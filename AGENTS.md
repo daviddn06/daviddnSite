@@ -1,6 +1,6 @@
 # personalWebsite, repo brief
 
-> Hosting update, 2026-10-06. daviddn.dev and www now point to InterServer 162.35.17.35. Caddy serves /var/www/daviddn-portfolio/current, with immutable releases under releases/. Run ./deploy-interserver.sh to build and publish. The previous Vercel deployment remains a rollback copy and is no longer the production destination. The initial copied build is release 20261006.
+> Hosting update, 2026-10-06. daviddn.dev and www now point to InterServer 162.35.17.35. Caddy serves /var/www/daviddn-portfolio/current, with immutable releases under releases/. Deploys are automatic on push to main of daviddn06/daviddnDev through daviddn06/deploy (pause with the Actions variable AUTODEPLOY=off, roll back with Actions, Deploy, Run workflow, rollback). `./deploy-interserver.sh` is the manual fallback. The previous Vercel deployment remains a rollback copy and is no longer the production destination. The initial copied build is release 20261006.
 
 > Last updated 2026-10-04 (night). Zone brief at `../../AGENTS.md`, full detail in `../../docs/agent-memory.md`.
 
@@ -30,7 +30,7 @@ Writing. Articles now live in `body` (above). Keep them short and in David's voi
 
 Screens. Vecka's are current as of 2026-10-04 (files `v3-*`), captured from a fresh local build of the repo via `tools/qa-lab.mjs` with the Work demo persona, demo banner, feedback button and Getting started card hidden, greeting set to the persona name. The site captures are from https://vecka.ai the same day. Recapture the same way when Vecka changes. ShoSoft marketing screens show David's redesign, which is not yet live on shosoft.ai, hence the caption "Marketing site redesign".
 
-Deploys to. Vercel project `personal-website` (team `nguyendongvinh2306-7063s-projects`). The repo has no `.git` on this laptop since 2026-09-27 (history lives on the M1 Max). Deploy prebuilt from a scratch copy: rsync the repo without node_modules, dist, .astro and .claude, symlink node_modules, then `npx vercel pull --yes --environment=production`, `npx vercel build --prod`, `npx vercel deploy --prebuilt --prod --yes`. Deploys carrying git author `david@Davids-MacBook-Pro-2.local` are blocked by the team and stall as UNKNOWN. Last production deploy 2026-10-04, Ready.
+Deploys to. InterServer, automatically on every push to main of daviddn06/daviddnDev through daviddn06/deploy (workflow `.github/workflows/deploy.yml`, project daviddn-dev, target site). It builds on GitHub and ships `dist/` as a new release under /var/www/daviddn-portfolio/releases. Pause with the Actions variable AUTODEPLOY=off; roll back with Actions, Deploy, Run workflow, rollback. The Vercel project `personal-website` (team `nguyendongvinh2306-7063s-projects`) is only the old rollback copy and is git connected to the OLD repo daviddn06/personalWebsite, so never push this source there. Deploys carrying git author `david@Davids-MacBook-Pro-2.local` are blocked by that Vercel team and stall as UNKNOWN.
 
 Run locally. `npm run dev -- --port 4323` (launch entry `portfolio`). `npm run build` before deploying.
 
