@@ -1,0 +1,292 @@
+/* daviddn.dev, after the reference (shreygups.com). A dark frame with a
+   faint grid, a sidebar panel of plain text, and the colour field. The
+   article lies under the field and is revealed by it (Field.tsx); it
+   takes as much width as it needs and the field keeps the rest. One type
+   size, one link colour, one curve. Motion is off for reduced motion. */
+
+:root {
+  --bg: #10141c;
+  --panel: #0a0d13;
+  --ink: #e9eef6;
+  --muted: #7d889a;
+  --link: #8db8ff;
+  --line: rgba(233, 238, 246, 0.07);
+  --frameline: rgba(220, 232, 255, 0.035);
+  --gridline: rgba(6, 10, 20, 0.62);
+  --sans: 'Libre Franklin', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --cell: 12px;
+  --pad: 20px;
+  --side: 300px;
+  /* the article's width: text keeps a reading measure, screens use the
+     whole column so their UI reads at a size close to the text; the
+     field always keeps a strip */
+  --col: min(1100px, calc(100vw - 2 * var(--pad) - var(--side) - 320px));
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #dfe5ee;
+    --panel: #f5f7fb;
+    --ink: #121821;
+    --muted: #7a8495;
+    --link: #2a5dcc;
+    --line: rgba(18, 24, 33, 0.08);
+    --frameline: rgba(18, 24, 33, 0.045);
+    --gridline: rgba(20, 35, 70, 0.22);
+    color-scheme: light;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--frameline) 1px, transparent 1px),
+    linear-gradient(90deg, var(--frameline) 1px, transparent 1px);
+  background-size: var(--cell) var(--cell);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 24px;
+  font-weight: 500;
+  -webkit-font-smoothing: antialiased;
+}
+
+img, video { display: block; max-width: 100%; }
+h1, h2, p, figure { margin: 0; }
+ul { margin: 0; padding: 0; list-style: none; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; border-radius: 3px; }
+::selection { background: var(--link); color: var(--panel); }
+
+/* Layout */
+
+.stage {
+  position: fixed;
+  inset: 0;
+  padding: var(--pad);
+  display: grid;
+  grid-template-columns: var(--side) 1fr;
+}
+/* the panel colour sits under the field, so cells not yet grown in (or
+   cleared) never show the page frame through them */
+.work { position: relative; min-width: 0; overflow: hidden; background: var(--panel); }
+
+/* Sidebar */
+
+.side {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px 20px 20px;
+  background: var(--panel);
+}
+
+.name { font-size: 15px; line-height: 24px; font-weight: 700; }
+.bio { margin-top: 16px; }
+
+.lists { margin-top: 16px; display: grid; gap: 16px; }
+.label { font-size: inherit; font-weight: inherit; color: var(--muted); }
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--link);
+  transition: color 700ms var(--ease), opacity 160ms var(--ease);
+}
+@media (hover: hover) { .link:hover { opacity: 0.72; } }
+.link .x { flex: none; opacity: 0.85; }
+
+.links { margin-top: auto; padding-top: 32px; }
+
+/* Article column, under the field */
+
+.article {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--col);
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--panel);
+  box-shadow: inset 1px 0 0 var(--line);
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.article::-webkit-scrollbar { display: none; }
+
+.article-inner {
+  width: var(--col);
+  padding: 24px 32px 64px;
+}
+
+.article-head { display: flex; align-items: center; justify-content: space-between; }
+.article-head .name { font-weight: 700; }
+.close { display: none; }
+
+.article p { margin-top: 16px; max-width: 620px; }
+.article .sub { margin-top: 40px; font-size: inherit; font-weight: 700; }
+.article .sub + p { margin-top: 8px; }
+.meta-line { color: var(--muted); }
+.meta-line a { color: var(--link); transition: color 700ms var(--ease); }
+@media (hover: hover) { .meta-line a:hover { opacity: 0.72; } }
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin: 32px 0 8px;
+  padding: 20px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.stats dt { font-size: 24px; line-height: 32px; font-weight: 700; color: var(--ink); }
+.stats dd { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 18px; }
+
+.shot { margin-top: 24px; }
+.shot + .shot { margin-top: 32px; }
+.shot figcaption { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 20px; }
+
+.frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  border-radius: 6px;
+  background: rgba(127, 127, 127, 0.08);
+  cursor: zoom-in;
+}
+.frame img, .frame video { width: 100%; height: 100%; object-fit: cover; }
+.frame::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--line); pointer-events: none; }
+.frame.tall { border-radius: 14px; }
+.shot > .frame.tall { max-width: 200px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }
+
+/* Before and after. The before image is clipped to the handle. */
+
+.compare {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  background: rgba(127, 127, 127, 0.08);
+  user-select: none;
+  touch-action: pan-y;
+}
+.compare img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.compare-before { position: absolute; inset: 0; clip-path: inset(0 calc(100% - var(--x)) 0 0); }
+.compare-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--x);
+  width: 2px;
+  margin-left: -1px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+}
+.compare-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border-radius: 50%;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 4.5 2.5 8 6 11.5M10 4.5 13.5 8 10 11.5' fill='none' stroke='%230a0d13' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px no-repeat;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+.compare-tag {
+  position: absolute;
+  bottom: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(10, 13, 19, 0.72);
+  color: #e9eef6;
+  font-size: 12px;
+  line-height: 20px;
+  pointer-events: none;
+}
+.compare-tag.left { left: 10px; }
+.compare-tag.right { right: 10px; }
+.compare input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: ew-resize;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.compare:has(input:focus-visible) { outline: 1.5px solid var(--link); outline-offset: 2px; }
+
+/* The field, over the article; the article shows where the field has
+   cleared its cells. */
+
+.main { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.field { position: absolute; top: 0; right: 0; width: 100vw; height: 100vh; }
+.field canvas { position: absolute; top: 0; left: 0; }
+
+/* Full size viewer */
+
+dialog.viewer { max-width: min(94vw, 1600px); max-height: 92vh; padding: 0; border: 0; background: transparent; overflow: visible; cursor: zoom-out; }
+dialog.viewer img { max-height: 92vh; width: auto; margin: 0 auto; border-radius: 8px; }
+dialog.viewer::backdrop { background: color-mix(in srgb, var(--panel) 94%, transparent); }
+dialog.viewer[open] img { animation: rise 360ms var(--ease) both; }
+dialog.viewer[open]::backdrop { animation: fade 300ms var(--ease) both; }
+
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+@keyframes fade { from { opacity: 0; } }
+
+/* Phones and narrow windows. The field is a band on top, the names
+   below, and an article takes the whole screen. */
+
+@media (max-width: 999px) {
+  :root { --pad: 12px; }
+  .stage { position: static; display: flex; flex-direction: column; min-height: 100svh; }
+  .work { order: -1; height: 34svh; flex: none; overflow: hidden; }
+  .main { inset: 0; }
+  .side { flex: 1; overflow: visible; padding: 24px 20px; }
+  .article {
+    position: fixed;
+    inset: 0;
+    width: auto;
+    z-index: 10;
+    box-shadow: none;
+    transform: translateY(100%);
+    visibility: hidden;
+    transition: transform 420ms var(--ease), visibility 0s linear 420ms;
+  }
+  .stage.is-open .article { transform: none; visibility: visible; transition: transform 420ms var(--ease); }
+  .article-inner { width: auto; max-width: 560px; margin: 0 auto; padding: 20px 20px 56px; }
+  .close {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    margin: -4px -8px -4px 0;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--line);
+    cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

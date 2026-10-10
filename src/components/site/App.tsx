@@ -1,0 +1,217 @@
+/* daviddn.dev, after the reference (shreygups.com). A dark frame, a
+   sidebar of plain names, and a calm field of colour beside it.
+   Hovering a name blends the field into that project's colours; clicking
+   one makes the field pull back cell by cell to reveal the article
+   underneath, its logo drawn in the cells that remain. Switching covers
+   the article and reveals the next; clicking the name again (or Escape)
+   lets the field cover it. The address follows
+   (/projects/<slug>/), so Back, Forward, reload and shared links land on
+   the same view. Under 1000px the field is a band above the names and an
+   article takes the whole screen. */
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { BRAND } from '../logos/brand';
+import { DEFAULT_PALETTE, DEFAULT_PALETTE_LIGHT, Field, REVEAL, brandAccent, brandPalette } from './Field';
+import { Marks, type Project } from './Media';
+import { Panel } from './Panel';
+
+type Props = { work: Project[]; projects: Project[]; earlier: Project[]; initial: string | null };
+
+const LINKS = [
+  { label: 'LinkedIn', url: 'https://www.linkedin.com/in/daviddn' },
+  { label: 'GitHub', url: 'https://github.com/daviddn06' },
+  { label: 'Email', url: 'mailto:daviddn@usc.edu' },
+];
+
+const slugOf = (path: string) => path.match(/^\/projects\/([^/]+)\/?$/)?.[1] ?? null;
+
+export default function App({ work, projects, earlier, initial }: Props) {
+  const all = useMemo(() => [...work, ...projects, ...earlier], [work, projects, earlier]);
+  const sections = [
+    { id: 'work', title: 'Work', items: work },
+    { id: 'projects', title: 'Projects', items: projects },
+    { id: 'earlier', title: 'Earlier', items: earlier },
+  ];
+
+  const [open, setOpen] = useState<string | null>(initial);
+  /* what the article holds; it keeps its project while the field covers it */
+  const [shown, setShown] = useState<string | null>(initial);
+  /* switching: the field covers the article, the content swaps, then it reveals */
+  const [covering, setCovering] = useState(false);
+  const swap = useRef(0);
+  const openRef = useRef(open);
+  openRef.current = open;
+  const shownRef = useRef(shown);
+  shownRef.current = shown;
+  const [ready, setReady] = useState(false);
+  useEffect(() => { requestAnimationFrame(() => setReady(true)); }, []);
+
+  const show = useCallback((s: string | null, push = true) => {
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const narrow = matchMedia('(max-width: 999px)').matches;
+    setOpen(s);
+    if (s && openRef.current && s !== shownRef.current && !still && !narrow) {
+      setCovering(true);
+      clearTimeout(swap.current);
+      swap.current = window.setTimeout(() => {
+        setShown(openRef.current ?? shownRef.current);
+        setCovering(false);
+      }, REVEAL + 80);
+    } else if (s) {
+      clearTimeout(swap.current);
+      setCovering(false);
+      setShown(s);
+    }
+    const p = all.find((x) => x.slug === s);
+    document.title = p ? `${p.name}, David Nguyen` : 'David Nguyen';
+    if (push) {
+      const url = s ? `/projects/${s}/` : '/';
+      if (location.pathname !== url) history.pushState({ slug: s }, '', url);
+    }
+  }, [all]);
+
+  useEffect(() => {
+    const onPop = () => show(slugOf(location.pathname), false);
+    addEventListener('popstate', onPop);
+    return () => removeEventListener('popstate', onPop);
+  }, [show]);
+
+  /* phones: the article owns scrolling while it is up */
+  useEffect(() => {
+    const narrow = matchMedia('(max-width: 999px)').matches;
+    document.documentElement.style.overflow = open && narrow ? 'hidden' : '';
+  }, [open]);
+
+  /* the full size viewer */
+  const [zoom, setZoom] = useState<{ src: string; alt: string } | null>(null);
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => { if (zoom && dialog.current && !dialog.current.open) dialog.current.showModal(); }, [zoom]);
+  const unzoom = () => { dialog.current?.close(); setZoom(null); };
+
+  /* Escape closes, arrows step through everything in order */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (zoom || e.metaKey || e.ctrlKey || e.altKey || !open) return;
+      if (e.key === 'Escape') { e.preventDefault(); show(null); return; }
+      const i = all.findIndex((p) => p.slug === open);
+      if (e.key === 'ArrowDown' && i < all.length - 1) { e.preventDefault(); show(all[i + 1].slug); }
+      if (e.key === 'ArrowUp' && i > 0) { e.preventDefault(); show(all[i - 1].slug); }
+    };
+    addEventListener('keydown', onKey);
+    return () => removeEventListener('keydown', onKey);
+  }, [open, zoom, all, show]);
+
+  /* Hover. A short grace on leaving, so moving between names never
+     dips back through the resting colours. */
+  const [hot, setHot] = useState<string | null>(null);
+  const timer = useRef(0);
+  const enter = (s: string, e: React.PointerEvent) => {
+    if (e.pointerType !== 'mouse') return;
+    clearTimeout(timer.current);
+    setHot(s);
+  };
+  const leave = () => {
+    clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => setHot(null), 160);
+  };
+
+  const [light, setLight] = useState(false);
+  useEffect(() => {
+    const mq = matchMedia('(prefers-color-scheme: light)');
+    const sync = () => setLight(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
+  /* how much of the field the article needs, measured from its column */
+  const [col, setCol] = useState(0);
+  useEffect(() => {
+    const el = document.querySelector<HTMLElement>('.article');
+    if (!el) return;
+    const narrow = matchMedia('(max-width: 999px)');
+    const sync = () => setCol(narrow.matches ? 0 : el.offsetWidth);
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    narrow.addEventListener('change', sync);
+    return () => { ro.disconnect(); narrow.removeEventListener('change', sync); };
+  }, []);
+  const cut = open && !covering ? col : 0;
+
+  /* the open project's colour becomes the accent for every link and mark */
+  const accent = open && BRAND[open] ? brandAccent(BRAND[open].color, light) : null;
+
+  /* the open project owns the colours; hover previews only when nothing is open */
+  const focus = open ?? hot;
+  const palette = useMemo(
+    () => (focus && BRAND[focus] ? brandPalette(BRAND[focus].color, light) : light ? DEFAULT_PALETTE_LIGHT : DEFAULT_PALETTE),
+    [focus, light],
+  );
+
+  return (
+    <div className={`stage${open ? ' is-open' : ''}${ready ? ' ready' : ''}`}
+      style={accent ? ({ '--link': accent } as React.CSSProperties) : undefined}>
+      <Marks slugs={all.map((p) => p.slug)} />
+      <aside className="side">
+        <h1 className="name">David Nguyen</h1>
+        <p className="bio">I design and build software products. Business at USC Marshall, minoring in Designing for Digital Experiences.</p>
+
+        <nav className="lists" onPointerLeave={leave} aria-label="Work and projects">
+          {sections.map((s) => (
+            <section key={s.id} aria-labelledby={`h-${s.id}`}>
+              <h2 id={`h-${s.id}`} className="label">{s.title}</h2>
+              <ul>
+                {s.items.map((p) => (
+                  <li key={p.slug}>
+                    <a
+                      className={`link${open === p.slug ? ' active' : ''}`}
+                      href={`/projects/${p.slug}/`}
+                      aria-current={open === p.slug ? 'page' : undefined}
+                      onPointerEnter={(e) => enter(p.slug, e)}
+                      onClick={(e) => {
+                        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+                        e.preventDefault();
+                        show(open === p.slug ? null : p.slug);
+                      }}
+                    >
+                      {p.name}
+                      {open === p.slug && (
+                        <svg className="x" viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">
+                          <circle cx="8" cy="8" r="7" fill="currentColor" />
+                          <path d="M5.6 5.6l4.8 4.8M10.4 5.6l-4.8 4.8" stroke="var(--panel)" strokeWidth="1.6" strokeLinecap="round" />
+                        </svg>
+                      )}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </nav>
+
+        <ul className="links">
+          {LINKS.map((l) => (
+            <li key={l.label}><a className="link" href={l.url} target={l.url.startsWith('http') ? '_blank' : undefined} rel="noopener">{l.label}</a></li>
+          ))}
+        </ul>
+      </aside>
+
+      <div className="work">
+        <Panel
+          p={all.find((x) => x.slug === shown) ?? null}
+          open={!!open}
+          onClose={() => show(null)}
+          onZoom={(src, alt) => setZoom({ src, alt })}
+        />
+        <main className="main">
+          <Field palette={palette} mark={open} cut={cut} />
+        </main>
+      </div>
+
+      <dialog ref={dialog} className="viewer" aria-label="Full size image"
+        onClick={unzoom} onCancel={(e) => { e.preventDefault(); unzoom(); }}>
+        {zoom && <img src={zoom.src} alt={zoom.alt} />}
+      </dialog>
+    </div>
+  );
+}

@@ -1,0 +1,16 @@
+---
+/* A deep link. The same page as the home page, with this project's
+   panel already open, so it reads in full without JavaScript too. */
+import Base from '../../layouts/Base.astro';
+import App from '../../components/site/App';
+import { work, projects, earlier, all } from '../../data/work.js';
+
+export function getStaticPaths() {
+  return all.map((p) => ({ params: { slug: p.slug }, props: { p } }));
+}
+
+const { p } = Astro.props;
+---
+<Base title={`${p.name}, David Nguyen`} description={p.line} image={p.tile.src}>
+  <App client:load work={work} projects={projects} earlier={earlier} initial={p.slug} />
+</Base>
