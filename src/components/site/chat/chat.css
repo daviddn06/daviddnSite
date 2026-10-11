@@ -32,7 +32,9 @@
   position: absolute;
   z-index: 2;
   left: calc(var(--side) + (100% - var(--side)) / 2);
-  top: 20px;
+  /* the conversation's head sits level with the guide's name, so the
+     top of the screen breathes the same on both sides */
+  top: 34px;
   bottom: 18px;
   width: min(660px, calc(100% - var(--side) - 96px));
   transform: translateX(-50%);
@@ -167,9 +169,10 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 12px 6px 28px;
+  padding: 22px 6px 28px;
   scroll-padding-bottom: 28px;
-  mask-image: linear-gradient(to bottom, transparent, #000 20px, #000 calc(100% - 12px), transparent);
+  /* bubbles scrolling up fade out well before they reach the head */
+  mask-image: linear-gradient(to bottom, transparent 6px, #000 46px, #000 calc(100% - 12px), transparent);
   transition: opacity var(--chat-enter) var(--ease), transform var(--chat-enter) var(--ease);
 }
 .chat-body::-webkit-scrollbar { display: none; }
