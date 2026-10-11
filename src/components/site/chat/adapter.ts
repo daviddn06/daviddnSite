@@ -45,8 +45,8 @@ const visitor = () => {
 const kindly = (status: number, said?: string) => {
   if (status === 413) return 'That message is a bit long for me. Try a shorter one.';
   if (status === 429) return 'That is a lot of messages at once. Give it a minute and try again.';
+  if (status === 403) return 'The chat can only answer on daviddn.dev, in an everyday browser.';
   if (said) return said;
-  if (status === 403) return 'The chat only answers on daviddn.dev.';
   if (status === 400) return 'Something in that message did not go through. Try rephrasing it.';
   return 'Something went wrong on my end. Try again in a moment.';
 };
