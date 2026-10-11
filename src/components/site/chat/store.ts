@@ -57,14 +57,23 @@ export const titleOf = (text: string) => {
   return t.length > 64 ? `${t.slice(0, 62).trimEnd()}…` : t;
 };
 
+/* date formats, made once: building one costs more than a whole list of rows */
+const FMT = new Map<string, Intl.DateTimeFormat>();
+const fmt = (o: Intl.DateTimeFormatOptions) => {
+  const k = JSON.stringify(o);
+  let f = FMT.get(k);
+  if (!f) FMT.set(k, (f = new Intl.DateTimeFormat(undefined, o)));
+  return f;
+};
+
 /* "Today, 9:25 PM", "Yesterday", "Oct 8" */
 export const when = (t: number) => {
   const d = new Date(t), now = new Date();
   const day = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   const diff = Math.round((day(now) - day(d)) / 86400000);
-  if (diff === 0) return new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(d);
+  if (diff === 0) return fmt({ hour: 'numeric', minute: '2-digit' }).format(d);
   if (diff === 1) return 'Yesterday';
-  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', ...(d.getFullYear() !== now.getFullYear() ? { year: 'numeric' } : {}) }).format(d);
+  return fmt({ month: 'short', day: 'numeric', ...(d.getFullYear() !== now.getFullYear() ? { year: 'numeric' } : {}) }).format(d);
 };
 
 /* how long ago, as short as a set's guide: "now", "5m", "2h",
@@ -78,5 +87,5 @@ export const ago = (t: number, now = Date.now()) => {
   const d = Math.floor(h / 24);
   if (d === 1) return 'Yesterday';
   if (d < 7) return `${d}d`;
-  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(new Date(t));
+  return fmt({ month: 'short', day: 'numeric' }).format(new Date(t));
 };
