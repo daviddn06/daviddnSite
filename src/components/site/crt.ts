@@ -244,7 +244,7 @@ const TUBE = COMMON + `
 uniform sampler2D uSig, uBloom;
 uniform vec2 uSize, uRes;
 uniform float uEdge, uDpr, uPitch, uLines, uStore, uK, uRadius, uLight, uT, uFrame, uFlick, uNoise;
-uniform float uScan, uGrille, uWire, uBloomAmt, uSheen, uRoll, uAfter;
+uniform float uScan, uGrille, uWire, uBloomAmt, uRoll, uAfter;
 uniform vec3 uGlass, uPanel;
 
 /* gentle barrel: the middle of each side stays put, the corners pull in */
@@ -305,9 +305,7 @@ void main() {
   scr *= 1.0 - 0.2 * pow(r2, 1.5);
 
   vec3 bloom = texture(uBloom, q / uSize).rgb / uStore * uBloomAmt;
-  /* a soft reflection on the curved glass, high on the left */
-  vec2 s = (n - vec2(-0.5, -0.62)) * vec2(0.75, 1.45);
-  float sheen = uSheen * (1.0 - smoothstep(0.0, 0.85, length(s)));
+  /* (the soft reflection high on the left is the glass overlay's, in CSS) */
 
   /* calm behind text on the glass: dimmer, flatter, quieter */
   float calm = calmAt(p);
@@ -322,7 +320,7 @@ void main() {
 
   vec3 raster = uLight > 0.5 ? scr + bloom : uGlass + scr + bloom;
   vec3 glass = uGlass + bloom * 0.6 * (1.0 - smoothstep(0.0, 24.0, length(max(abs(q - uSize * 0.5) - uSize * 0.5, 0.0))));
-  vec3 solid = mix(glass, raster, inside) + sheen;
+  vec3 solid = mix(glass, raster, inside);
   /* over the article the screen is gone; only the fading phosphor and
      a little halation remain, added as light */
   vec3 after = (lit * 0.9 + bloom * 0.25) * uAfter;
@@ -819,7 +817,6 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     u1(u.uGrille, (light ? 0.035 : 0.06) * Math.min(1, dpr / 2 + 0.25));
     u1(u.uWire, light ? 0.05 : 0.09);
     u1(u.uBloomAmt, light ? 0.1 : 0.26);
-    u1(u.uSheen, 0);
     u1(u.uRoll, still ? 0 : light ? 0.015 : 0.03);
     u1(u.uAfter, light ? 0 : 1);
     /* the glass is the page's screen colour, so the picture's margins
