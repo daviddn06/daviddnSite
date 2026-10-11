@@ -591,6 +591,10 @@ button { font: inherit; color: inherit; }
 /* Text on the glass comes on with the picture, as the tube warms up,
    rather than floating on a dark screen before it */
 .osd, .chat { animation: warm 240ms steps(3, end) 680ms backwards; }
+/* a browser that has been here before skips the power on (Base.astro):
+   the picture settles in for a moment and the text is there at once */
+html.seen :is(.osd, .chat) { animation: none; }
+html.seen .field { animation: fade var(--t-small) var(--ease-out) backwards; }
 @keyframes warm { from { opacity: 0; } 60% { opacity: 0.55; } }
 
 /* Full size viewer */

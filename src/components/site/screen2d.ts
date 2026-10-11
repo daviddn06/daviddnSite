@@ -177,7 +177,7 @@ export function startScreen2d(canvas0: HTMLCanvasElement, w: Wants, opts: { quie
   let cutTarget = w.cut.current ?? 0, edgeFrom = cutTarget, edgeTo = cutTarget, edgeAt = -1e9, edgeNow = cutTarget;
 
   let raf = 0, last = performance.now(), t = Math.random() * 100, born = -1;
-  const power = !still && !opts.quiet;
+  const power = !still && !opts.quiet && !document.documentElement.classList.contains('seen');
   const draw = (ms: number) => {
     const dt = Math.min(64, ms - last);
     last = ms;
