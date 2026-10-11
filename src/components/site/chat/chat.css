@@ -939,42 +939,36 @@
 .crt-slot[data-mode="dock"] {
   left: calc(var(--side) + var(--col) + 24px);
   right: 24px;
-  top: var(--logo-zone, 196px);
+  /* the same top as the chat on the home screen: its header row sits
+     where the home one does */
+  top: 20px;
   bottom: 18px;
   width: auto;
   height: auto;
   transform: none;
 }
 .crt-slot[data-mode="dock"] .chat-hello { display: none; }
-/* the row of controls shares the logo's line at the top of the strip,
-   New chat to its left and Close to its right */
-.crt-slot[data-mode="dock"] .chat-head {
-  position: absolute;
-  z-index: 1;
-  left: 0;
-  right: 0;
-  top: var(--row-top, -114px);
-  justify-content: space-between;
-  pointer-events: none;
-}
-.crt-slot[data-mode="dock"] .chat-head > * { pointer-events: auto; }
+/* the header row is the home screen's; the project's mark leads it */
+.head-mark { flex: none; width: 20px; height: 20px; margin: 0 2px 0 6px; }
+.crt-slot[data-mode="dock"] .chat-topic { padding-left: 4px; }
 /* where the picture draws the project's logo (crt.ts reads this box):
-   centred with the headline under it while the chat is empty, up in the
-   top row once there is a conversation, a transform between the two */
+   large and centred with the headline under it while the chat is empty,
+   shrunk into the header's mark once there is a conversation, one
+   transform between the two */
 .crt-logo-spot {
   position: absolute;
   left: 0;
   right: 0;
-  top: var(--spot-top, -162px);
-  width: min(200px, 60%);
+  top: var(--spot-top, 30%);
+  width: 160px;
   height: 128px;
   margin: 0 auto;
   pointer-events: none;
-  transform: none;
+  transform: var(--spot-to, none);
   transition: transform var(--chat-settle) var(--ease);
 }
 .chat > .crt-logo-spot { pointer-events: none; }
-.crt-slot[data-mode="dock"][data-empty] .crt-logo-spot { transform: translateY(var(--spot-drop, 0px)); }
+.crt-slot[data-mode="dock"][data-empty] .crt-logo-spot { transform: none; }
 .dock-hello {
   position: absolute;
   left: 0;
@@ -989,8 +983,6 @@
 .chat > .dock-hello { pointer-events: none; }
 .dock-hello .chat-title { padding: 0 12px; font-size: 20px; line-height: 28px; animation: none; }
 .crt-slot[data-mode="dock"][data-empty] .dock-hello { opacity: 1; transform: none; transition: opacity var(--chat-enter) var(--ease) 80ms, transform var(--chat-enter) var(--ease) 80ms; }
-.crt-slot[data-mode="dock"][data-empty]:not([data-menu]) .chat-sheet { justify-content: flex-end; }
-.crt-slot[data-mode="dock"][data-empty]:not([data-menu]) .chat-stage { flex: none; }
 
 /* the parts that open and close in the dock and on phones: the sheet
    wipes up from the bar, and folds back down quicker */

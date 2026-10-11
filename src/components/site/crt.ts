@@ -128,6 +128,7 @@ uniform vec3 uDecay, uHot, uInk;
 uniform vec3 uPtr;      // x, y, how near (0 to 1)
 uniform vec4 uLogo;     // centre x, y, lit, morph
 uniform vec4 uLogoBox;  // field size w, h, half the fitted size w, h
+uniform float uLogoS;   // the logo's scale on screen (the chat can shrink it)
 uniform vec4 uPower;    // centre x, y, half width, half height lit so far
 uniform vec4 uPower2;   // squeeze x, y, white, brightness
 uniform vec2 uDegauss;  // amount, seconds
@@ -176,9 +177,9 @@ void main() {
     /* the logo, from two distance fields blended while morphing */
     float L = 0.0;
     if (uLogo.z > 0.0) {
-      vec2 lp = p - uLogo.xy;
+      vec2 lp = (p - uLogo.xy) / uLogoS;
       vec2 luv = (lp + uLogoBox.xy * 0.5) / uLogoBox.xy;
-      float d = mix(texture(uSdfA, luv).r, texture(uSdfB, luv).r, uLogo.w) + uWeight;
+      float d = (mix(texture(uSdfA, luv).r, texture(uSdfB, luv).r, uLogo.w) + uWeight) * uLogoS;
       float cov = clamp(d / 1.25 + 0.5, 0.0, 1.0);
       /* light bleeds into the field around it (deepens it on paper) */
       float g = d > 0.0 ? 1.0 : exp(d / 14.0) * (1.0 - smoothstep(24.0, 38.0, -d));
@@ -771,10 +772,14 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
        `.crt-logo-spot` (chat/Live.tsx), centred in an empty panel and
        moved up by a transform once there is a conversation; the logo
        follows it frame by frame */
-    const spotBox = dock?.querySelector<HTMLElement>('.crt-logo-spot')?.getBoundingClientRect();
-    const spot = spotBox && spotBox.width > 0 && spotBox.height > 0 ? spotBox : null;
-    const roomH = spot ? spot.height : dockTop > 80 ? dockTop - 56 : H * 0.4;
-    const fitW = Math.max(96, Math.min(spot ? Math.floor(spot.width / 8) * 8 : dockTop > 80 ? 200 : 288, Math.floor((vw * 0.8) / 8) * 8));
+    const spotEl = dock?.querySelector<HTMLElement>('.crt-logo-spot');
+    const spotBox = spotEl?.getBoundingClientRect();
+    const spot = spotEl && spotBox && spotEl.offsetWidth > 0 && spotEl.offsetHeight > 0 ? spotBox : null;
+    /* the spot's own size sets the logo's; a transform on it (shrinking
+       it into the chat's header) scales the drawing, not the field */
+    const spotS = spot ? Math.max(0.05, spot.width / spotEl!.offsetWidth) : 1;
+    const roomH = spot ? spotEl!.offsetHeight : dockTop > 80 ? dockTop - 56 : H * 0.4;
+    const fitW = Math.max(96, Math.min(spot ? Math.floor(spotEl!.offsetWidth / 8) * 8 : dockTop > 80 ? 200 : 288, Math.floor((vw * 0.8) / 8) * 8));
     const fitH = Math.max(96, Math.min(240, Math.floor(roomH / 8) * 8));
     const fit = `${fitW}x${fitH}`;
     if (!target) {
@@ -878,7 +883,8 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     u3(u.uInk, light ? 1 : 252 / 255, light ? 1 : 246 / 255, light ? 1 : 238 / 255);
     u3(u.uPtr, px, py, lift);
     const showLogo = !!shape && lit > 0;
-    u4(u.uLogo, (lastCut + W) / 2, logoY, showLogo ? lit : 0, morph ? morphE : 1);
+    u4(u.uLogo, spot ? spot.left + spot.width / 2 - canvas.getBoundingClientRect().left : (lastCut + W) / 2, logoY, showLogo ? lit : 0, morph ? morphE : 1);
+    u1(u.uLogoS, spotS);
     u4(u.uLogoBox, sdfB.w, sdfB.h, fitW / 2, fitH / 2);
     u4(u.uPower, cx, cy, hw, hh);
     u4(u.uPower2, done ? 1 : Math.min(12, fullW / hw), done ? 1 : Math.min(12, fullH / hh), white, over);

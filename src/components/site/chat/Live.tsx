@@ -293,30 +293,40 @@ function Screen({ open, all, headline, cid, named, swap, switchTo }: ScreenProps
   }, [mac]);
 
   /* Docked beside a project, the project's logo (drawn by the picture,
-     crt.ts) follows this chat's \`.crt-logo-spot\`: centred in the panel
-     with the headline under it while the chat is empty, up at the top in
-     a compact row with the chat's controls once there is a conversation.
+     crt.ts) follows this chat's \`.crt-logo-spot\`: large and centred in
+     the panel with the headline under it while the chat is empty; once
+     there is a conversation it shrinks into the mark at the start of the
+     header row (\`.head-mark\`), the same header as on the home screen.
      The spot moves by a transform; here it is only measured, when the
      panel changes size. */
   useEffect(() => {
     const el = slot.current;
     if (mode !== 'dock' || !el) return;
-    const SPOT = 128, GAP = 14, LINE = 30, TOP = 28, FOOT = 104;
+    const SPOT = 128, GAP = 16, LINE = 28;
     const place = () => {
-      const z = el.offsetTop, h = el.offsetHeight;
-      const up = -z / 2 + 6;
-      const room = h - FOOT + z - TOP;
-      const group = Math.max(-z + TOP, -z + TOP + (room - (SPOT + GAP + LINE)) / 2);
-      el.style.setProperty('--spot-top', `${Math.round(up - SPOT / 2)}px`);
-      el.style.setProperty('--spot-drop', `${Math.round(Math.max(0, group + SPOT / 2 - up))}px`);
-      el.style.setProperty('--row-top', `${Math.round(up - 16)}px`);
-      el.style.setProperty('--hello-top', `${Math.round(group + SPOT + GAP)}px`);
+      const w = el.offsetWidth;
+      const head = el.querySelector<HTMLElement>('.chat-head');
+      const mark = el.querySelector<HTMLElement>('.head-mark');
+      const box = el.querySelector<HTMLElement>('.composer');
+      if (!head || !mark || !box) return;
+      const r = el.getBoundingClientRect();
+      /* where the header settles, without the small lift it enters with */
+      const lift = new DOMMatrix(getComputedStyle(head).transform === 'none' ? undefined : getComputedStyle(head).transform).m42;
+      const top = head.getBoundingClientRect().bottom - lift - r.top;
+      const bottom = box.getBoundingClientRect().top - r.top;
+      /* the logo and the line under it, centred between header and box */
+      const cy = Math.max(top + SPOT / 2, (top + bottom) / 2 - (GAP + LINE) / 2);
+      const m = mark.getBoundingClientRect();
+      const tx = m.left + m.width / 2 - r.left - w / 2, ty = m.top - lift + m.height / 2 - r.top - cy;
+      el.style.setProperty('--spot-top', `${Math.round(cy - SPOT / 2)}px`);
+      el.style.setProperty('--spot-to', `translate(${Math.round(tx)}px, ${Math.round(ty)}px) scale(${(m.height / SPOT).toFixed(3)})`);
+      el.style.setProperty('--hello-top', `${Math.round(cy + SPOT / 2 + GAP)}px`);
     };
     place();
     const ro = new ResizeObserver(place);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [mode]);
+  }, [mode, empty]);
 
   return (<>
     <div id="crt-chat-slot" ref={slot} className="crt-slot" data-mode={mode} data-fade={fade}
@@ -334,7 +344,8 @@ function Screen({ open, all, headline, cid, named, swap, switchTo }: ScreenProps
         <div className="chat-sheet">
           {/* once talking: what this chat is about, New chat, and Close */}
           <div className="chat-head" data-on={!empty || mode === 'bar' ? '' : undefined}>
-            {mode === 'center' && <p className="chat-topic" title={named || asked}><span key={named || asked}>{named || asked}</span></p>}
+            {mode === 'dock' && <span className="head-mark" aria-hidden="true" />}
+            {mode !== 'bar' && <p className="chat-topic" title={named || asked}><span key={named || asked}>{named || asked}</span></p>}
             {mode === 'bar' && (
               <button type="button" className="chat-tool" data-kind="history" data-on={past || menu ? '' : undefined} tabIndex={past || menu ? 0 : -1}
                 aria-expanded={menu} onClick={() => (menu ? closeMenu() : openMenu())}>
