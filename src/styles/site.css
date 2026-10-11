@@ -47,10 +47,14 @@
   --side: calc(var(--panel-w) + 2 * var(--inset));
   /* the scanline pitch, set by the screen to match its own lines */
   --scan: 3px;
-  /* the article's width: text keeps a reading measure, screens use the
-     whole column so their UI reads at a size close to the text; the
-     field always keeps a strip */
-  --col: min(1060px, calc(100vw - 2 * var(--pad) - var(--side) - 320px));
+  /* An open project splits the screen beside the guide: the article
+     takes a reading column (about 48% of the room, 460 to 680px, so its
+     text keeps a measure near 620px and screenshots match it), and the
+     chat panel takes the rest, never under 400px on desktop. */
+  --room: calc(100vw - 2 * var(--pad) - var(--side));
+  --col: clamp(340px, min(calc(var(--room) * 0.48), calc(var(--room) - 400px)), 680px);
+  /* the top of the panel, where the project's logo glows */
+  --logo-zone: 196px;
   color-scheme: dark;
 }
 

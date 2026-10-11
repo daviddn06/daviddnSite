@@ -236,7 +236,7 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
   useEffect(() => { if (running) setPinned(true); }, [running]);
   /* in the dock an empty conversation stays a bar, unless there are past
      chats to reach (then just their button shows above it) */
-  const expanded = mode === 'center' || menu || ((focused || pinned) && (mode === 'bar' || !empty || past));
+  const expanded = mode === 'center' || mode === 'dock' || menu || ((focused || pinned) && (mode === 'bar' || !empty || past));
 
   const focusInput = () => { if (!matchMedia('(hover: none)').matches) input.current?.focus(); };
   const away = () => { setMenu(false); setPinned(false); setFocused(false); input.current?.blur(); };

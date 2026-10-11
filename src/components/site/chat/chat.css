@@ -517,15 +517,17 @@ a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
 }
 @media (max-width: 999px) { .crt-history, .hist-toggle { display: none; } }
 
-/* Docked beside an open article: a slim bar at the bottom of the strip;
-   in use, the conversation opens upward over the strip */
+/* Docked beside an open article: a real conversation panel filling the
+   room right of the article, under the project's logo (crt.ts keeps the
+   logo in the zone above it): the conversation scrolls in the middle,
+   the box and its line at the bottom. */
 .crt-slot[data-mode="dock"] {
-  left: calc(var(--side) + var(--col) + 14px);
-  right: 14px;
-  top: auto;
-  bottom: 14px;
+  left: calc(var(--side) + var(--col) + 24px);
+  right: 24px;
+  top: var(--logo-zone, 196px);
+  bottom: 18px;
   width: auto;
-  height: 52%;
+  height: auto;
   transform: none;
 }
 .crt-slot[data-mode="dock"] .cards { grid-template-columns: 1fr; }

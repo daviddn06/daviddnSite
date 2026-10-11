@@ -613,8 +613,13 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     const target = w.mark.current;
     if (target && goal > 0) lastCut = goal;
     const vw = W - lastCut;
-    const fitW = Math.max(120, Math.min(288, Math.floor((vw * 0.8) / 8) * 8));
-    const fitH = Math.max(120, Math.min(240, Math.floor((H * 0.4) / 8) * 8));
+    /* the logo's room: with the chat panel below it, the zone above the
+       panel (its top less a margin); otherwise the strip */
+    const dock = glass.querySelector<HTMLElement>('.crt-slot[data-mode="dock"]');
+    const dockTop = dock ? dock.getBoundingClientRect().top - canvas.getBoundingClientRect().top : 0;
+    const roomH = dockTop > 80 ? dockTop - 56 : H * 0.4;
+    const fitW = Math.max(96, Math.min(dockTop > 80 ? 200 : 288, Math.floor((vw * 0.8) / 8) * 8));
+    const fitH = Math.max(96, Math.min(240, Math.floor(roomH / 8) * 8));
     const fit = `${fitW}x${fitH}`;
     if (!target) {
       /* closing: the logo fades out where it is */
@@ -653,14 +658,9 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
 
     readCalm(dt);
 
-    /* the logo rises into the free part of the strip while the chat's
-       sheet is open over its lower half, and settles back after */
-    let wantY = H / 2;
-    const sheet = glass.querySelector<HTMLElement>('.crt-slot[data-mode="dock"][data-expanded]');
-    if (sheet) {
-      const top = sheet.getBoundingClientRect().top - canvas.getBoundingClientRect().top;
-      wantY = Math.min(H / 2, Math.max(fitH / 2 + 24, top / 2 + 6));
-    }
+    /* the logo sits in the zone above the chat panel when there is one,
+       otherwise in the middle of the strip, easing between the two */
+    const wantY = dockTop > 80 ? dockTop / 2 + 4 : H / 2;
     logoY = logoY < 0 || still ? wantY : logoY + (wantY - logoY) * Math.min(1, dt / 220);
 
     /* the power on: a dot, a line across, the picture opening out
