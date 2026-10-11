@@ -274,6 +274,99 @@
   text-underline-offset: 3px;
 }
 
+/* Citations (cite.tsx): a numbered chip after a claim, tinted with the
+   project's colour, and the reply's sources lined up under it */
+.cite {
+  display: inline-grid;
+  place-items: center;
+  min-width: 17px;
+  height: 17px;
+  margin: 0 1px 0 3px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--tint, var(--chat-link)) 22%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tint, var(--chat-link)) 70%, transparent);
+  color: var(--ink);
+  font: inherit;
+  font-size: 10.5px;
+  line-height: 1;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  vertical-align: 0.42em;
+  text-shadow: none;
+  cursor: pointer;
+  transition: box-shadow var(--chat-quick) var(--ease), background-color var(--chat-quick) var(--ease);
+}
+@media (hover: hover) { .cite:hover { background: color-mix(in srgb, var(--tint, var(--chat-link)) 45%, transparent); } }
+.cite:focus-visible { outline: 1.5px solid var(--link); outline-offset: 1px; }
+/* it scans in, top to bottom, a touch overbright */
+.cite.is-new { animation: cite-scan 280ms steps(6, end) backwards; }
+@keyframes cite-scan {
+  from { clip-path: inset(0 0 100% 0); filter: brightness(2.2); }
+  to { clip-path: inset(0 0 0 0); filter: brightness(1); }
+}
+
+.sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  max-width: min(80%, 520px);
+  margin: 2px 0 0 2px;
+}
+.source {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 28px;
+  padding: 0 10px 0 6px;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--chat-rule);
+  color: var(--chat-quiet);
+  font: inherit;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: left;
+  text-shadow: inherit;
+  cursor: pointer;
+  transition: box-shadow var(--chat-quick) var(--ease), color var(--chat-quick) var(--ease);
+}
+.source .mini { flex: none; display: inline-flex; }
+.source-n {
+  flex: none;
+  min-width: 15px;
+  color: var(--tint, var(--chat-link));
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.source-name { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--ink); }
+.source-where { color: var(--chat-quiet); }
+@media (hover: hover) { .source:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tint, var(--link)) 75%, transparent); } }
+.source:focus-visible { outline: 1.5px solid var(--link); outline-offset: 1px; }
+.sources.is-new .source { animation: chat-rise 300ms var(--ease) backwards; animation-delay: calc(var(--i, 0) * 70ms); }
+
+/* the project's channel in the guide flickers as a source arrives, the
+   set tuning in */
+.channel.cite-tune { animation: cite-tune 380ms steps(8, end); }
+@keyframes cite-tune {
+  0% { filter: brightness(1.9); opacity: 1; }
+  25% { opacity: 0.55; }
+  45% { filter: brightness(1.6); opacity: 1; }
+  65% { opacity: 0.75; }
+  100% { filter: brightness(1); opacity: 1; }
+}
+/* the heading a source points at glows for a moment */
+.article .cite-hit { animation: cite-hit 1600ms var(--ease); }
+@keyframes cite-hit {
+  0%, 25% { color: var(--link); text-shadow: 0 0 2px var(--link), 0 0 14px color-mix(in srgb, var(--link) 70%, transparent); }
+  100% { text-shadow: none; }
+}
+
 /* typing: three dots in David's bubble before his first words; they step
    rather than glide, so only three small changes a second are drawn */
 .is-typing { padding: 12px 14px; line-height: 0; }

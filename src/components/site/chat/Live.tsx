@@ -22,6 +22,7 @@ import { SiteContext, ToolCard, type Site } from './cards';
 import { listChats, newId, putChat, setCurrent, titleOf, when, type Convo, type Stored } from './store';
 import { NARROW, noteFor, placeholderFor, still, type Mode } from './shared';
 import { Corner } from './Corner';
+import { Chip, CiteContext, MARK, Sources, citesOf, holdPartial, useGo, type Cite } from './cite';
 import type { Project } from '../Media';
 
 /* the line above the box, one picked per new chat, from David himself,
@@ -37,6 +38,10 @@ const pickHeadline = (not?: string) => {
   return pool[Math.floor(Math.random() * pool.length)];
 };
 
+
+/* on phones, following a source puts the conversation away so the
+   article shows */
+const AwayContext = createContext<(() => void) | undefined>(undefined);
 
 /* when the conversation on screen began, so only what arrives after it
    animates in (a conversation reopened from History just appears) */
@@ -308,6 +313,7 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
       onAnimationEnd={(e) => { if (e.target === e.currentTarget && e.animationName === 'chat-place-in') faded(); }}
       onFocus={() => setFocused(true)}
       onBlur={(e) => { if (!slot.current?.contains(e.relatedTarget as Node)) setFocused(false); }}>
+      <AwayContext.Provider value={mode === 'bar' ? away : undefined}>
       <ThreadPrimitive.Root className="chat">
         <div className="chat-sheet">
           {/* once talking: what this chat is about, New chat, and Close */}
@@ -362,6 +368,7 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
         <p className="chat-note">{noteFor(project)}</p>
         <div className="chat-rest" />
       </ThreadPrimitive.Root>
+      </AwayContext.Provider>
     </div>
     <Corner chats={ordered} current={cid} fresh={empty} onNew={fresh} onPick={reopen} />
   </>);
@@ -461,7 +468,14 @@ function UserMessage() {
 function AssistantMessage() {
   const fresh = useFresh();
   const first = useAuiState((s) => s.thread.messages.find((m) => m.role === 'assistant')?.id === s.message.id);
+  /* the reply's sources, numbered in the order they first appear */
+  const site = useContext(SiteContext);
+  const said = useAuiState((s) => s.message.content.map((p) => (p.type === 'text' ? p.text : '')).join('\n'));
+  const cites = useMemo(() => citesOf(said, site?.all ?? []), [said, site?.all]);
+  const go = useGo(useContext(AwayContext));
+  const cite = useMemo(() => ({ cites, go }), [cites, go]);
   return (
+    <CiteContext.Provider value={cite}>
     <MessagePrimitive.Root className={`msg msg-bot${fresh ? ' is-new' : ''}`}>
       {first && <p className="msg-from">David <span className="ai-tag">AI</span></p>}
       <MessagePrimitive.Parts>
@@ -471,6 +485,7 @@ function AssistantMessage() {
           return null;
         }}
       </MessagePrimitive.Parts>
+      <Sources cites={cites} fresh={fresh} />
       <MessagePrimitive.Error>
         <ErrorPrimitive.Root className="msg-error">
           <ErrorPrimitive.Message />
@@ -478,6 +493,7 @@ function AssistantMessage() {
         </ErrorPrimitive.Root>
       </MessagePrimitive.Error>
     </MessagePrimitive.Root>
+    </CiteContext.Provider>
   );
 }
 
@@ -499,6 +515,7 @@ function Text() {
   const { text, status } = useSmooth((part ?? NONE) as Parameters<typeof useSmooth>[0], fresh ? { drainMs: 420, maxCharIntervalMs: 14 } : false);
   const typing = status.type === 'running';
   const site = useContext(SiteContext);
+  const { cites } = useContext(CiteContext);
   /* links to a project open it here, keeping the conversation */
   const onClick = (e: React.MouseEvent) => {
     const a = (e.target as HTMLElement).closest('a');
@@ -515,7 +532,7 @@ function Text() {
   }
   return (
     <p className="msg-text bubble" onClick={onClick}>
-      {rich(shown)}
+      {withCites(shown, cites, fresh)}
     </p>
   );
 }
@@ -523,13 +540,28 @@ function Text() {
 /* the spacing around a piece of an answer, and a bold marker that has
    not closed yet */
 const tidy = (text: string, typing: boolean) => {
-  let t = text.trim();
+  let t = (typing ? holdPartial(text) : text).trim();
   if (typing && (t.match(/\*\*/g)?.length ?? 0) % 2) {
     const i = t.lastIndexOf('**');
     t = t.slice(0, i) + t.slice(i + 2);
   }
   return t;
 };
+
+/* the text with its citation markers as numbered chips */
+function withCites(text: string, cites: Cite[], fresh: boolean) {
+  const out: React.ReactNode[] = [];
+  let last = 0, k = 0;
+  for (const m of text.matchAll(MARK)) {
+    const i = m.index ?? 0;
+    if (i > last) out.push(<span key={k++}>{rich(text.slice(last, i).replace(/ $/, ''))}</span>);
+    const c = cites.find((x) => x.key === `${m[1]}#${(m[2] ?? '').trim().toLowerCase()}`);
+    if (c) out.push(<Chip key={k++} c={c} fresh={fresh} />);
+    last = i + m[0].length;
+  }
+  if (last < text.length) out.push(<span key={k++}>{rich(text.slice(last))}</span>);
+  return out;
+}
 
 const LINK = /(https?:\/\/[^\s)]+|daviddn\.dev\/[^\s),.]*|[\w.+-]+@[\w-]+\.[\w.]+|\*\*[^*]+\*\*)/g;
 function rich(text: string) {

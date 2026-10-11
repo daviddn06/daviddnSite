@@ -71,7 +71,7 @@ export const chatAdapter = (actions: Actions): ChatModelAdapter => ({
       res = await fetch('/a/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vid: visitor(), cid: actions.cid(), page: actions.page(), context: actions.context(), messages: history }),
+        body: JSON.stringify({ vid: visitor(), cid: actions.cid(), page: actions.page(), context: actions.context(), features: ['cite'], messages: history }),
         signal: abortSignal,
       });
     } catch (e) {
