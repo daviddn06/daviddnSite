@@ -129,6 +129,8 @@ button { font: inherit; color: inherit; }
 .under { z-index: 0; }
 .over { z-index: 2; }
 .tube[data-curved] .on-glass { filter: url(#crt-warp); }
+/* the article's layer bends only over the article's column (warp.ts) */
+.tube[data-curved] .under.on-glass { filter: url(#crt-warp-under); }
 /* the chat panel's box beside an open project, only to tell the picture
    where to calm down (crt.ts reads `data-calm`); it draws nothing */
 .dock-calm { position: absolute; left: calc(var(--side) + var(--col) + 24px); right: 24px; top: var(--logo-zone, 196px); bottom: 18px; pointer-events: none; }

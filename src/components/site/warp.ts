@@ -30,8 +30,26 @@ const source = (x: number, y: number, w: number, h: number) => {
   return [cx + (dx * f) / (1 + (CURVE * cx * cx) / r2), cy + (dy * f) / (1 + (CURVE * cy * cy) / r2)];
 };
 
+/* the bend itself, as one SVG filter: the displacement, and the softening
+   where it moves things far */
+const filter = (id: string) => `<filter id="${id}" filterUnits="objectBoundingBox" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB" x="0" y="0" width="1" height="1">
+      <feImage class="crt-warp-map" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="map"/>
+      <feDisplacementMap class="crt-warp-move" in="SourceGraphic" in2="map" scale="0" xChannelSelector="R" yChannelSelector="G" result="bent"/>
+      <feGaussianBlur in="bent" stdDeviation="0.3" result="soft"/>
+      <feColorMatrix in="map" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 1 0 0" result="edge"/>
+      <feComposite in="soft" in2="edge" operator="in" result="soft-edge"/>
+      <feComposite in="bent" in2="edge" operator="out" result="sharp-middle"/>
+      <feComposite in="soft-edge" in2="sharp-middle" operator="arithmetic" k2="1" k3="1"/>
+    </filter>`;
+
 /* Builds (or rebuilds) the filter for a tube, and keeps it in step with
-   the tube's size. Returns a function that stops watching. */
+   the tube's size. Returns a function that stops watching.
+
+   Two copies share the map. `#crt-warp` bends a whole layer (the guide,
+   the chat, the scanlines). `#crt-warp-under` bends the article's layer
+   only as far right as the article reaches: right of it that layer is
+   empty, and while a project is open it is bent again every frame, so
+   the browser is spared the empty part of the screen. */
 export function curve(tube: HTMLElement): () => void {
   let svg = document.getElementById('crt-warp-svg') as unknown as SVGSVGElement | null;
   if (!svg) {
@@ -41,21 +59,15 @@ export function curve(tube: HTMLElement): () => void {
     svg.setAttribute('width', '0');
     svg.setAttribute('height', '0');
     svg.style.position = 'absolute';
-    svg.innerHTML = `<defs><filter id="crt-warp" filterUnits="objectBoundingBox" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB" x="0" y="0" width="1" height="1">
-      <feImage id="crt-warp-map" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="map"/>
-      <feDisplacementMap id="crt-warp-move" in="SourceGraphic" in2="map" scale="0" xChannelSelector="R" yChannelSelector="G" result="bent"/>
-      <feGaussianBlur in="bent" stdDeviation="0.3" result="soft"/>
-      <feColorMatrix in="map" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 1 0 0" result="edge"/>
-      <feComposite in="soft" in2="edge" operator="in" result="soft-edge"/>
-      <feComposite in="bent" in2="edge" operator="out" result="sharp-middle"/>
-      <feComposite in="soft-edge" in2="sharp-middle" operator="arithmetic" k2="1" k3="1"/>
-    </filter></defs>`;
+    svg.innerHTML = `<defs>${filter('crt-warp')}${filter('crt-warp-under')}</defs>`;
     document.body.appendChild(svg);
   }
-  const map = svg.querySelector('#crt-warp-map')!;
-  const move = svg.querySelector('#crt-warp-move')!;
+  const maps = svg.querySelectorAll('.crt-warp-map');
+  const moves = svg.querySelectorAll('.crt-warp-move');
+  const under = svg.querySelector('#crt-warp-under')!;
+  const layer = tube.querySelector<HTMLElement>('.under');
 
-  let last = '';
+  let last = '', most = 0;
   const build = () => {
     const w = Math.round(tube.clientWidth), h = Math.round(tube.clientHeight);
     if (!w || !h || `${w}x${h}` === last) return;
@@ -63,7 +75,7 @@ export function curve(tube: HTMLElement): () => void {
     /* the map at a quarter size is plenty: the curve is smooth */
     const mw = Math.max(2, Math.ceil(w / 4)), mh = Math.max(2, Math.ceil(h / 4));
     const [cx0, cy0] = source(0, 0, w, h);
-    const most = Math.max(Math.abs(cx0), Math.abs(cy0), 1);
+    most = Math.max(Math.abs(cx0), Math.abs(cy0), 1);
     const scale = Math.ceil(most * 2 + 4);
     const c = document.createElement('canvas');
     c.width = mw; c.height = mh;
@@ -85,12 +97,41 @@ export function curve(tube: HTMLElement): () => void {
     /* the filter's region is the layer's own box (in its bounding box
        units: WebKit misplaces a region given in user space now and then);
        the map inside it is laid out in CSS pixels */
-    for (const [k, v] of [['width', w], ['height', h]] as const) map.setAttribute(k, String(v));
-    map.setAttribute('href', c.toDataURL('image/png'));
-    move.setAttribute('scale', String(scale));
+    const href = c.toDataURL('image/png');
+    for (const map of maps) {
+      for (const [k, v] of [['width', w], ['height', h]] as const) map.setAttribute(k, String(v));
+      map.setAttribute('href', href);
+    }
+    for (const move of moves) move.setAttribute('scale', String(scale));
+  };
+
+  /* the under layer from the tube's left edge to the article's right
+     edge, widened by the most the bend moves a point (plus the
+     softening). It always starts at the left edge: WebKit shifts the
+     whole result by a region that starts anywhere else. */
+  let span = '';
+  const fit = () => {
+    const w = tube.clientWidth;
+    if (!layer || !w) return;
+    let r = 0;
+    for (const a of layer.querySelectorAll<HTMLElement>('.article')) r = Math.max(r, a.offsetLeft + a.offsetWidth);
+    const x1 = r > 0 ? Math.min(w, Math.ceil(r + most + 4)) : w;
+    const next = String(x1 / w);
+    if (next === span) return;
+    span = next;
+    under.setAttribute('width', next);
+  };
+  const watched = new Set<Element>();
+  const ro = new ResizeObserver(() => { build(); fit(); });
+  const track = () => {
+    for (const a of layer?.querySelectorAll('.article') ?? []) if (!watched.has(a)) { watched.add(a); ro.observe(a); }
+    for (const a of watched) if (!a.isConnected) { watched.delete(a); ro.unobserve(a); }
+    fit();
   };
   build();
-  const ro = new ResizeObserver(build);
   ro.observe(tube);
-  return () => ro.disconnect();
+  const mo = new MutationObserver(track);
+  if (layer) mo.observe(layer, { childList: true });
+  track();
+  return () => { ro.disconnect(); mo.disconnect(); };
 }
