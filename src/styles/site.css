@@ -156,7 +156,7 @@ button { font: inherit; color: inherit; }
    where to calm down (crt.ts reads `data-calm`); it draws nothing */
 /* the split's single source of truth, measured by App.tsx */
 .split { position: absolute; left: var(--side); top: 0; width: var(--col); height: 0; visibility: hidden; pointer-events: none; }
-.dock-calm { position: absolute; left: calc(var(--side) + var(--col) + 24px); right: 24px; top: 46px; bottom: 18px; pointer-events: none; }
+.dock-calm { position: absolute; left: calc(var(--side) + var(--col) + 24px); right: 24px; top: 64px; bottom: 18px; pointer-events: none; }
 @media (max-width: 999px) { .dock-calm { display: none; } }
 /* With nothing open the WebGL picture is opaque over the whole tube
    (crt.ts marks the tube `data-gl`), so once it has swept back over the
