@@ -42,7 +42,7 @@ The picture is rendered in four WebGL 2 passes every frame.
 
 Everything that is HTML on the screen (the guide, the chat, the write ups) bends with the glass too. An SVG displacement filter made for the screen's size curves those layers with exactly the shader's formula, so a line of text bows the way the picture does, and the same scanlines, a faint aperture grille, phosphor glow and corner falloff run over the text. Where text sits, the picture quietly dims and flattens in a wide soft oval instead of a box.
 
-Scanlines always land on whole device pixels so they never shimmer, and the render size has a pixel budget so it stays smooth on large screens. Logos are distance fields, so switching projects can melt one outline into the next. Light mode is a CRT in a lit room, grey glass and lower contrast. Reduced motion turns off the power on, afterglow and grain and only redraws on change, and browsers without WebGL 2 get a simpler canvas fallback.
+Scanlines always land on whole device pixels so they never shimmer, and the render size has a pixel budget so it stays smooth on large screens. Logos are distance fields, so switching projects can melt one outline into the next. Light mode is a CRT in a lit room, grey glass and lower contrast. Reduced motion turns off the power on, afterglow and grain and only redraws on change, and browsers without WebGL 2 get the same picture drawn on a 2D canvas, bent onto the same curve with the same scanlines.
 
 ### The chat
 
@@ -57,6 +57,13 @@ Guardrails, in the order a message meets them.
 - a system prompt that keeps it on my work, never shares private details, and treats instructions inside messages as conversation
 
 The profile is cached, so a typical answer costs well under a tenth of a cent.
+
+### Details
+
+- **The pointer is pixel art.** An arrow, a pointing hand and an I-beam drawn like an early GUI's, with a one pixel phosphor halo, at 1x and 2x so they stay crisp. Phosphor white in the dark, ink in a lit room. Touch screens keep their own.
+- **Every page is on the set.** Privacy, the resume link and a miss all sit on the same tube, the picture calm behind the text. A page that doesn't exist shows snow and says there is no signal.
+- **Motion is quiet.** Focus is a phosphor ring that settles in, links trace an underline on hover, screenshots come on once loaded, pages fade into each other, and reduced motion turns all of it off.
+- **The icon is a little CRT**, and sharing the site shows the home screen.
 
 ### Privacy
 
@@ -78,8 +85,9 @@ Earlier ventures (Digital Enterprise, HYRE, Swire, AVA Media) are on the site to
 
 ```
 src/
-  pages/            index, /projects/<slug>/, /cv/ (opens the resume), /privacy/
-  layouts/Base.astro
+  pages/            index, /projects/<slug>/, /cv/ (opens the resume), /privacy/, 404
+  layouts/          Base.astro, and Screen.astro for the plain pages on the set
+  styles/           site.css (the screen), details.css (pointer, focus, pages)
   components/site/
     App.tsx         layout, the guide, routing, keyboard, the chat slot
     crt.ts          the WebGL CRT
@@ -90,6 +98,7 @@ src/
     chat/           Chat.tsx, the runtime adapter, the cards
   data/work.js      every project and its write up, the one content file
 public/work/        images and video for each project
+public/cursors/     the pixel pointer, 1x and 2x
 integrations/       a build step that drops media no page uses
 ```
 
