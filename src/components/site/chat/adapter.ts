@@ -43,12 +43,12 @@ const visitor = () => {
 
 /* kind words for the ways a request can fail */
 const kindly = (status: number, said?: string) => {
-  if (status === 413) return 'That message is a bit long for me. Try a shorter one.';
-  if (status === 429) return 'That is a lot of messages at once. Give it a minute and try again.';
-  if (status === 403) return 'The chat can only answer on daviddn.dev, in an everyday browser.';
+  if (status === 413) return "that one's a bit long for me. mind sending a shorter one?";
+  if (status === 429) return "that's a lot of texts at once. give me a minute and try again";
+  if (status === 403) return 'i can only text back on daviddn.dev, in an everyday browser';
   if (said) return said;
-  if (status === 400) return 'Something in that message did not go through. Try rephrasing it.';
-  return 'Something went wrong on my end. Try again in a moment.';
+  if (status === 400) return "something in that didn't come through. try saying it another way?";
+  return 'something went wrong on my end. try again in a sec';
 };
 
 /* the next frame, or a moment later where frames are not running (a
@@ -76,7 +76,7 @@ export const chatAdapter = (actions: Actions): ChatModelAdapter => ({
       });
     } catch (e) {
       if (abortSignal.aborted) throw e;
-      throw new Error('I could not reach the chat just now. Check your connection and try again.');
+      throw new Error("your text didn't reach me. check your connection and try again");
     }
     if (!res.ok || !res.body) {
       let said: string | undefined;

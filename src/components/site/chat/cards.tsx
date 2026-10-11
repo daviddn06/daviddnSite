@@ -105,12 +105,12 @@ function Note({ name, slug }: { name: string; slug?: unknown }) {
   if (name === 'open_project' && p) {
     return (
       <p className="chat-note-act">
-        {open === p.slug ? 'Showing ' : 'Showed '}
+        pulled up{' '}
         <a href={`/projects/${p.slug}/`} onClick={(e) => { if (e.metaKey || e.ctrlKey || e.button !== 0) return; e.preventDefault(); show(p.slug); }}>{p.name}</a>
       </p>
     );
   }
-  if (name === 'close_project') return <p className="chat-note-act">Back to the screen</p>;
+  if (name === 'close_project') return <p className="chat-note-act">took you back to the home screen</p>;
   return null;
 }
 
