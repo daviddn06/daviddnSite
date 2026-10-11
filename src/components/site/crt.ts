@@ -343,7 +343,9 @@ type Target = Tex & { fb: WebGLFramebuffer };
      2  the picture is drawn at 3/4 of its resolution (scanlines keep
         their size, a little softer)
      3  the glass is asked to go light (`data-lite` on the tube and a
-        `crt-quality` event), for the curve over the HTML */
+        `crt-quality` event), for the curve over the HTML
+   `?fps=1` shows a small readout: frames a second, the 95th percentile
+   frame time, frames dropped, the level, and the picture's own rate. */
 const QKEY = 'crt-quality';
 export const QMAX = 3;
 type Gov = { level: number; tick: (ms: number, moving: boolean) => void; drew: () => void; stop: () => void };
@@ -351,8 +353,8 @@ function governor(apply: (level: number) => void): Gov {
   let level = 0;
   try { level = Math.min(QMAX, Math.max(0, parseInt(sessionStorage.getItem(QKEY) || '0', 10) || 0)); } catch {}
   const ring = new Float32Array(240);
-  let n = 0, head = 0, prev = -1, born = -1, winAt = -1, frames = 0, missed = 0, quiet = true;
-  let base = 1000 / 60, changedAt = -1e9, upAt = -1e9, clean = 0, floor = 0, rate = 0;
+  let n = 0, head = 0, prev = -1, born = -1, winAt = -1, frames = 0, missed = 0, dropped = 0, quiet = true;
+  let base = 1000 / 60, changedAt = -1e9, upAt = -1e9, clean = 0, floor = 0, draws = 0, drawsAt = 0, rate = 0;
   const set = (to: number, ms: number) => {
     /* back down soon after stepping up: that level does not hold here */
     if (to > level) { if (ms - upAt < 10000) floor = to; } else upAt = ms;
@@ -366,10 +368,18 @@ function governor(apply: (level: number) => void): Gov {
     const xs = Array.from(ring.subarray(0, n)).sort((a, b) => a - b);
     return xs.length ? xs[Math.min(xs.length - 1, Math.floor(xs.length * q))] : 0;
   };
+  /* the readout, only with ?fps=1 */
+  let hud: HTMLElement | null = null, hudAt = 0;
+  if (/[?&]fps=1(&|$)/.test(location.search)) {
+    hud = document.createElement('div');
+    hud.setAttribute('aria-hidden', 'true');
+    hud.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:2147483647;pointer-events:none;font:11px/1.35 ui-monospace,Menlo,monospace;color:#d8f0ff;background:rgba(0,0,0,.72);padding:6px 8px;border-radius:4px;white-space:pre';
+    document.body.appendChild(hud);
+  }
   return {
     get level() { return level; },
-    drew: () => {},
-    stop: () => {},
+    drew: () => { draws++; },
+    stop: () => { hud?.remove(); },
     tick: (ms, moving) => {
       const gap = ms - prev;
       prev = ms;
@@ -378,7 +388,7 @@ function governor(apply: (level: number) => void): Gov {
       if (gap <= 0 || gap > 250) { winAt = ms; frames = missed = 0; return; }
       ring[head] = gap; head = (head + 1) % ring.length; n = Math.min(n + 1, ring.length);
       frames++;
-      if (gap > base * 1.5) missed++;
+      if (gap > base * 1.5) { missed++; dropped += Math.max(1, Math.round(gap / base) - 1); }
       if (moving) quiet = false;
       if (ms - winAt >= 2000) {
         /* the refresh interval: most frames make it, so a low percentile */
@@ -391,6 +401,14 @@ function governor(apply: (level: number) => void): Gov {
           } else clean = 0;
         }
         winAt = ms; frames = missed = 0; quiet = true;
+      }
+      if (hud && ms - hudAt > 250) {
+        /* frames in the last second */
+        let fps = 0;
+        for (let i = 0, sum = 0; i < n && sum < 1000; i++) { sum += ring[(head - 1 - i + ring.length) % ring.length]; fps++; }
+        const pic = (1000 * draws) / Math.max(1, ms - drawsAt);
+        draws = 0; drawsAt = ms; hudAt = ms;
+        hud.textContent = `fps ${fps}  p95 ${pct(0.95).toFixed(1)}ms\ndropped ${dropped}  miss ${(rate * 100).toFixed(1)}%\nlevel ${level}  picture ${pic.toFixed(0)}/s`;
       }
     },
   };
