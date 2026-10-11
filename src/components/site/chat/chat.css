@@ -430,7 +430,7 @@ a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
   text-transform: uppercase;
 }
 .hist-label::after { content: ''; flex: 1; height: 1px; background: var(--chat-rule); }
-.crt-history[data-on] { flex: 0 1 auto; }
+.crt-history[data-on] { flex: 0 1 auto; min-height: 0; }
 /* shrinks with the guide down to about three rows, then scrolls */
 .hist-list {
   flex: 0 1 auto;

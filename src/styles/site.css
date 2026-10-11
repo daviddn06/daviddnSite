@@ -211,7 +211,9 @@ button { font: inherit; color: inherit; }
   text-shadow: var(--body-glow);
 }
 .osd-panel > * { flex: none; }
-.osd-panel > #crt-history-slot { flex: 0 1 auto; display: flex; flex-direction: column; }
+.osd-panel > #crt-history-slot { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; }
+/* never smaller than its label and about three rows */
+.osd-panel > #crt-history-slot:has(.crt-history[data-on]) { min-height: 134px; }
 .osd-panel .name { text-shadow: var(--glow); }
 .osd-panel::-webkit-scrollbar { display: none; }
 
