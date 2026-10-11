@@ -31,6 +31,7 @@ const LINKS = [
   { label: 'Privacy', url: '/privacy/' },
 ];
 
+const NOOP = () => {};
 const slugOf = (path: string) => path.match(/^\/projects\/([^/]+)\/?$/)?.[1] ?? null;
 
 /* the time in the guide's header strip, like a set's on screen clock;
@@ -111,6 +112,8 @@ export default function App({ work, projects, earlier, initial }: Props) {
     return () => removeEventListener('popstate', onPop);
   }, [show]);
 
+  const close = useCallback(() => show(null), [show]);
+
   /* phones: the article owns scrolling while it is up */
   useEffect(() => {
     const narrow = matchMedia('(max-width: 999px)').matches;
@@ -119,6 +122,7 @@ export default function App({ work, projects, earlier, initial }: Props) {
 
   /* the full size viewer */
   const [zoom, setZoom] = useState<{ src: string; alt: string } | null>(null);
+  const onZoom = useCallback((src: string, alt: string) => setZoom({ src, alt }), []);
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => { if (zoom && dialog.current && !dialog.current.open) dialog.current.showModal(); }, [zoom]);
   /* closing, the picture switches off like a set (a bright line, then
@@ -226,16 +230,16 @@ export default function App({ work, projects, earlier, initial }: Props) {
             open={false}
             leaving
             startAt={leavingAt.current}
-            onClose={() => {}}
-            onZoom={() => {}}
+            onClose={NOOP}
+            onZoom={NOOP}
           />
         )}
         <Panel
           p={all.find((x) => x.slug === shown) ?? null}
           open={!!open}
           wipe={!!leaving}
-          onClose={() => show(null)}
-          onZoom={(src, alt) => setZoom({ src, alt })}
+          onClose={close}
+          onZoom={onZoom}
         />
         {/* the wipe's leading edge, a line of phosphor with a short trail */}
         {leaving && <div className="wipe-line" key={`wipe-${shown}`} aria-hidden="true" />}

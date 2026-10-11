@@ -3,7 +3,7 @@
    never animates. The title, one line, the role and dates, then the
    body: paragraphs, small headings and screens, including before and
    after sliders. Projects without a body fall back to notes and shots. */
-import { useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { Compare, Frame, Mini, type Block, type Project, type Shot } from './Media';
 
 type Props = {
@@ -19,7 +19,9 @@ type Props = {
   onZoom: (src: string, alt: string) => void;
 };
 
-export function Panel({ p, open, wipe, leaving, startAt, onClose, onZoom }: Props) {
+/* drawn again only when its own props change, not on every hover or step
+   of the slide around it */
+export const Panel = memo(function Panel({ p, open, wipe, leaving, startAt, onClose, onZoom }: Props) {
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => { if (open) ref.current?.scrollTo({ top: 0 }); }, [open, p?.slug]);
@@ -96,4 +98,4 @@ export function Panel({ p, open, wipe, leaving, startAt, onClose, onZoom }: Prop
       )}
     </section>
   );
-}
+});
