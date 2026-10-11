@@ -108,7 +108,7 @@ export function Live({ first, ...site }: Site & { first: Convo | null }) {
       if (name === 'close_project') s.show(null);
       if (name === 'show_resume') s.show('cv');
     },
-    quota: (left, limit) => writeQuota({ left, limit }),
+    quota: (left, limit, team) => writeQuota({ left, limit, team }),
     title: (t) => { convo.current.topic = t; setTopic(t); },
     limit: (kind, retry, limit) => writeQuota({ left: kind === 'day' ? 0 : readQuota()?.left ?? limit, limit, kind, until: Date.now() + retry * 1000 }),
   }), []);
@@ -465,23 +465,29 @@ function useQuota() {
   return {
     left: q?.left ?? null,
     limit: q?.limit ?? 100,
+    team: !!q?.team,
     wait: waiting?.kind === 'minute' ? Math.ceil((waiting.until! - now) / 1000) : 0,
     done: waiting?.kind === 'day',
   };
 }
 
 /* close to the limit: how many are left, and a bar that drains */
-function Meter({ left, wait }: { left: number | null; wait: number }) {
+function Meter({ left, limit, team, wait }: { left: number | null; limit: number; team: boolean; wait: number }) {
   const near = left !== null && left <= NEAR;
-  if (!near && !wait) return null;
+  /* David's own browsers always see it, the whole day on one bar */
+  const show = left !== null && (near || team);
+  if (!show && !wait) return null;
+  const lit = team && !near ? Math.round((left! / limit) * NEAR) : left!;
   return (
-    <div className="quota" role="status">
+    <div className="quota" role="status" data-team={team ? '' : undefined}>
       {wait > 0 && <span className="quota-wait">try again in {wait}s</span>}
-      {near && <>
+      {show && <>
         <span className="quota-bar" aria-hidden="true">
-          {Array.from({ length: NEAR }, (_, i) => <i key={i} data-on={i < left! ? '' : undefined} />)}
+          {Array.from({ length: NEAR }, (_, i) => <i key={i} data-on={i < lit ? '' : undefined} />)}
         </span>
-        <span className="quota-left">{left === 1 ? '1 message' : `${left} messages`} left today</span>
+        <span className="quota-left">
+          {team ? `${left} of ${limit} left today · no limit for you` : `${left === 1 ? '1 message' : `${left} messages`} left today`}
+        </span>
       </>}
     </div>
   );
@@ -502,7 +508,7 @@ function Composer({ input, placeholder, onEscape, onHistory }: { input: React.Re
   }
   const held = quota.wait > 0;
   return (<>
-    <Meter left={quota.left} wait={quota.wait} />
+    <Meter left={quota.left} limit={quota.limit} team={quota.team} wait={quota.wait} />
     <ComposerPrimitive.Root className="composer" data-history={onHistory ? '' : undefined} data-held={held ? '' : undefined}>
       {/* on phones, past chats are a tap away from the bar */}
       {onHistory && (

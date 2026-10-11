@@ -30,7 +30,7 @@ export type Actions = {
   act: (name: string, input: Record<string, unknown>) => void;
   /* how many messages are left today, and a limit when one is hit
      (quota.ts) */
-  quota?: (left: number, limit: number) => void;
+  quota?: (left: number, limit: number, team: boolean) => void;
   /* a short title for the conversation */
   title?: (title: string) => void;
   limit?: (kind: 'minute' | 'day', retry: number, limit: number) => void;
@@ -124,7 +124,7 @@ export const chatAdapter = (actions: Actions): ChatModelAdapter => ({
         const line = buffer.slice(0, nl).trim();
         buffer = buffer.slice(nl + 1);
         if (!line.startsWith('data:')) continue;
-        let ev: { t?: string; v?: string; name?: string; input?: Record<string, unknown>; left?: number; limit?: number; kind?: string; retry?: number };
+        let ev: { t?: string; v?: string; name?: string; input?: Record<string, unknown>; left?: number; limit?: number; kind?: string; retry?: number; team?: boolean };
         try { ev = JSON.parse(line.slice(5).trim()); } catch { continue; }
         if (ev.t === 'text' && ev.v) {
           /* a replay of everything so far keeps only what is new */
@@ -147,7 +147,7 @@ export const chatAdapter = (actions: Actions): ChatModelAdapter => ({
         } else if (ev.t === 'title' && ev.v) {
           actions.title?.(ev.v.trim().slice(0, 48));
         } else if (ev.t === 'quota' && typeof ev.left === 'number') {
-          actions.quota?.(ev.left, typeof ev.limit === 'number' ? ev.limit : 100);
+          actions.quota?.(ev.left, typeof ev.limit === 'number' ? ev.limit : 100, ev.team === true);
         } else if (ev.t === 'limit' && (ev.kind === 'minute' || ev.kind === 'day')) {
           actions.limit?.(ev.kind, Math.max(1, Number(ev.retry) || 60), typeof ev.limit === 'number' ? ev.limit : 100);
         } else if (ev.t === 'error') {
