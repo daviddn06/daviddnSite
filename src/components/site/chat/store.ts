@@ -66,3 +66,17 @@ export const when = (t: number) => {
   if (diff === 1) return 'Yesterday';
   return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', ...(d.getFullYear() !== now.getFullYear() ? { year: 'numeric' } : {}) }).format(d);
 };
+
+/* how long ago, as short as a set's guide: "now", "5m", "2h",
+   "Yesterday", "3d", then the date */
+export const ago = (t: number, now = Date.now()) => {
+  const m = Math.floor((now - t) / 60000);
+  if (m < 1) return 'now';
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  if (d === 1) return 'Yesterday';
+  if (d < 7) return `${d}d`;
+  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(new Date(t));
+};

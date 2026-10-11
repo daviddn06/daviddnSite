@@ -20,7 +20,8 @@ import {
 import { chatAdapter, MAX_CHARS, type Context } from './adapter';
 import { SiteContext, ToolCard, type Site } from './cards';
 import { listChats, newId, putChat, setCurrent, titleOf, when, type Convo, type Stored } from './store';
-import { NARROW, noteFor, placeholderFor, still, type Mode } from './shared';
+import { NARROW, WIDE, noteFor, placeholderFor, still, type Mode } from './shared';
+import { Corner, type CornerLayout } from './Corner';
 import type { Project } from '../Media';
 
 /* the line above the box, one picked per new chat, in the chat's own
@@ -213,6 +214,19 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
     return () => { removeEventListener('dd-chats', sync); removeEventListener('storage', sync); };
   }, []);
   const past = chats.some((c) => c.id !== cid);
+  /* newest first by when each was started, so continuing an older chat
+     never reshuffles the list under the pointer */
+  const ordered = useMemo(() => [...chats].sort((a, b) => b.at - a.at), [chats]);
+  /* History stands in the bottom right corner when there is room for it,
+     and folds into a toggle there when there is not (Corner.tsx) */
+  const [roomy, setRoomy] = useState(() => matchMedia(WIDE).matches);
+  useEffect(() => {
+    const mq = matchMedia(WIDE);
+    const sync = () => setRoomy(mq.matches);
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+  const corner: CornerLayout = mode === 'bar' ? 'none' : mode === 'center' && roomy ? 'full' : 'toggle';
   const [menu, setMenu] = useState(false);
   const menuShown = usePresence(menu, 200);
 
@@ -235,7 +249,7 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
   useEffect(() => {
     if (!menu && (mode === 'center' || !pinned)) return;
     const onDown = (e: PointerEvent) => {
-      if (slot.current?.contains(e.target as Node)) return;
+      if (slot.current?.contains(e.target as Node) || (e.target as Element)?.closest?.('.hist-toggle')) return;
       setMenu(false);
       if (!running) setPinned(false);
     };
@@ -243,8 +257,11 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
     return () => removeEventListener('pointerdown', onDown);
   }, [mode, pinned, running, menu]);
 
-  return (
+  const openMenu = () => { setChats(listChats()); setMenu(true); };
+
+  return (<>
     <div id="crt-chat-slot" ref={slot} className="crt-slot" data-mode={mode} data-fade={fade}
+      data-history={corner}
       data-expanded={expanded ? '' : undefined}
       data-empty={empty ? '' : undefined}
       data-menu={menu ? '' : undefined}
@@ -260,7 +277,7 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
               New chat
             </button>
             <button type="button" className="chat-tool" data-on={past || menu ? '' : undefined} tabIndex={past || menu ? 0 : -1}
-              aria-expanded={menu} onClick={() => (menu ? closeMenu() : (setChats(listChats()), setMenu(true)))}>
+              aria-expanded={menu} onClick={() => (menu ? closeMenu() : openMenu())}>
               History
             </button>
             <button type="button" className="chat-x" onClick={away} aria-label="Close chat">
@@ -276,17 +293,20 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
             <div className="chat-hello" aria-hidden={!empty}>
               <div><h2 className="chat-title" key={headline}>{headline}</h2></div>
             </div>
-            {menuShown && <History chats={chats} current={cid} on={menu} onPick={reopen} onClose={closeMenu} />}
+            {menuShown && <History chats={ordered} current={cid} on={menu} onPick={reopen} onClose={closeMenu} />}
           </div>
         </div>
 
-        <Composer input={input} placeholder={placeholderFor(project)} onEscape={() => (menu ? closeMenu() : away())} />
+        <Composer input={input} placeholder={placeholderFor(project)} onEscape={() => (menu ? closeMenu() : away())}
+          onHistory={mode === 'bar' && chats.length ? openMenu : undefined} />
 
         <p className="chat-note">{noteFor(project)}</p>
         <div className="chat-rest" />
       </ThreadPrimitive.Root>
     </div>
-  );
+    <Corner layout={corner} place={mode} away={menu || (expanded && mode === 'dock')} chats={ordered} current={cid} fresh={empty}
+      onNew={fresh} onPick={reopen} onOpen={openMenu} />
+  </>);
 }
 
 /* History, a small on screen menu over the conversation: past chats
@@ -317,7 +337,7 @@ function History({ chats, current, on, onPick, onClose }: { chats: Convo[]; curr
         {chats.map((c, i) => (
           <li key={c.id} style={{ "--n": i } as React.CSSProperties}>
             <button type="button" className="chat-row" aria-current={c.id === current ? 'true' : undefined} onClick={() => onPick(c)}>
-              <span className="ch">{String(i + 1).padStart(2, '0')}</span>
+              <span className="ch">{String(chats.length - i).padStart(2, '0')}</span>
               <span className="chat-row-title">{c.title}</span>
               <span className="chat-row-when">{c.id === current ? 'Now' : when(c.updated)}</span>
             </button>
@@ -328,11 +348,17 @@ function History({ chats, current, on, onPick, onClose }: { chats: Convo[]; curr
   );
 }
 
-function Composer({ input, placeholder, onEscape }: { input: React.RefObject<HTMLTextAreaElement | null>; placeholder: string; onEscape: () => void }) {
+function Composer({ input, placeholder, onEscape, onHistory }: { input: React.RefObject<HTMLTextAreaElement | null>; placeholder: string; onEscape: () => void; onHistory?: () => void }) {
   const length = useAuiState((s) => s.composer.text.length);
   const running = useAuiState((s) => s.thread.isRunning);
   return (
-    <ComposerPrimitive.Root className="composer">
+    <ComposerPrimitive.Root className="composer" data-history={onHistory ? '' : undefined}>
+      {/* on phones, past chats are a tap away from the bar */}
+      {onHistory && (
+        <button type="button" className="composer-history" aria-label="History" onClick={onHistory}>
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2.5 4h11M2.5 8h11M2.5 12h7" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+        </button>
+      )}
       <ComposerPrimitive.Input
         ref={input}
         className="composer-input"
