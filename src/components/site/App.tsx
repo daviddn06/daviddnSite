@@ -318,6 +318,10 @@ export default function App({ work, projects, earlier, initial }: Props) {
         </header>
 
         {/* the chat, in the middle of the screen (#crt-chat-slot, see .crt-slot) */}
+        {/* the picture quiets down behind the chat panel beside an open
+            project (the panel's box, see .dock-calm), so its replies and
+            cards read over any brand's colours */}
+        <div className="dock-calm" data-calm={chatOpen ? '0.7' : '0'} aria-hidden="true" />
         <Chat all={all} sections={sections} open={chatOpen} show={show} />
         <div className="lines" aria-hidden="true" />
         </div>

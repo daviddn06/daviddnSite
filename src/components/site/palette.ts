@@ -47,9 +47,8 @@ export const fromLab = (L: number, A: number, B: number, out: Float32Array | Uin
 export const DEFAULT_PALETTE = ['#0b1530', '#11214a', '#19306a', '#264486'];
 export const DEFAULT_PALETTE_LIGHT = ['#9fb3da', '#aabde0', '#b6c7e6', '#c3d2ec'];
 
-/* A brand's palette: neighbouring hues around its colour at mid tones,
-   so every brand reads as a soft field rather than a hard ramp. Near
-   black brands get a warm grey. */
+/* A brand's palette: neighbouring hues around its colour, so every brand
+   reads as a soft field rather than a hard ramp. */
 export function brandPalette(color: string, light = false): string[] {
   const [r, g, b] = hex(color).map((v) => v / 255);
   const max = Math.max(r, g, b), min = Math.min(r, g, b);
@@ -63,15 +62,19 @@ export function brandPalette(color: string, light = false): string[] {
     else h = (r - g) / d + 4;
     h *= 60;
   }
-  const up = light ? 0.14 : 0;
+  /* Calm like the resting picture (2026-10-11): on dark the brand is a
+     deep tint, about as dark as the resting navy, its brightest tone a
+     muted glow; on paper a pale wash. Each project still reads as its own
+     channel by hue. Near black brands get a warm grey. */
+  const L = light ? [0.66, 0.75, 0.8, 0.85] : [0.08, 0.13, 0.19, 0.27];
   if (l < 0.08 || s < 0.08) {
-    const g = (x: number) => `hsl(30 6% ${Math.round((x + up) * 100)}%)`;
-    return [g(0.2), g(0.32), g(0.45), g(0.58)];
+    const g = (x: number) => `hsl(30 6% ${Math.round(x * 100)}%)`;
+    return L.map(g);
   }
-  const sat = Math.min(0.5, Math.max(0.3, s * 0.6));
-  const hsl = (dh: number, ll: number, ss = sat) =>
-    `hsl(${(((h + dh) % 360) + 360) % 360} ${Math.round(ss * 100)}% ${Math.round((ll + up) * 100)}%)`;
-  return [hsl(-22, 0.3), hsl(0, 0.42), hsl(14, 0.52, sat * 0.85), hsl(30, 0.62, sat * 0.6)];
+  const sat = light ? Math.min(0.42, Math.max(0.24, s * 0.5)) : Math.min(0.62, Math.max(0.36, s * 0.7));
+  const hsl = (dh: number, ll: number, ss: number) =>
+    `hsl(${Math.round((((h + dh) % 360) + 360) % 360)} ${Math.round(ss * 100)}% ${Math.round(ll * 100)}%)`;
+  return [hsl(-14, L[0], sat), hsl(0, L[1], sat), hsl(8, L[2], sat * 0.85), hsl(18, L[3], sat * 0.7)];
 }
 
 /* A brand's accent for text: its hue, kept readable on the page. Light

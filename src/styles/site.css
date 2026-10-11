@@ -126,6 +126,10 @@ button { font: inherit; color: inherit; }
 .under { z-index: 0; }
 .over { z-index: 2; }
 .tube[data-curved] .on-glass { filter: url(#crt-warp); }
+/* the chat panel's box beside an open project, only to tell the picture
+   where to calm down (crt.ts reads `data-calm`); it draws nothing */
+.dock-calm { position: absolute; left: calc(var(--side) + var(--col) + 24px); right: 24px; top: var(--logo-zone, 196px); bottom: 18px; pointer-events: none; }
+@media (max-width: 999px) { .dock-calm { display: none; } }
 /* With nothing open the WebGL picture is opaque over the whole tube
    (crt.ts marks the tube `data-gl`), so once it has swept back over the
    article the under layer is out of sight, and the browser need not
