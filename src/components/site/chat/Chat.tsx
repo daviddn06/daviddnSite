@@ -3,9 +3,10 @@
    site's own adapter (adapter.ts) and styled entirely by site.css, so it
    reads as text on the glass.
 
-   Where it sits. With nothing open it is the screen's main thing, centred
-   in the picture: a line, the box to type in and a few suggestions, then
-   the conversation above the box. With a project open it docks to the
+   Where it sits. With nothing open it is the screen's main thing, a
+   column centred in the picture: one line picked per visit, the box to
+   type in and a quiet note under it; once talking, the conversation
+   above the box, like any chat. With a project open it docks to the
    bottom of the strip beside the article as a slim bar; while it is in
    use (focused, or answering) the conversation opens upward as a short
    sheet over the strip. Under 1000px it is a bar along the bottom of the
@@ -33,12 +34,16 @@ import { chatAdapter, MAX_CHARS } from './adapter';
 import { SiteContext, ToolCard, type Site } from './cards';
 
 const KEY = 'dd_chat';
-const SUGGESTIONS = [
-  'What is David working on?',
-  'Show me his AI work',
-  'Walk me through his timeline',
-  'How do I reach him?',
+/* the line above the box, one picked per visit */
+const HEADLINES = [
+  'What do you want to know about David?',
+  'Ask me what David is building.',
+  'Curious how David works?',
+  'Where should we start?',
+  'Want the short version of David?',
+  'Ask about anything on the screen.',
 ];
+const NOTE = 'Ask anything about David.';
 
 /* the conversation, kept for this tab */
 type Stored = { id: string; role: 'user' | 'assistant'; content: ThreadMessageLike['content'] };
@@ -81,17 +86,19 @@ export function Chat(props: Props) {
   );
 }
 
-/* the chat before it is live: the same box, nothing to do yet */
+/* the chat before it is live: the same box, nothing to do yet (the
+   headline is kept blank so a different one never flashes in) */
 function Still({ open }: { open: string | null }) {
   return (
     <div id="crt-chat-slot" className="crt-slot" data-mode={open ? 'dock' : 'center'} data-empty="">
       <div className="chat">
         <div className="chat-body">
-          <div className="chat-hello"><p className="chat-title">Ask about David's work.</p></div>
+          <div className="chat-hello"><p className="chat-title">&nbsp;</p></div>
         </div>
         <div className="composer">
-          <textarea className="composer-input" rows={1} placeholder="Ask anything" aria-label="Message" disabled />
+          <textarea className="composer-input" rows={1} placeholder="Type a question" aria-label="Message" disabled />
         </div>
+        <p className="chat-note">{NOTE}</p>
       </div>
     </div>
   );
@@ -123,6 +130,7 @@ function Screen({ open }: { open: string | null }) {
   const slot = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const empty = useAuiState((s) => s.thread.isEmpty);
+  const [headline] = useState(() => HEADLINES[Math.floor(Math.random() * HEADLINES.length)]);
   const running = useAuiState((s) => s.thread.isRunning);
 
   const [narrow, setNarrow] = useState(false);
@@ -172,8 +180,7 @@ function Screen({ open }: { open: string | null }) {
         <ThreadPrimitive.Viewport className="chat-body">
           <AuiIf condition={(s) => s.thread.isEmpty}>
             <div className="chat-hello">
-              <p className="chat-title">Ask about David's work.</p>
-              <p className="chat-sub">What he is building, where he has worked, how to reach him.</p>
+              <h2 className="chat-title">{headline}</h2>
             </div>
           </AuiIf>
           <ThreadPrimitive.Messages>
@@ -183,14 +190,7 @@ function Screen({ open }: { open: string | null }) {
 
         <Composer input={input} onEscape={away} />
 
-        <AuiIf condition={(s) => s.thread.isEmpty}>
-          <div className="chips" role="list">
-            {SUGGESTIONS.map((p) => (
-              <ThreadPrimitive.Suggestion key={p} prompt={p} send className="chip" role="listitem">{p}</ThreadPrimitive.Suggestion>
-            ))}
-          </div>
-        </AuiIf>
-        <p className="chat-privacy">Chats are saved so David can read them. <a href="/privacy/">Privacy</a></p>
+        <p className="chat-note">{NOTE}</p>
       </ThreadPrimitive.Root>
     </div>
   );
@@ -203,7 +203,7 @@ function Composer({ input, onEscape }: { input: React.RefObject<HTMLTextAreaElem
       <ComposerPrimitive.Input
         ref={input}
         className="composer-input"
-        placeholder="Ask anything"
+        placeholder="Type a question"
         aria-label="Message"
         rows={1}
         maxRows={6}

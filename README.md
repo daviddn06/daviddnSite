@@ -10,7 +10,7 @@ I'm David Nguyen, a business student at USC Marshall with a minor in Designing f
 
 - **The whole page is the screen.** There is no sidebar beside a picture. My name, a line about me and every project sit on the glass as an on screen guide, with projects numbered like channels. Up and down change the channel.
 - **Projects open on the glass.** Picking one blanks the picture from the left, line by line, and the write up appears underneath. The project's logo glows in the strip that's left, in that brand's colours.
-- **A chat in the middle.** Visitors can ask about my work. Answers stream in, and when it helps the assistant shows project cards, a timeline or my contact details, or opens a project on the page for them.
+- **A chat in the middle.** It opens the way ChatGPT does, one question picked at random above the box and "Ask anything about David." under it. Visitors can ask about my work. Answers stream in, and when it helps the assistant shows project cards, a timeline or my contact details, or opens a project on the page for them.
 - **It feels like a real tube.** It powers on with a dot, a line and a short wobble, moving things leave a little afterglow, and the picture bends slightly near the cursor like a magnet near the glass.
 
 | A question answered with cards | A project open, chat docked | On a phone |
@@ -44,7 +44,7 @@ Scanlines always land on whole device pixels so they never shimmer, and the rend
 
 ### The chat
 
-The chat UI is built on [assistant-ui](https://github.com/assistant-ui/assistant-ui)'s unstyled pieces, restyled so the text reads as if it's on the glass. It streams from `/a/chat`, a small endpoint on my server that calls Claude Haiku 5.5. The model only knows a written profile of my public work, and it answers with tool calls the page renders as cards or acts on (`open_project`, `show_projects`, `show_timeline`, `show_contact`, `show_resume`).
+The chat UI is built on [assistant-ui](https://github.com/assistant-ui/assistant-ui)'s unstyled pieces, restyled so the text reads as if it's on the glass. It's deliberately bare, a headline, the box and one line under it, and once a conversation starts it's a single centred column. It streams from `/a/chat`, a small endpoint on my server that calls Claude Haiku 5.5. The model only knows a written profile of my public work, and it answers with tool calls the page renders as cards or acts on (`open_project`, `show_projects`, `show_timeline`, `show_contact`, `show_resume`).
 
 Guardrails, in the order a message meets them.
 
@@ -58,7 +58,7 @@ The profile is cached, so a typical answer costs well under a tenth of a cent.
 
 ### Privacy
 
-The site counts visits with my own script, not a third party. It keeps a random id in the browser, never stores IP addresses, sets no cookies and runs no ads. Browsers that send Do Not Track or Global Privacy Control are not counted at all. Chats are saved so I can read and reply, which the chat says right under the input. The plain words version is at [daviddn.dev/privacy](https://daviddn.dev/privacy/).
+The site counts visits with my own script, not a third party. It keeps a random id in the browser, never stores IP addresses, sets no cookies and runs no ads. Browsers that send Do Not Track or Global Privacy Control are not counted at all. Chats are saved so I can read and reply. That's spelled out on the privacy page, which is one of the links in the guide. The plain words version is at [daviddn.dev/privacy](https://daviddn.dev/privacy/).
 
 ## The projects on it
 

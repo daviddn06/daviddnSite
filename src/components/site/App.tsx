@@ -24,6 +24,7 @@ const LINKS = [
   { label: 'LinkedIn', url: 'https://www.linkedin.com/in/daviddn' },
   { label: 'GitHub', url: 'https://github.com/daviddn06' },
   { label: 'Email', url: 'mailto:daviddn@usc.edu' },
+  { label: 'Privacy', url: '/privacy/' },
 ];
 
 const slugOf = (path: string) => path.match(/^\/projects\/([^/]+)\/?$/)?.[1] ?? null;

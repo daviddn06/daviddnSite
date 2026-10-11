@@ -301,10 +301,10 @@ button { font: inherit; color: inherit; }
   position: absolute;
   z-index: 2;
   left: calc(var(--side) + (100% - var(--side)) / 2);
-  top: 50%;
-  width: min(620px, calc(100% - var(--side) - 96px));
-  height: min(600px, calc(100% - 72px));
-  transform: translate(-50%, -50%);
+  top: 28px;
+  bottom: 22px;
+  width: min(660px, calc(100% - var(--side) - 96px));
+  transform: translateX(-50%);
   pointer-events: none;
   text-shadow: var(--glow);
 }
@@ -317,8 +317,8 @@ button { font: inherit; color: inherit; }
   justify-content: flex-end;
   gap: 10px;
 }
-/* empty, the line, the box and the suggestions sit together in the middle */
-.crt-slot[data-mode="center"][data-empty] .chat { inset: 0; top: auto; bottom: 50%; transform: translateY(50%); }
+/* empty, the line, the box and the note sit together in the middle */
+.crt-slot[data-mode="center"][data-empty] .chat { inset: auto 0 50%; transform: translateY(50%); }
 .chat-body {
   min-height: 0;
   overflow-y: auto;
@@ -336,9 +336,8 @@ button { font: inherit; color: inherit; }
 .crt-slot[data-empty] .chat-body { mask-image: none; }
 .crt-slot[data-mode="center"][data-empty] .chat-body { overflow: visible; }
 
-.chat-hello { padding: 0 4px 6px; }
-.chat-title { font-weight: 700; }
-.chat-sub { color: var(--soft); }
+.chat-hello { padding: 0 4px 10px; text-align: center; }
+.chat-title { font-size: 22px; line-height: 30px; font-weight: 700; letter-spacing: -0.005em; }
 
 .msg { display: flex; flex-direction: column; gap: 10px; }
 .msg-user { align-items: flex-end; }
@@ -385,8 +384,8 @@ button { font: inherit; color: inherit; }
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  padding: 8px 8px 8px 16px;
-  border-radius: 18px;
+  padding: 8px 8px 8px 18px;
+  border-radius: 24px;
   background: rgba(6, 9, 15, 0.62);
   box-shadow: inset 0 0 0 1px rgba(200, 220, 255, 0.12), 0 10px 40px rgba(0, 0, 0, 0.35);
   -webkit-backdrop-filter: blur(14px);
@@ -427,25 +426,7 @@ button { font: inherit; color: inherit; }
 .composer-btn:disabled { opacity: 0.3; cursor: default; }
 .composer-btn.is-stop { background: color-mix(in srgb, var(--ink) 85%, transparent); }
 
-.chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 2px 0 0; }
-.chip {
-  padding: 5px 12px;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(6, 9, 15, 0.45);
-  box-shadow: inset 0 0 0 1px rgba(200, 220, 255, 0.12);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  color: var(--ink);
-  font-size: 13px;
-  line-height: 20px;
-  text-shadow: inherit;
-  cursor: pointer;
-  transition: box-shadow 160ms var(--ease), color 160ms var(--ease);
-}
-@media (hover: hover) { .chip:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 60%, transparent); color: var(--link); } }
-.chat-privacy { padding: 0 6px; color: var(--soft); font-size: 12px; line-height: 18px; }
-.chat-privacy a { text-decoration: underline; text-underline-offset: 3px; }
+.chat-note { color: var(--soft); font-size: 12px; line-height: 18px; text-align: center; }
 
 /* cards inside answers */
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
@@ -487,7 +468,8 @@ a.card:hover, a.card:focus-visible { box-shadow: inset 0 0 0 1px color-mix(in sr
   transform: none;
 }
 .crt-slot[data-mode="dock"] .cards { grid-template-columns: 1fr; }
-.crt-slot:is([data-mode="dock"], [data-mode="bar"]):not([data-expanded]) :is(.chat-body, .chips, .chat-privacy, .chat-head) { display: none; }
+.crt-slot:is([data-mode="dock"], [data-mode="bar"]):not([data-expanded]) :is(.chat-body, .chat-note, .chat-head) { display: none; }
+.crt-slot[data-mode="dock"] .chat-note { display: none; }
 .crt-slot[data-mode="dock"][data-expanded] .chat {
   padding: 12px 10px 10px;
   border-radius: 20px;
@@ -500,7 +482,6 @@ a.card:hover, a.card:focus-visible { box-shadow: inset 0 0 0 1px color-mix(in sr
 @media (prefers-color-scheme: light) {
   .composer { background: rgba(250, 251, 253, 0.78); box-shadow: inset 0 0 0 1px rgba(18, 24, 33, 0.1), 0 10px 30px rgba(30, 45, 80, 0.12); }
   .composer:focus-within { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 50%, transparent), 0 10px 30px rgba(30, 45, 80, 0.12); }
-  .chip { background: rgba(250, 251, 253, 0.7); box-shadow: inset 0 0 0 1px rgba(18, 24, 33, 0.1); }
   .card { background: rgba(255, 255, 255, 0.55); }
   .crt-slot[data-mode="dock"][data-expanded] .chat { background: rgba(244, 246, 250, 0.82); box-shadow: inset 0 0 0 1px rgba(18, 24, 33, 0.08); }
   .cursor { box-shadow: none; }
