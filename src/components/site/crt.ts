@@ -46,8 +46,8 @@
    changes, and every change is instant. Returns null when WebGL 2 is
    missing, and the site falls back to a 2D canvas picture (screen2d.ts). */
 import type { RefObject } from 'react';
-import { blender } from './palette';
-import { markSdf, type Sdf } from './marks';
+import { blender, toRGB } from './palette';
+import { markImage, markSdf, type Sdf } from './marks';
 import { CURVE } from './warp';
 
 export type Wants = {
@@ -1032,6 +1032,20 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     }
   };
   wake();
+
+  /* Once the power on is over, in idle moments one at a time: the colour
+     probe the palettes are read through (its first use is slow), then
+     every logo drawn and measured, so opening a project only fits one. */
+  const idle: (fn: () => void) => void = (window as any).requestIdleCallback
+    ? (fn) => (window as any).requestIdleCallback(fn, { timeout: 2000 })
+    : (fn) => setTimeout(fn, 200);
+  const warm: (() => unknown)[] = [() => toRGB('hsl(0 0% 0%)')];
+  for (const n of glass.ownerDocument.querySelectorAll<HTMLElement>('.marks [data-mark]')) warm.push(() => markImage(n.dataset.mark!));
+  const warmNext = () => {
+    if (dead || !warm.length) return;
+    Promise.resolve(warm.shift()!()).then(() => idle(warmNext));
+  };
+  setTimeout(() => idle(warmNext), LOAD + 400);
 
   const onVis = () => { visible = !document.hidden; if (visible) wake(); else { cancelAnimationFrame(raf); raf = 0; } };
   document.addEventListener('visibilitychange', onVis);
