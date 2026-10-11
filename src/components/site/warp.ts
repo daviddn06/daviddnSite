@@ -21,15 +21,6 @@ export const CURVE = 0.05;
 
 const NS = 'http://www.w3.org/2000/svg';
 
-/* where on the flat layout the point (x, y) of a w by h screen comes
-   from: the same formula as `warp` in crt.ts */
-const source = (x: number, y: number, w: number, h: number) => {
-  const cx = w / 2, cy = h / 2, dx = x - cx, dy = y - cy;
-  const r2 = cx * cx + cy * cy;
-  const f = 1 + (CURVE * (dx * dx + dy * dy)) / r2;
-  return [cx + (dx * f) / (1 + (CURVE * cx * cx) / r2), cy + (dy * f) / (1 + (CURVE * cy * cy) / r2)];
-};
-
 /* the bend itself, as one SVG filter: the displacement, and the softening
    where it moves things far. The fast one is the displacement alone: the
    softening costs the browser five more passes over the layer, every
@@ -43,6 +34,39 @@ const filter = (id: string, fast = false) => `<filter id="${id}" filterUnits="ob
       <feComposite in="bent" in2="edge" operator="out" result="sharp-middle"/>
       <feComposite in="soft-edge" in2="sharp-middle" operator="arithmetic" k2="1" k3="1"/>`}
     </filter>`;
+
+/* The displacement map's pixels for a w by h screen, self contained
+   (it is also written into the page as is, to bend the screen before the
+   app has loaded: warpBoot.ts). Red and green say where each point comes
+   from on the flat layout, blue how far it moves (the softening's mask).
+   At a quarter size: the curve is smooth. */
+export function warpMap(w: number, h: number, k: number) {
+  const cx = w / 2, cy = h / 2, r2 = cx * cx + cy * cy;
+  const nx = 1 + (k * cx * cx) / r2, ny = 1 + (k * cy * cy) / r2;
+  const src = (x: number, y: number) => {
+    const dx = x - cx, dy = y - cy, f = 1 + (k * (dx * dx + dy * dy)) / r2;
+    return [cx + (dx * f) / nx, cy + (dy * f) / ny];
+  };
+  const mw = Math.max(2, Math.ceil(w / 4)), mh = Math.max(2, Math.ceil(h / 4));
+  const c0 = src(0, 0);
+  const most = Math.max(Math.abs(c0[0]), Math.abs(c0[1]), 1);
+  const scale = Math.ceil(most * 2 + 4);
+  const px = new Uint8ClampedArray(mw * mh * 4);
+  for (let j = 0; j < mh; j++) {
+    for (let i = 0; i < mw; i++) {
+      const x = ((i + 0.5) / mw) * w, y = ((j + 0.5) / mh) * h;
+      const s = src(x, y), o = (j * mw + i) * 4;
+      px[o] = Math.round(((s[0] - x) / scale + 0.5) * 255);
+      px[o + 1] = Math.round(((s[1] - y) / scale + 0.5) * 255);
+      px[o + 2] = Math.round(Math.min(1, Math.max(0, Math.hypot(s[0] - x, s[1] - y) - 2) / 6) * 255);
+      px[o + 3] = 255;
+    }
+  }
+  return { mw, mh, most, scale, px };
+}
+
+/* the filters' markup, also written into the page by warpBoot.ts */
+export const DEFS = `<defs>${filter('crt-warp')}${filter('crt-warp-under')}${filter('crt-warp-fast', true)}${filter('crt-warp-under-fast', true)}</defs>`;
 
 /* Builds (or rebuilds) the filter for a tube, and keeps it in step with
    the tube's size. Returns a function that stops watching.
@@ -72,7 +96,7 @@ export function curve(tube: HTMLElement): () => void {
     svg.setAttribute('width', '0');
     svg.setAttribute('height', '0');
     svg.style.position = 'absolute';
-    svg.innerHTML = `<defs>${filter('crt-warp')}${filter('crt-warp-under')}${filter('crt-warp-fast', true)}${filter('crt-warp-under-fast', true)}</defs>`;
+    svg.innerHTML = DEFS;
     document.body.appendChild(svg);
   }
   const maps = svg.querySelectorAll('.crt-warp-map');
@@ -85,27 +109,14 @@ export function curve(tube: HTMLElement): () => void {
     const w = Math.round(tube.clientWidth), h = Math.round(tube.clientHeight);
     if (!w || !h || `${w}x${h}` === last) return;
     last = `${w}x${h}`;
-    /* the map at a quarter size is plenty: the curve is smooth */
-    const mw = Math.max(2, Math.ceil(w / 4)), mh = Math.max(2, Math.ceil(h / 4));
-    const [cx0, cy0] = source(0, 0, w, h);
-    most = Math.max(Math.abs(cx0), Math.abs(cy0), 1);
-    const scale = Math.ceil(most * 2 + 4);
+    const m = warpMap(w, h, CURVE);
+    most = m.most;
+    const scale = m.scale;
     const c = document.createElement('canvas');
-    c.width = mw; c.height = mh;
+    c.width = m.mw; c.height = m.mh;
     const x = c.getContext('2d')!;
-    const img = x.createImageData(mw, mh);
-    for (let j = 0; j < mh; j++) {
-      for (let i = 0; i < mw; i++) {
-        const px = ((i + 0.5) / mw) * w, py = ((j + 0.5) / mh) * h;
-        const [sx, sy] = source(px, py, w, h);
-        const o = (j * mw + i) * 4;
-        img.data[o] = Math.round(((sx - px) / scale + 0.5) * 255);
-        img.data[o + 1] = Math.round(((sy - py) / scale + 0.5) * 255);
-        /* how much this point moves, as the mask for the softening */
-        img.data[o + 2] = Math.round(Math.min(1, Math.max(0, Math.hypot(sx - px, sy - py) - 2) / 6) * 255);
-        img.data[o + 3] = 255;
-      }
-    }
+    const img = x.createImageData(m.mw, m.mh);
+    img.data.set(m.px);
     x.putImageData(img, 0, 0);
     /* the filter's region is the layer's own box (in its bounding box
        units: WebKit misplaces a region given in user space now and then);

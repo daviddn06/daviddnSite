@@ -144,14 +144,14 @@ button { font: inherit; color: inherit; }
 .under .article { pointer-events: auto; }
 .under { z-index: 0; }
 .over { z-index: 2; }
-.tube[data-curved] .on-glass { filter: url(#crt-warp); }
+:is(html.curved, .tube[data-curved]) .on-glass { filter: url(#crt-warp); }
 /* the article's layer bends only over the article's column (warp.ts) */
-.tube[data-curved] .under.on-glass { filter: url(#crt-warp-under); }
+:is(html.curved, .tube[data-curved]) .under.on-glass { filter: url(#crt-warp-under); }
 /* while anything on the tube moves, and on a machine that cannot keep up (the
    screen's governor marks the tube `data-lite`), the curve without its
    softening (warp.ts) */
-.tube[data-curved]:is([data-moving], [data-lite]) .on-glass { filter: url(#crt-warp-fast); }
-.tube[data-curved]:is([data-moving], [data-lite]) .under.on-glass { filter: url(#crt-warp-under-fast); }
+:is(html.curved, .tube[data-curved]) .tube:is([data-moving], [data-lite]) .on-glass, .tube[data-curved]:is([data-moving], [data-lite]) .on-glass { filter: url(#crt-warp-fast); }
+:is(html.curved, .tube[data-curved]) .tube:is([data-moving], [data-lite]) .under.on-glass, .tube[data-curved]:is([data-moving], [data-lite]) .under.on-glass { filter: url(#crt-warp-under-fast); }
 /* the chat panel's box beside an open project, only to tell the picture
    where to calm down (crt.ts reads `data-calm`); it draws nothing */
 /* the split's single source of truth, measured by App.tsx */
@@ -653,9 +653,11 @@ dialog.viewer.closing::backdrop { animation: fade-out var(--t-small) var(--ease-
      Type is at least 15px and every row a 44px target. */
   .osd { width: auto; right: var(--inset); bottom: 0; }
   .osd-panel {
-    padding: 14px 8px calc(96px + env(safe-area-inset-bottom));
+    padding: 14px 8px calc(132px + env(safe-area-inset-bottom));
     -webkit-overflow-scrolling: touch;
-    mask-image: linear-gradient(to bottom, #000 calc(100% - 96px), transparent calc(100% - 64px));
+    /* nothing shows behind the chat bar: the guide fades out above it,
+       and its last rows (chats, links) scroll up clear of it */
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 128px - env(safe-area-inset-bottom)), transparent calc(100% - 88px - env(safe-area-inset-bottom)));
   }
   .name, .bio { font-size: 15px; line-height: 23px; }
   /* the guide scrolls as a whole here, so History keeps its full height */

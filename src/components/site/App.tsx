@@ -122,15 +122,17 @@ export default function App({ work, projects, earlier, initial }: Props) {
     if (!el) return;
     const stop = curve(el);
     el.dataset.curved = '';
+    /* the layers on the glass may show now (Base.astro) */
+    requestAnimationFrame(() => document.documentElement.classList.add('curved'));
     return stop;
   }, []);
 
-  /* Nothing on the glass shows until the screen is whole: the curve is
-     on, the live chat has taken over from the server's copy and settled
-     (a refresh restores, then starts a new conversation), and the picture
-     has drawn its first frame. Until then Base.astro holds the guide, the
-     chat and the article at nothing; then they fade in once, together.
-     A failsafe shows them anyway after 1.5s. */
+  /* The chat's parts show once the screen is whole: the curve is on, the
+     live chat has taken over from the server's copy and settled (a
+     refresh restores, then starts a new conversation), and the picture
+     has drawn its first frame; then they fade in (Base.astro). The guide
+     and the article show as soon as the curve is on. A failsafe shows the
+     chat anyway after 1.5s. */
   useEffect(() => {
     const el = tube.current;
     if (!el) return;
