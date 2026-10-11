@@ -110,6 +110,8 @@ button { font: inherit; color: inherit; }
    into it. They bend once the curve is ready; without script they sit
    flat. */
 .under, .over { position: absolute; inset: 0; pointer-events: none; }
+/* the layers pass clicks through; the article itself takes them, and its scroll */
+.under .article { pointer-events: auto; }
 .under { z-index: 0; }
 .over { z-index: 2; }
 .tube[data-curved] .on-glass { filter: url(#crt-warp); }
@@ -423,17 +425,38 @@ button { font: inherit; color: inherit; }
 /* Text on the glass comes on with the picture, as the tube warms up,
    rather than floating on a dark screen before it */
 .osd, .chat { animation: warm 240ms steps(3, end) 680ms both; }
+/* the chat fades in wherever it moves to (the strip, or back to the
+   middle), each place its own animation so a move restarts it */
+.crt-slot[data-mode="center"] { animation: chat-here var(--calm) var(--ease) both; }
+.crt-slot[data-mode="dock"] { animation: chat-there var(--calm) var(--ease) both; }
+@keyframes chat-here { from { opacity: 0; } }
+@keyframes chat-there { from { opacity: 0; } }
 @keyframes warm { from { opacity: 0; } 60% { opacity: 0.55; } }
 
 /* Full size viewer */
 
 dialog.viewer { max-width: min(94vw, 1600px); max-height: 92vh; padding: 0; border: 0; background: transparent; overflow: visible; cursor: zoom-out; }
+dialog.viewer:focus-visible { outline: none; }
 dialog.viewer img { max-height: 92vh; width: auto; margin: 0 auto; border-radius: 8px; }
 dialog.viewer::backdrop { background: color-mix(in srgb, var(--panel) 94%, transparent); }
-dialog.viewer[open] img { animation: rise var(--calm) var(--ease) both; }
+/* the picture switches on like a set: a bright line opening out; and
+   off the same way, folding back to a line as the glass behind dims */
+dialog.viewer[open] img { animation: set-on var(--calm) var(--ease) both; }
 dialog.viewer[open]::backdrop { animation: fade var(--calm) var(--ease) both; }
+dialog.viewer.closing img { animation: set-off 240ms cubic-bezier(0.55, 0, 0.75, 0.2) both; }
+dialog.viewer.closing::backdrop { animation: fade-out 260ms var(--ease) both; }
+@keyframes set-on {
+  from { transform: scale(0.96, 0.004); filter: brightness(2.6); opacity: 0.6; }
+  45% { transform: scale(1, 0.06); filter: brightness(2); opacity: 1; }
+  to { transform: none; filter: none; opacity: 1; }
+}
+@keyframes set-off {
+  from { transform: none; filter: none; opacity: 1; }
+  55% { transform: scale(1, 0.006); filter: brightness(2.4); opacity: 1; }
+  to { transform: scale(0.02, 0.004); filter: brightness(3); opacity: 0; }
+}
+@keyframes fade-out { to { opacity: 0; } }
 
-@keyframes rise { from { opacity: 0; transform: translateY(6px); } }
 @keyframes fade { from { opacity: 0; } }
 
 /* Phones and narrow windows. The guide fills the screen, the chat is a

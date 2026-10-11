@@ -119,7 +119,18 @@ export default function App({ work, projects, earlier, initial }: Props) {
   const [zoom, setZoom] = useState<{ src: string; alt: string } | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => { if (zoom && dialog.current && !dialog.current.open) dialog.current.showModal(); }, [zoom]);
-  const unzoom = () => { dialog.current?.close(); setZoom(null); };
+  /* closing, the picture switches off like a set (a bright line, then
+     nothing) before the dialog goes; with reduced motion it just goes */
+  const closing = useRef(0);
+  const unzoom = () => {
+    const d = dialog.current;
+    if (!d || !d.open || d.classList.contains('closing')) return;
+    const done = () => { d.classList.remove('closing'); d.close(); setZoom(null); };
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { done(); return; }
+    d.classList.add('closing');
+    clearTimeout(closing.current);
+    closing.current = window.setTimeout(done, 260);
+  };
 
   /* Escape closes, arrows step through everything in order */
   useEffect(() => {
