@@ -222,14 +222,36 @@ export default function App({ work, projects, earlier, initial }: Props) {
     closing.current = window.setTimeout(done, 240);
   };
 
-  /* Escape closes, arrows step through everything in order */
+  /* Escape, one owner, wherever focus is (the chat's box included), in
+     layers: a menu or popover that is open closes itself (its own
+     handler); otherwise an open project or the resume closes, the
+     conversation gliding back to the middle with the box focused;
+     otherwise the chat's own handler closes the conversation. Caught
+     first (capture), and stopped once handled, so nothing else acts on
+     the same press. */
+  useEffect(() => {
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.isComposing || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (zoom || document.querySelector('dialog[open], .model-menu[data-on], .chat-menu[data-on], .hist-foot[data-asking]')) return;
+      if (!openRef.current) return;
+      e.preventDefault();
+      e.stopPropagation();
+      show(null);
+      if (!matchMedia('(hover: none)').matches) {
+        window.setTimeout(() => document.querySelector<HTMLTextAreaElement>('#crt-chat-slot .composer-input')?.focus({ preventScroll: true }), 60);
+      }
+    };
+    addEventListener('keydown', onEsc, true);
+    return () => removeEventListener('keydown', onEsc, true);
+  }, [zoom, show]);
+
+  /* arrows step through everything in order */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (zoom || e.metaKey || e.ctrlKey || e.altKey || !open) return;
       /* never while typing, or while the chat has focus */
       const t = e.target as HTMLElement | null;
       if (t?.closest?.('input, textarea, select, [contenteditable="true"], .crt-slot')) return;
-      if (e.key === 'Escape') { e.preventDefault(); show(null); return; }
       const i = all.findIndex((p) => p.slug === open);
       if (i < 0) return;
       if (e.key === 'ArrowDown' && i < all.length - 1) { e.preventDefault(); show(all[i + 1].slug); }

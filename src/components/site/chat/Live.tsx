@@ -280,6 +280,21 @@ function Screen({ open, all, headline, cid, named, swap, switchTo }: ScreenProps
     return m ? m.content.map((p) => (p.type === 'text' ? p.text : '')).join(' ').replace(/\s+/g, ' ').trim() : '';
   });
 
+  /* Escape with focus elsewhere on the page closes the conversation too
+     (in the box, the box's own handler does); an open project is closed
+     first by App.tsx, which stops the press there */
+  const escRef = useRef<() => void>(() => {});
+  escRef.current = () => { if (menu) closeMenu(); else if (!empty && mode !== 'bar') closeChat(); };
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented || e.isComposing) return;
+      if ((e.target as Element)?.closest?.('.composer, .model, .chat-menu, .crt-history, dialog')) return;
+      escRef.current();
+    };
+    addEventListener('keydown', onKey);
+    return () => removeEventListener('keydown', onKey);
+  }, []);
+
   /* New chat from the guide's button before the chat had loaded */
   useEffect(() => {
     const go = () => freshRef.current();
