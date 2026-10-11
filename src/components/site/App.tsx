@@ -37,7 +37,6 @@ const LINKS = [
   { label: 'Privacy', url: '/privacy/' },
 ];
 
-const NOOP = () => {};
 const slugOf = (path: string) => path.match(/^\/projects\/([^/]+)\/?$/)?.[1] ?? null;
 
 /* the time in the guide's header strip, like a set's on screen clock;
@@ -83,6 +82,9 @@ export default function App({ work, projects, earlier, initial }: Props) {
   const [outgoing, setOutgoing] = useState<{ slug: string; id: number; at: number; from: number }[]>([]);
   const swap = useRef(0);
   const outId = useRef(0);
+  /* the article in front; a switch hands it to `outgoing` as it is and
+     starts a new one */
+  const [slot, setSlot] = useState(0);
   const openRef = useRef(open);
   openRef.current = open;
   const shownRef = useRef(shown);
@@ -112,7 +114,8 @@ export default function App({ work, projects, earlier, initial }: Props) {
         const art = document.querySelector<HTMLElement>('.article:not(.is-leaving)');
         const inner = art?.querySelector<HTMLElement>('.article-inner');
         const from = inner ? +getComputedStyle(inner).opacity : 1;
-        const gone = { slug: shownRef.current, id: ++outId.current, at: art?.scrollTop ?? 0, from };
+        const gone = { slug: shownRef.current, id: outId.current, at: art?.scrollTop ?? 0, from };
+        setSlot(++outId.current);
         setOutgoing((list) => [...list.filter((o) => o.slug !== s), gone].slice(-3));
         clearTimeout(swap.current);
         swap.current = window.setTimeout(() => setOutgoing([]), SWITCH + 60);
@@ -203,13 +206,18 @@ export default function App({ work, projects, earlier, initial }: Props) {
      its own column, measured to the column's right edge */
   const [col, setCol] = useState(0);
   useEffect(() => {
-    const el = document.querySelector<HTMLElement>('.article');
-    if (!el) return;
+    const box = tube.current;
+    if (!box) return;
     const narrow = matchMedia('(max-width: 999px)');
-    const sync = () => setCol(narrow.matches ? 0 : el.offsetLeft + el.offsetWidth);
+    /* the article in front (they come and go as projects switch, so it is
+       looked up each time; they all share one size) */
+    const sync = () => {
+      const el = box.querySelector<HTMLElement>('.article:not(.is-leaving)');
+      if (el) setCol(narrow.matches ? 0 : el.offsetLeft + el.offsetWidth);
+    };
     sync();
     const ro = new ResizeObserver(sync);
-    ro.observe(el);
+    ro.observe(box);
     narrow.addEventListener('change', sync);
     return () => { ro.disconnect(); narrow.removeEventListener('change', sync); };
   }, []);
@@ -217,6 +225,7 @@ export default function App({ work, projects, earlier, initial }: Props) {
   /* the chat glides between the middle and the panel beside an article
      along with the picture's sweep (chat/Live.tsx) */
   const chatOpen = open;
+
 
   /* the open project's colour becomes the accent for every link and mark */
   const accent = open && BRAND[open] ? brandAccent(BRAND[open].color, light) : null;
@@ -239,16 +248,19 @@ export default function App({ work, projects, earlier, initial }: Props) {
         {/* under the picture, shown where it gives way: the article */}
         <div className="under on-glass">
         <Panel
+          key={`a${slot}`}
           p={all.find((x) => x.slug === shown) ?? null}
           open={!!open}
           swapping={outgoing.length > 0}
           onClose={close}
           onZoom={onZoom}
         />
-        {/* switching: what was on screen fades out over the new article */}
+        {/* switching: what was on screen fades out over the new article,
+            the very same article (kept by its key, as it was, where it was
+            scrolled) rather than a copy built again in the click */}
         {outgoing.map((o) => (
-          <Panel key={`was-${o.id}`} p={all.find((x) => x.slug === o.slug) ?? null} open={false}
-            leaving startAt={o.at} from={o.from} onClose={NOOP} onZoom={NOOP} />
+          <Panel key={`a${o.id}`} p={all.find((x) => x.slug === o.slug) ?? null} open={false}
+            leaving startAt={o.at} from={o.from} onClose={close} onZoom={onZoom} />
         ))}
         </div>
         <main className="main">
