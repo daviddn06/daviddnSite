@@ -1,5 +1,7 @@
 ---
+import '../styles/fonts.css';
 import '../styles/site.css';
+import latinFont from '../assets/fonts/libre-franklin-latin.woff2?url';
 import '../styles/details.css';
 
 interface Props {
@@ -37,9 +39,8 @@ const ogImage = new URL(image ?? '/og.jpg', Astro.site);
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@500;700&display=swap" />
+    <!-- the type is served from here (styles/fonts.css); the latin file covers every page's text -->
+    <link rel="preload" href={latinFont} as="font" type="font/woff2" crossorigin />
     <slot name="head" />
     <script is:inline>document.documentElement.classList.add('js');</script>
     <!-- screenshots come on when they have loaded instead of popping in (details.css) -->
