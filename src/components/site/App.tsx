@@ -16,6 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BRAND } from '../logos/brand';
 import { DEFAULT_PALETTE, DEFAULT_PALETTE_LIGHT, Field, SWAP, brandAccent, brandPalette } from './Field';
 import { Static } from './Static';
+import { curve } from './warp';
 import { Marks, type Project } from './Media';
 import { Panel } from './Panel';
 import { Chat } from './chat/Chat';
@@ -68,6 +69,15 @@ export default function App({ work, projects, earlier, initial }: Props) {
   openRef.current = open;
   const [ready, setReady] = useState(false);
   useEffect(() => { requestAnimationFrame(() => setReady(true)); }, []);
+  /* everything on the screen bends with the glass (warp.ts) */
+  const tube = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = tube.current;
+    if (!el) return;
+    const stop = curve(el);
+    el.dataset.curved = '';
+    return stop;
+  }, []);
 
   const show = useCallback((s: string | null, push = true) => {
     const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -178,7 +188,9 @@ export default function App({ work, projects, earlier, initial }: Props) {
     <div className={`stage${tuned ? ' is-open' : ''}${ready ? ' ready' : ''}`}
       style={accent ? ({ '--link': accent } as React.CSSProperties) : undefined}>
       <Marks slugs={all.map((p) => p.slug)} />
-      <div className="tube">
+      <div className="tube" ref={tube}>
+        {/* under the picture, shown where it gives way: the article */}
+        <div className="under on-glass">
         <Panel
           p={all.find((x) => x.slug === shown) ?? null}
           channel={shown ? channel(shown) : ''}
@@ -186,18 +198,23 @@ export default function App({ work, projects, earlier, initial }: Props) {
           onClose={() => show(null)}
           onZoom={(src, alt) => setZoom({ src, alt })}
         />
+        </div>
         <main className="main">
           <Field palette={palette} mark={tuned} cut={cut} tune={tune} />
         </main>
         {/* the static of a channel change, over the picture and the article */}
         <Static tune={tune} />
 
+        {/* over the picture, drawn into it: the guide, the chat, and the
+            scanlines that cross everything on the screen */}
+        <div className="over on-glass">
+
         {/* The on screen display: a panel on the glass like a TV's channel
             guide. A header strip (name and the time), a line about David,
             the channels in three sections with the open one on a
             selection bar, and the links at the foot. */}
-        <header className="osd" data-calm="0.35">
-          <div className="osd-panel">
+        <header className="osd">
+          <div className="osd-panel" data-calm="0.9">
             <div className="osd-top">
               <h1 className="name">David Nguyen</h1>
               <Clock />
@@ -247,8 +264,11 @@ export default function App({ work, projects, earlier, initial }: Props) {
 
         {/* the chat, in the middle of the screen (#crt-chat-slot, see .crt-slot) */}
         <Chat all={all} sections={sections} open={tuned} show={show} />
+        <div className="lines" aria-hidden="true" />
+        </div>
 
-        {/* the glass over everything: scanlines, the tube's edge, a reflection */}
+        {/* the glass itself, flat over everything: the tube's edge falling
+            into shadow, the corners darker, a reflection high on the left */}
         <div className="glass" aria-hidden="true" />
       </div>
 

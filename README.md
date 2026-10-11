@@ -40,6 +40,8 @@ The picture is rendered in four WebGL 2 passes every frame.
 2. **Halation, two passes.** The bright parts, shrunk and blurred, for the soft light that spreads inside the glass.
 3. **The tube.** Each pixel finds its place on a gently curved raster, then gets scanlines that swell with brightness, a hair of colour fringing toward the edges, a faint aperture grille, a slow refresh band, grain and rounded corners.
 
+Everything that is HTML on the screen (the guide, the chat, the write ups) bends with the glass too. An SVG displacement filter made for the screen's size curves those layers with exactly the shader's formula, so a line of text bows the way the picture does, and the same scanlines, a faint aperture grille, phosphor glow and corner falloff run over the text. Where text sits, the picture quietly dims and flattens in a wide soft oval instead of a box.
+
 Scanlines always land on whole device pixels so they never shimmer, and the render size has a pixel budget so it stays smooth on large screens. Logos are distance fields, so switching projects can melt one outline into the next. Light mode is a CRT in a lit room, grey glass and lower contrast. Reduced motion turns off the power on, afterglow and grain and only redraws on change, and browsers without WebGL 2 get a simpler canvas fallback.
 
 ### The chat

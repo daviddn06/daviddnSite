@@ -46,6 +46,7 @@
 import type { RefObject } from 'react';
 import { blender } from './palette';
 import { markSdf, type Sdf } from './marks';
+import { CURVE } from './warp';
 
 export type Wants = {
   palette: RefObject<string[]>;
@@ -99,10 +100,15 @@ float box(vec2 p, vec4 r, float rad) {
 /* how much the picture calms down here, for text on the glass */
 uniform vec4 uCalm[${CALMS}];
 uniform float uCalmAmt[${CALMS}];
+/* an oval around each box with a very wide, soft falloff, so it never
+   reads as a shape: the picture just grows quieter where text is */
 float calmAt(vec2 p) {
   float c = 0.0;
   for (int i = 0; i < ${CALMS}; i++) {
-    if (uCalmAmt[i] > 0.0) c = max(c, uCalmAmt[i] * (1.0 - smoothstep(-40.0, 120.0, box(p, uCalm[i], 32.0))));
+    if (uCalmAmt[i] <= 0.0) continue;
+    vec4 r = uCalm[i];
+    vec2 d = (p - r.xy - r.zw * 0.5) / (r.zw * 0.5 + 160.0);
+    c = max(c, uCalmAmt[i] * (1.0 - smoothstep(0.35, 1.0, length(d))));
   }
   return c;
 }
@@ -299,7 +305,7 @@ void main() {
 
   /* calm behind text on the glass: dimmer, flatter, quieter */
   float calm = calmAt(p);
-  scr = mix(scr, uLight > 0.5 ? mix(scr, uPanel, 0.6) : scr * 0.4, calm * 0.85);
+  scr = mix(scr, uLight > 0.5 ? mix(scr, uPanel, 0.62) : scr * 0.48, calm * 0.88);
   bloom *= 1.0 - calm * 0.6;
 
   /* where the raster is: the tube's rounded rectangle, starting at the
@@ -508,7 +514,8 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
 
   /* the calm zones: every `data-calm` element on the glass, eased */
   const calmBoxes = new Float32Array(CALMS * 4), calmAmts = new Float32Array(CALMS);
-  const eased = new WeakMap<Element, number>();
+  /* each zone's strength and box, eased so it never pops or jumps */
+  const eased = new WeakMap<Element, { c: number; r: number[] }>();
   const readCalm = (dt: number) => {
     calmAmts.fill(0);
     const els = glass.querySelectorAll<HTMLElement>('[data-calm]');
@@ -517,14 +524,16 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     for (const el of els) {
       if (n >= CALMS) break;
       const goal = parseFloat(el.dataset.calm || '0') || 0;
-      let c = eased.get(el) ?? goal;
-      c += (goal - c) * (still ? 1 : Math.min(1, dt / 300));
-      eased.set(el, c);
-      if (c < 0.002) continue;
       const a = el.getBoundingClientRect();
-      if (!a.width || !a.height) continue;
-      calmBoxes.set([a.left - b.left, a.top - b.top, a.width, a.height], n * 4);
-      calmAmts[n++] = c;
+      const box = [a.left - b.left, a.top - b.top, a.width, a.height];
+      let z = eased.get(el);
+      if (!z) { z = { c: 0, r: box }; eased.set(el, z); }
+      const k = still ? 1 : 1 - Math.exp(-dt / 190);
+      z.c += (goal - z.c) * k;
+      if (a.width && a.height) for (let i = 0; i < 4; i++) z.r[i] += (box[i] - z.r[i]) * k;
+      if (z.c < 0.002 || !z.r[2] || !z.r[3]) continue;
+      calmBoxes.set(z.r, n * 4);
+      calmAmts[n++] = z.c;
     }
   };
 
@@ -737,7 +746,7 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     gl.uniform1f(u.uPitch, pitch);
     gl.uniform1f(u.uLines, lines);
     gl.uniform1f(u.uStore, store);
-    gl.uniform1f(u.uK, 0.05);
+    gl.uniform1f(u.uK, CURVE);
     gl.uniform1f(u.uRadius, 16);
     gl.uniform1f(u.uLight, light ? 1 : 0);
     gl.uniform1f(u.uT, t);
