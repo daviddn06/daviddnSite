@@ -353,7 +353,9 @@ function Screen({ open, all, headline, cid, named, swap, switchTo }: ScreenProps
             )}
           </div>
           <div className="chat-stage">
-            <ThreadPrimitive.Viewport className="chat-body" turnAnchor={mode === 'center' ? 'top' : 'bottom'} autoScroll={mode !== 'center'} inert={menu || undefined}>
+            {/* messages fill the screen from the top and only scroll, following the
+                newest, once they reach the bottom */}
+            <ThreadPrimitive.Viewport className="chat-body" turnAnchor="bottom" autoScroll inert={menu || undefined}>
               <ThreadPrimitive.Messages>
                 {({ message }) => (message.role === 'user' ? <UserMessage /> : <AssistantMessage />)}
               </ThreadPrimitive.Messages>
