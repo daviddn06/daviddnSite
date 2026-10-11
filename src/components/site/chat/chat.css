@@ -440,6 +440,77 @@
 .composer-btn:not(:disabled):active { transform: scale(0.94); }
 .composer-btn.is-stop { background: var(--ink); box-shadow: 0 0 12px color-mix(in srgb, var(--ink) 30%, transparent); }
 
+/* the model, beside the send button (Model.tsx): a quiet pill, and a
+   small menu that opens upward with the locked models dimmed */
+.model { position: relative; flex: none; align-self: flex-end; }
+.model-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 16px;
+  background: none;
+  color: var(--chat-quiet);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  text-shadow: inherit;
+  cursor: pointer;
+  transition: box-shadow var(--chat-quick) var(--ease), color var(--chat-quick) var(--ease);
+}
+@media (hover: hover) { .model-pill:hover { color: var(--ink); box-shadow: inset 0 0 0 1px var(--chat-rule); } }
+.model-pill[aria-expanded="true"] { color: var(--ink); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 60%, transparent); }
+.model-pill:focus-visible { outline: 1.5px solid var(--link); outline-offset: 1px; }
+.model-caret { opacity: 0.7; transition: transform var(--chat-quick) var(--ease); }
+.model-pill[aria-expanded="false"] .model-caret { transform: rotate(180deg); }
+.model-menu {
+  position: absolute;
+  z-index: 3;
+  right: 0;
+  bottom: calc(100% + 10px);
+  width: 210px;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border-radius: 14px;
+  /* solid, so nothing on the screen shows through the list */
+  background: var(--screen);
+  box-shadow: inset 0 0 0 1px var(--chat-rule), 0 8px 24px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transform-origin: bottom right;
+  transition: opacity var(--chat-quick) var(--chat-out), transform var(--chat-quick) var(--chat-out), visibility 0s linear var(--chat-quick);
+}
+.model-menu[data-on] { opacity: 1; visibility: visible; transform: none; transition: opacity 220ms var(--ease), transform 220ms var(--ease), visibility 0s; }
+.model-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 9px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+}
+.model-opt:focus { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 70%, transparent); }
+.model-opt[aria-disabled] { cursor: not-allowed; }
+.model-opt[aria-disabled] .model-opt-name { opacity: 0.5; }
+.model-lock { display: inline-flex; align-items: center; gap: 5px; color: var(--chat-quiet); font-size: 11px; font-weight: 500; opacity: 0.8; }
+.model-check { display: inline-flex; color: var(--chat-link); }
+.model-opt.is-shaking { animation: model-no 300ms var(--ease); }
+@keyframes model-no { 20% { transform: translateX(-4px); } 45% { transform: translateX(4px); } 70% { transform: translateX(-2px); } 100% { transform: none; } }
+@media (max-width: 999px) {
+  .model-name, .model-caret { display: none; }
+  .model-pill { width: 32px; padding: 0; justify-content: center; }
+}
+
 .chat-note {
   flex: none;
   padding-top: 10px;

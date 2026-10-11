@@ -22,6 +22,7 @@ import { SiteContext, ToolCard, type Site } from './cards';
 import { listChats, newId, putChat, setCurrent, titleOf, when, type Convo, type Stored } from './store';
 import { NARROW, noteFor, placeholderFor, still, type Mode } from './shared';
 import { Corner } from './Corner';
+import { ModelPicker } from './Model';
 import { Chip, CiteContext, MARK, Sources, citesOf, holdPartial, useGo, type Cite } from './cite';
 import type { Project } from '../Media';
 
@@ -456,6 +457,7 @@ function Composer({ input, placeholder, onEscape, onHistory }: { input: React.Re
         onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); onEscape(); } }}
       />
       <span className="composer-count" data-on={length > MAX_CHARS - 160 ? '' : undefined} aria-live="polite">{length > MAX_CHARS - 160 ? `${length} / ${MAX_CHARS}` : ''}</span>
+      <ModelPicker />
       {/* one button that turns into stop while answering */}
       {running ? (
         <ComposerPrimitive.Cancel className="composer-btn is-stop" aria-label="Stop">
