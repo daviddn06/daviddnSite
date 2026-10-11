@@ -120,6 +120,12 @@ button { font: inherit; color: inherit; }
 .under { z-index: 0; }
 .over { z-index: 2; }
 .tube[data-curved] .on-glass { filter: url(#crt-warp); }
+/* With nothing open the WebGL picture is opaque over the whole tube
+   (crt.ts marks the tube `data-gl`), so once it has swept back over the
+   article the under layer is out of sight, and the browser need not
+   bend it every frame. It is back the moment a project opens. */
+.tube[data-gl] .under { transition: visibility 0s; }
+.stage:not(.is-open) .tube[data-gl] .under { visibility: hidden; transition: visibility 0s linear var(--sweep); }
 
 /* the same scanlines as the picture, and a faint aperture grille, over
    every line of text */
@@ -501,5 +507,8 @@ dialog.viewer.closing::backdrop { animation: fade-out 260ms var(--ease) both; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+  /* the still picture redraws on its next check (crt.ts polls every
+     100ms), so the under layer waits for it rather than going first */
+  .stage:not(.is-open) .tube[data-gl] .under { transition: visibility 0s linear 200ms !important; }
 }
 

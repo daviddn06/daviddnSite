@@ -421,6 +421,9 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     return true;
   };
   if (!init()) return null;
+  /* the picture is drawn opaque wherever the article is not showing; the
+     page uses this to stop bending what it fully covers (site.css) */
+  glass.dataset.gl = '';
 
   /* sizes: CSS px of the screen, device pixels per CSS px (capped so a
      big window stays cheap), the scanline pitch in whole device pixels */
@@ -802,8 +805,8 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     if (k !== lastKey) { lastKey = k; wake(); }
   }, 100) : 0;
 
-  const onLost = (e: Event) => { e.preventDefault(); cancelAnimationFrame(raf); raf = 0; };
-  const onRestored = () => { if (init()) wake(); };
+  const onLost = (e: Event) => { e.preventDefault(); cancelAnimationFrame(raf); raf = 0; delete glass.dataset.gl; };
+  const onRestored = () => { if (init()) { glass.dataset.gl = ''; wake(); } };
   canvas.addEventListener('webglcontextlost', onLost);
   canvas.addEventListener('webglcontextrestored', onRestored);
 
@@ -818,5 +821,6 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     document.removeEventListener('visibilitychange', onVis);
     canvas.removeEventListener('webglcontextlost', onLost);
     canvas.removeEventListener('webglcontextrestored', onRestored);
+    delete glass.dataset.gl;
   };
 }
