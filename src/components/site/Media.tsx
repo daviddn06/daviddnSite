@@ -1,6 +1,6 @@
 /* Types, the screenshot frame, the before and after slider, and the
    hidden marks the field draws its logo from. */
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { BRAND } from '../logos/brand';
 import { ProjectLogo } from '../logos/ProjectLogo';
 
@@ -92,11 +92,12 @@ export function Mini({ slug }: { slug: string }) {
   return <span className="mini" aria-hidden="true"><ProjectLogo slug={slug} size={17} /></span>;
 }
 
-/* Every brand's mark, hidden. The screen draws the open one from it as glowing phosphor. */
-export function Marks({ slugs }: { slugs: string[] }) {
+/* Every brand's mark, hidden. The screen draws the open one from it as
+   glowing phosphor. It never changes, so it is drawn once. */
+export const Marks = memo(function Marks({ slugs }: { slugs: string[] }) {
   return (
     <div className="marks" hidden aria-hidden="true">
       {slugs.map((s) => <span key={s} data-mark={s}><ProjectLogo slug={s} size={64} color="#fff" /></span>)}
     </div>
   );
-}
+});

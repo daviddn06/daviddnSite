@@ -54,6 +54,7 @@ export default function App({ work, projects, earlier, initial }: Props) {
     { id: 'projects', title: 'Projects', items: projects },
     { id: 'earlier', title: 'Earlier', items: earlier },
   ], [work, projects, earlier]);
+  const slugs = useMemo(() => all.map((p) => p.slug), [all]);
 
   /* `open` is the project on screen; `shown` is what the article holds
      (it keeps its project while the screen covers it again). Switching
@@ -212,7 +213,7 @@ export default function App({ work, projects, earlier, initial }: Props) {
   return (
     <div className={`stage${open ? ' is-open' : ''}${ready ? ' ready' : ''}`}
       style={accent ? ({ '--link': accent } as React.CSSProperties) : undefined}>
-      <Marks slugs={all.map((p) => p.slug)} />
+      <Marks slugs={slugs} />
       <div className="tube" ref={tube}>
         {/* under the picture, shown where it gives way: the article */}
         <div className="under on-glass">
