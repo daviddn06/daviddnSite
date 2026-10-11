@@ -281,12 +281,12 @@
   /* a superscript: its number sits on the text's baseline, then the chip is lifted
      by position so the line's height never changes */
   position: relative;
-  top: -0.42em;
+  top: -0.6em;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 16px;
-  height: 16px;
+  min-width: 15px;
+  height: 15px;
   margin: 0 1px 0 3px;
   padding: 0 4px;
   border: 0;
@@ -295,7 +295,7 @@
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tint, var(--chat-link)) 70%, transparent);
   color: var(--ink);
   font: inherit;
-  font-size: 10.5px;
+  font-size: 10px;
   line-height: 1;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
