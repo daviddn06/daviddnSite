@@ -939,9 +939,9 @@
 .crt-slot[data-mode="dock"] {
   left: calc(var(--side) + var(--col) + 24px);
   right: 24px;
-  /* the same top as the chat on the home screen: its header row sits
-     where the home one does */
-  top: 20px;
+  /* clear of the panel's top edge and the shadow the picture draws along it,
+     so the header row never sits in it */
+  top: 46px;
   bottom: 18px;
   width: auto;
   height: auto;
