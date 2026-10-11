@@ -1,0 +1,444 @@
+/* The chat, on the glass (Chat.tsx). `#crt-chat-slot` is its box:
+   centred in the picture while nothing is open, docked to the bottom of
+   the strip beside an open article, a bar along the bottom on phones.
+
+   No panel behind it. The text is light phosphor with a tight dark halo
+   around each letter, the way a beam's spot sits in the shadow of its
+   own line, so it reads over the brightest part of the picture without
+   blacking anything out. Secondary text stays bright; hierarchy comes
+   from size and weight. Outlines are thin phosphor rules.
+
+   Motion. One curve (--ease) and three lengths: quick for small state
+   changes, medium for things entering, slow for the layout settling.
+   Things leave faster than they arrive. Reduced motion stops all of it
+   (site.css). */
+
+.crt-slot {
+  /* the screen's motion tokens (site.css), with fallbacks */
+  --chat-quick: var(--quick, 160ms);
+  --chat-enter: var(--calm, 320ms);
+  --chat-settle: var(--slow, 520ms);
+  --chat-out: cubic-bezier(0.4, 0, 1, 1);
+  --chat-rule: var(--rule, rgba(200, 220, 255, 0.3));
+  --chat-quiet: var(--soft, rgba(236, 242, 252, 0.9));
+  /* links, a step lighter than the screen's accent so they hold up on
+     the bright parts of the picture */
+  --chat-link: color-mix(in srgb, var(--link) 62%, #fff);
+  /* the screen's phosphor glow, with the dark halo pulled a little
+     tighter around each letter */
+  --chat-halo: var(--glow, 0 0 0 transparent), 0 0 1px rgba(2, 5, 14, 0.75), 0 0 5px rgba(2, 5, 14, 0.45);
+  --chat-box-halo: 0 0 0 1px rgba(2, 5, 14, 0.22), 0 0 10px rgba(2, 5, 14, 0.22);
+
+  position: absolute;
+  z-index: 2;
+  left: calc(var(--side) + (100% - var(--side)) / 2);
+  top: 20px;
+  bottom: 18px;
+  width: min(660px, calc(100% - var(--side) - 96px));
+  transform: translateX(-50%);
+  pointer-events: none;
+  color: var(--ink);
+  text-shadow: var(--chat-halo);
+}
+@media (prefers-color-scheme: light) {
+  .crt-slot {
+    --chat-rule: var(--rule, rgba(18, 24, 33, 0.22));
+    --chat-link: color-mix(in srgb, var(--link) 80%, #000);
+    --chat-halo: var(--glow, 0 0 0 transparent), 0 0 1px rgba(255, 255, 255, 0.9), 0 0 5px rgba(255, 255, 255, 0.6);
+    --chat-box-halo: 0 0 0 1px rgba(255, 255, 255, 0.3), 0 0 10px rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* the column: the conversation (or the line), the box, the note, and a
+   spacer under them that holds the box in the middle until there is a
+   conversation, then lets it settle to the bottom */
+.chat {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+.chat > :not(.chat-rest) { pointer-events: auto; }
+.chat-sheet { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+.chat-rest { flex: 1 1 0; transition: flex-grow var(--chat-settle) var(--ease); }
+.crt-slot:not([data-mode="center"]) .chat-rest,
+.crt-slot[data-mode="center"]:not([data-empty]) .chat-rest { flex-grow: 0; }
+
+/* a change of place (a project opening or closing): out quick, in soft
+   (on the slot, so the chat's own warm up as the tube powers on never
+   replays) */
+.crt-slot[data-fade="out"] { opacity: 0; transition: opacity var(--chat-quick) var(--chat-out); }
+.crt-slot[data-fade="in"] { animation: chat-place-in 380ms var(--ease) both; }
+.crt-slot[data-fade] .chat-rest { transition: none; }
+@keyframes chat-place-in { from { opacity: 0; translate: 0 6px; } }
+
+/* New chat and History, small and quiet at the top */
+.chat-head {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 2px;
+  height: 32px;
+}
+.chat-tool {
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--chat-quiet);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-shadow: inherit;
+  cursor: pointer;
+  transition: opacity var(--chat-enter) var(--ease), color var(--chat-quick) var(--ease), box-shadow var(--chat-quick) var(--ease), visibility 0s;
+}
+.chat-tool:not([data-on]) { opacity: 0; visibility: hidden; transition: opacity var(--chat-quick) var(--chat-out), visibility 0s linear var(--chat-quick); }
+@media (hover: hover) { .chat-tool:hover { color: var(--ink); box-shadow: inset 0 0 0 1px var(--chat-rule); } }
+.chat-tool[aria-expanded="true"] { color: var(--chat-link); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--chat-link) 60%, transparent); }
+.chat-tool:focus-visible, .chat-x:focus-visible { outline: 1.5px solid var(--link); outline-offset: 1px; }
+.chat-x { display: none; }
+
+/* the conversation, and the line over the box */
+.chat-stage { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.chat-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 12px 6px 16px;
+  mask-image: linear-gradient(to bottom, transparent, #000 20px, #000 calc(100% - 12px), transparent);
+  transition: opacity var(--chat-enter) var(--ease), transform var(--chat-enter) var(--ease);
+}
+.chat-body::-webkit-scrollbar { display: none; }
+.crt-slot[data-swap] .chat-body { opacity: 0; transform: translateY(4px); transition-duration: 180ms; transition-timing-function: var(--chat-out); }
+.crt-slot[data-menu] .chat-body { opacity: 0; transition-duration: var(--chat-quick); }
+
+.chat-hello {
+  flex: none;
+  display: grid;
+  grid-template-rows: 1fr;
+  text-align: center;
+  transition: grid-template-rows var(--chat-settle) var(--ease), opacity var(--chat-enter) var(--ease);
+}
+.chat-hello > div { min-height: 0; overflow: hidden; }
+.chat-title {
+  padding: 0 8px 16px;
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  animation: chat-rise 520ms var(--ease) 80ms both;
+}
+.crt-slot:not([data-empty]) .chat-hello { grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows var(--chat-settle) var(--ease), opacity var(--chat-quick) var(--chat-out); }
+.crt-slot[data-menu] .chat-hello { opacity: 0; transition: opacity var(--chat-quick) var(--chat-out); }
+
+/* messages */
+.msg { display: flex; flex-direction: column; gap: 12px; }
+.msg-user { align-items: flex-end; }
+.msg-user p {
+  max-width: 84%;
+  padding: 7px 13px;
+  border-radius: 12px 12px 3px 12px;
+  box-shadow: inset 0 0 0 1px var(--chat-rule), var(--chat-box-halo);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.msg-text { white-space: pre-wrap; overflow-wrap: anywhere; padding: 0 4px; }
+.msg-text a, .chat-note-act a { color: var(--chat-link); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--chat-link) 50%, transparent); text-underline-offset: 3px; transition: color var(--brand, 700ms) var(--ease); }
+.msg-text strong { font-weight: 700; }
+.msg-error { padding: 0 4px; color: var(--chat-quiet); animation: chat-fade var(--chat-enter) var(--ease) both; }
+.msg-retry {
+  margin-left: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--chat-link);
+  text-shadow: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* entering: a question rises into place, an answer comes up behind the
+   beam, cards follow one after another */
+.msg-user.is-new { animation: chat-rise 380ms var(--ease) both; }
+.msg-bot.is-new { animation: chat-fade 240ms var(--ease) both; }
+.msg-part.is-new { animation: chat-fade 200ms var(--ease) both; }
+.msg-part.is-new .card { animation: chat-rise 440ms var(--ease) both; animation-delay: calc(var(--i, 0) * 60ms); }
+@keyframes chat-rise { from { opacity: 0; transform: translateY(8px); } }
+@keyframes chat-fade { from { opacity: 0; } }
+@keyframes chat-gone { to { opacity: 0; } }
+
+/* the beam, waiting at the end of the line */
+.cursor {
+  display: inline-block;
+  width: 0.5em;
+  height: 1.05em;
+  margin-left: 3px;
+  vertical-align: -0.17em;
+  background: currentColor;
+  box-shadow: 0 0 8px color-mix(in srgb, currentColor 70%, transparent);
+  animation: beam 1.1s ease-in-out infinite;
+}
+.cursor[data-off] { animation: chat-gone 260ms var(--ease) forwards; }
+@keyframes beam { 50% { opacity: 0.25; } }
+
+/* the box to type in: a phosphor outline, nothing behind it */
+.composer {
+  flex: none;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 7px 7px 7px 18px;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px var(--chat-rule), var(--chat-box-halo);
+  transition: box-shadow 240ms var(--ease);
+}
+.composer:focus-within {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 85%, transparent), 0 0 0 3px color-mix(in srgb, var(--link) 16%, transparent), 0 0 22px color-mix(in srgb, var(--link) 24%, transparent);
+}
+.composer-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 32px;
+  padding: 4px 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  line-height: 24px;
+  text-shadow: inherit;
+}
+.composer-input::placeholder { color: var(--chat-quiet); opacity: 1; transition: color var(--chat-quick) var(--ease); }
+.composer:focus-within .composer-input::placeholder { color: color-mix(in srgb, var(--chat-quiet) 70%, transparent); }
+.composer-count { align-self: flex-end; padding-bottom: 6px; color: var(--chat-quiet); font-size: 12px; font-variant-numeric: tabular-nums; }
+.composer-count:not([data-on]) { display: none; }
+.composer-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--link);
+  color: var(--screen);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--link) 40%, transparent);
+  cursor: pointer;
+  transition: background-color var(--brand, 700ms) var(--ease), opacity var(--chat-quick) var(--ease), transform var(--chat-quick) var(--ease), box-shadow var(--chat-quick) var(--ease);
+  animation: chat-fade var(--chat-quick) var(--ease);
+}
+.composer-btn:disabled { opacity: 0.35; box-shadow: none; cursor: default; }
+@media (hover: hover) { .composer-btn:not(:disabled):hover { transform: scale(1.06); } }
+.composer-btn:not(:disabled):active { transform: scale(0.94); }
+.composer-btn.is-stop { background: var(--ink); box-shadow: 0 0 12px color-mix(in srgb, var(--ink) 30%, transparent); }
+
+.chat-note {
+  flex: none;
+  padding-top: 10px;
+  color: var(--chat-quiet);
+  font-size: 13px;
+  line-height: 18px;
+  text-align: center;
+}
+
+/* cards inside answers: phosphor outlines on the glass */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px 12px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px var(--chat-rule), var(--chat-box-halo);
+  transition: box-shadow var(--chat-quick) var(--ease), transform 220ms var(--ease);
+}
+@media (hover: hover) {
+  a.card:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 75%, transparent), 0 0 16px color-mix(in srgb, var(--link) 22%, transparent); transform: translateY(-1px); }
+}
+a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
+.card-top { display: flex; align-items: baseline; gap: 8px; }
+.card .ch, .tl-name .ch, .chat-row .ch { color: var(--chat-quiet); font-size: 12px; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.card-name { color: var(--chat-link); font-weight: 700; transition: color var(--brand, 700ms) var(--ease); }
+.card-meta { color: var(--chat-quiet); font-size: 13px; line-height: 20px; }
+.card-line { margin-top: 4px; font-size: 14px; line-height: 21px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.card-list { gap: 14px; padding: 12px 14px 14px; }
+.tl-group { display: grid; gap: 2px; }
+.tl-label, .row-label, .chat-menu-label {
+  color: var(--ink);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.tl-label { margin-bottom: 2px; }
+.row-label { min-width: 72px; padding-top: 4px; }
+.tl-group li, .rows li { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+.tl-name { display: inline-flex; gap: 10px; color: var(--ink); transition: color var(--brand, 700ms) var(--ease); }
+.tl-name .ch { min-width: 18px; }
+.tl-when { color: var(--chat-quiet); font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
+.rows { display: grid; gap: 6px; }
+.rows a { color: var(--chat-link); }
+.chat-note-act { padding: 0 4px; color: var(--chat-quiet); font-size: 13px; }
+
+/* History: a small on screen menu over the conversation, the way a set
+   lays its menu over the picture */
+.chat-menu {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 8px 0 16px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity var(--chat-quick) var(--chat-out), transform var(--chat-quick) var(--chat-out);
+}
+.chat-menu[data-on] { opacity: 1; transform: none; transition: opacity 260ms var(--ease), transform var(--chat-enter) var(--ease); }
+.chat-menu-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 12px 6px;
+}
+.chat-menu-label::after { content: ''; flex: 1; height: 1px; background: var(--chat-rule); }
+.chat-menu ul { min-height: 0; overflow-y: auto; scrollbar-width: none; display: grid; gap: 2px; }
+.chat-menu ul::-webkit-scrollbar { display: none; }
+.chat-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: var(--ink);
+  text-align: left;
+  text-shadow: inherit;
+  cursor: pointer;
+  transition: box-shadow var(--chat-quick) var(--ease), color var(--chat-quick) var(--ease);
+}
+.chat-row-title { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.chat-row-when { color: var(--chat-quiet); font-size: 13px; font-variant-numeric: tabular-nums; }
+.chat-row:focus-visible { outline: none; }
+@media (hover: hover) { .chat-row:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 70%, transparent); } }
+.chat-menu:focus-within .chat-row:focus { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 85%, transparent), 0 0 14px color-mix(in srgb, var(--link) 22%, transparent); }
+.chat-row[aria-current] { box-shadow: inset 2px 0 0 var(--chat-link); }
+.chat-row[aria-current] .ch, .chat-row[aria-current] .chat-row-when { color: var(--chat-link); }
+.chat-menu[data-on] li { animation: chat-rise 360ms var(--ease) both; animation-delay: calc(min(var(--n, 0), 8) * 24ms); }
+
+/* Docked beside an open article: a slim bar at the bottom of the strip;
+   in use, the conversation opens upward over the strip */
+.crt-slot[data-mode="dock"] {
+  left: calc(var(--side) + var(--col) + 14px);
+  right: 14px;
+  top: auto;
+  bottom: 14px;
+  width: auto;
+  height: 52%;
+  transform: none;
+}
+.crt-slot[data-mode="dock"] .cards { grid-template-columns: 1fr; }
+.crt-slot[data-mode="dock"] .chat-hello { display: none; }
+.crt-slot[data-mode="dock"][data-empty]:not([data-menu]) .chat-sheet { justify-content: flex-end; }
+.crt-slot[data-mode="dock"][data-empty]:not([data-menu]) .chat-stage { flex: none; }
+
+/* the parts that open and close in the dock and on phones: the sheet
+   wipes up from the bar, and folds back down quicker */
+.crt-slot:is([data-mode="dock"], [data-mode="bar"]) :is(.chat-sheet, .chat-note) {
+  opacity: 0;
+  visibility: hidden;
+  clip-path: inset(100% 0 0 0);
+  transition: opacity 180ms var(--chat-out), clip-path 240ms var(--chat-out), visibility 0s linear 240ms;
+}
+.crt-slot:is([data-mode="dock"], [data-mode="bar"])[data-expanded] :is(.chat-sheet, .chat-note) {
+  opacity: 1;
+  visibility: visible;
+  clip-path: inset(-20px -20px 0 -20px);
+  transition: opacity 280ms var(--ease), clip-path 460ms var(--ease), visibility 0s;
+}
+
+/* Phones and narrow windows. A bar along the bottom of the screen that
+   opens into a full screen conversation, over the guide and any open
+   article. */
+@media (max-width: 999px) {
+  /* With a project open the article slides up over the guide. The chat
+     stays reachable over it: once the article has covered the screen,
+     the layer the chat lives in (.over) lifts above the article's layer
+     and the guide inside it, now hidden under the article anyway, is
+     put away. Closing drops both back at once, before the article
+     slides down. */
+  .stage.is-open .over { z-index: 4; transition: z-index 0s linear var(--sweep, 560ms); }
+  .stage.is-open .osd { visibility: hidden; transition: visibility 0s linear var(--sweep, 560ms); }
+  .crt-slot[data-mode] { left: 0; right: 0; top: 0; bottom: 0; width: auto; height: auto; transform: none; z-index: 5; }
+  .chat { padding: 10px 12px max(12px, env(safe-area-inset-bottom)); }
+  /* the screen behind the full conversation, so nothing shows through */
+  .chat::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--screen);
+    opacity: 0;
+    transition: opacity 220ms var(--chat-out);
+    pointer-events: none;
+  }
+  .crt-slot[data-expanded] .chat::before { opacity: 1; transition: opacity 300ms var(--ease); }
+  .chat > * { position: relative; }
+  .chat-sheet { flex: 1 1 auto; }
+  .chat-head { justify-content: flex-start; padding: 0 0 4px; }
+  .chat-x {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    margin-left: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    box-shadow: inset 0 0 0 1px var(--chat-rule);
+    cursor: pointer;
+  }
+  /* over an open article the bar sits on the screen's own colour, the
+     article fading out under it */
+  .chat::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 104px;
+    background: linear-gradient(to bottom, transparent, var(--screen) 34px);
+    opacity: 0;
+    transition: opacity 300ms var(--ease);
+    pointer-events: none;
+    z-index: -1;
+  }
+  .crt-slot[data-page]:not([data-expanded]) .chat::after { opacity: 1; }
+  .chat { z-index: 0; }
+  /* an empty conversation: the line sits in the middle of the screen */
+  .crt-slot[data-mode="bar"][data-empty] .chat-stage { justify-content: center; }
+  .crt-slot[data-mode="bar"][data-empty] .chat-body { flex: 0 0 auto; }
+  .crt-slot[data-mode="bar"] .chat-title { font-size: 22px; line-height: 30px; }
+  .crt-slot[data-mode="bar"] .cards { grid-template-columns: 1fr; }
+  .chat-note { padding-top: 8px; font-size: 12px; }
+  .composer { padding-left: 16px; }
+}

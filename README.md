@@ -10,7 +10,7 @@ I'm David Nguyen, a business student at USC Marshall with a minor in Designing f
 
 - **The whole page is the screen.** There is no sidebar beside a picture. My name, a line about me and every project sit on the glass in a guide panel composed like a TV's channel guide: a header strip with the time, projects numbered like channels in one column, the open one on a selection bar. Up and down change the channel.
 - **Projects slide in on the tube.** Picking one sweeps the picture's edge across the screen as a bright line of phosphor with a short afterglow, the write up easing in behind it, curved and scanlined with the glass the whole way. Closing slides it back; switching wipes the new write up in over the old with the same line. On phones it slides up over the guide. The project's logo glows in the strip that's left, in that brand's colours.
-- **A chat in the middle.** It opens the way ChatGPT does, one question picked at random above the box and "Ask anything about David." under it. Visitors can ask about my work. Answers stream in, and when it helps the assistant shows project cards, a timeline or my contact details, or opens a project on the page for them.
+- **A chat in the middle.** It opens the way ChatGPT does, one line picked at random above the box and "Ask anything about David." under it. Visitors can ask about my work. Answers stream in, and when it helps the assistant shows project cards, a timeline or my contact details, or opens a project on the page for them. The conversation follows you around the site: open a project and the chat docks beside it ("Ask anything about ShoSoft") and already knows which project and which part of it you're reading. Every visit starts a new chat, and past ones are a History menu away.
 - **It feels like a real tube.** It powers on with a dot, a line and a short wobble, moving things leave a little afterglow, and the picture bends slightly near the cursor like a magnet near the glass.
 
 | A question answered with cards | A project open, chat docked | On a phone |
@@ -46,7 +46,14 @@ Scanlines always land on whole device pixels so they never shimmer, and the rend
 
 ### The chat
 
-The chat UI is built on [assistant-ui](https://github.com/assistant-ui/assistant-ui)'s unstyled pieces, restyled so the text reads as if it's on the glass. It's deliberately bare, a headline, the box and one line under it, and once a conversation starts it's a single centred column. It streams from `/a/chat`, a small endpoint on my server that calls Claude Haiku 5.5. The model only knows a written profile of my public work, and it answers with tool calls the page renders as cards or acts on (`open_project`, `show_projects`, `show_timeline`, `show_contact`, `show_resume`).
+The chat UI is built on [assistant-ui](https://github.com/assistant-ui/assistant-ui)'s unstyled pieces, restyled so the text reads as if it's on the glass: no panel behind it, light phosphor text with a tight dark halo so it holds up over the brightest part of the picture, and thin phosphor outlines for the box and the cards. It's deliberately bare, a line, the box and one line under it. Once a conversation starts the box settles to the bottom and each question pins to the top while its answer types out below it.
+
+- **One conversation across the site.** Opening, switching and closing projects keep it. With a project open it docks to the bottom of the strip beside the article as a slim bar that opens upward while in use; on phones it's a bar that opens into a full screen conversation, over the article too.
+- **It knows where you are.** Every message carries the open project, the heading you're reading in its write up, how far down you are, and whether you're on a phone, so "tell me more about this part" works.
+- **New chat and History.** A page load starts a new conversation and New chat starts one too. Past ones are kept in your browser only (`localStorage`) and listed in History, a small on screen menu numbered like the channels, to read and continue. Coming Back to the page picks the last one up again.
+- **Motion.** Everything moves on one curve and enters a little up and in; the answer types out at an even pace behind a beam whatever the network does, cards follow one after another, and the chat fades rather than slides when it changes place. Reduced motion turns it all off.
+
+It streams from `/a/chat`, a small endpoint on my server that calls Claude Haiku 5.5. The model only knows a written profile of my public work, and it answers with tool calls the page renders as cards or acts on (`open_project`, `close_project`, `show_projects`, `show_timeline`, `show_contact`, `show_resume`).
 
 Guardrails, in the order a message meets them.
 
@@ -95,7 +102,7 @@ src/
     marks.ts        logos as distance fields
     palette.ts      brand colours and blending
     Panel.tsx       the article
-    chat/           Chat.tsx, the runtime adapter, the cards
+    chat/           Chat.tsx, the runtime adapter, the cards, History's store, chat.css
   data/work.js      every project and its write up, the one content file
 public/work/        images and video for each project
 public/cursors/     the pixel pointer, 1x and 2x

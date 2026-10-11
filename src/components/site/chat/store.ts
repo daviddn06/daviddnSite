@@ -1,0 +1,68 @@
+/* The visitor's past conversations, kept in this browser only
+   (localStorage `dd_chats`). Every page load starts a new conversation;
+   the ones before it stay here to read and continue from the History
+   menu. Coming Back to the page (the browser's back button, from the
+   resume or the privacy page) picks the last one up again, since that is
+   not a fresh visit. */
+import type { ThreadMessageLike } from '@assistant-ui/react';
+
+const KEY = 'dd_chats';
+/* the conversation this tab is in, for coming Back to it */
+const CURRENT = 'dd_chat_cur';
+const MAX_CHATS = 30;
+const MAX_MESSAGES = 40;
+
+export type Stored = { id: string; role: 'user' | 'assistant'; content: Exclude<ThreadMessageLike['content'], string>[number][] };
+export type Convo = { id: string; title: string; at: number; updated: number; messages: Stored[] };
+
+export const newId = () => {
+  try { return crypto.randomUUID(); } catch { return `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`; }
+};
+
+export const listChats = (): Convo[] => {
+  try {
+    const raw = localStorage.getItem(KEY);
+    const list = raw ? (JSON.parse(raw) as Convo[]) : [];
+    return Array.isArray(list) ? list.filter((c) => c && c.id && Array.isArray(c.messages)).sort((a, b) => b.updated - a.updated) : [];
+  } catch { return []; }
+};
+
+export const getChat = (id: string) => listChats().find((c) => c.id === id) ?? null;
+
+export const putChat = (c: Convo) => {
+  const list = [c, ...listChats().filter((x) => x.id !== c.id)].slice(0, MAX_CHATS);
+  list[0] = { ...c, messages: c.messages.slice(-MAX_MESSAGES) };
+  try { localStorage.setItem(KEY, JSON.stringify(list)); } catch { /* storage full or blocked */ }
+  dispatchEvent(new Event('dd-chats'));
+};
+
+export const setCurrent = (id: string) => {
+  try { sessionStorage.setItem(CURRENT, id); } catch { /* blocked */ }
+};
+
+/* the conversation to start with: the last one when coming Back, else a
+   new one */
+export const firstChat = (): Convo | null => {
+  try {
+    sessionStorage.removeItem('dd_chat'); /* the old per tab store */
+    const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+    if (nav?.type !== 'back_forward') return null;
+    const id = sessionStorage.getItem(CURRENT);
+    return id ? getChat(id) : null;
+  } catch { return null; }
+};
+
+export const titleOf = (text: string) => {
+  const t = text.replace(/\s+/g, ' ').trim();
+  return t.length > 64 ? `${t.slice(0, 62).trimEnd()}…` : t;
+};
+
+/* "Today, 9:25 PM", "Yesterday", "Oct 8" */
+export const when = (t: number) => {
+  const d = new Date(t), now = new Date();
+  const day = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diff = Math.round((day(now) - day(d)) / 86400000);
+  if (diff === 0) return new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(d);
+  if (diff === 1) return 'Yesterday';
+  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', ...(d.getFullYear() !== now.getFullYear() ? { year: 'numeric' } : {}) }).format(d);
+};

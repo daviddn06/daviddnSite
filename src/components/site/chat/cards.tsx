@@ -2,7 +2,9 @@
    happened. Everything comes from the same project data as the guide
    (src/data/work.js, passed down from App), so the cards never drift
    from the site. Choosing a project in a card opens it exactly like
-   choosing its channel. */
+   choosing its channel. The cards are plain class based markup (`card`,
+   and the screen's shared `crt-card`), drawn as phosphor outlines on the
+   glass by chat.css. */
 import { createContext, useContext } from 'react';
 import type { Project } from '../Media';
 
@@ -24,10 +26,10 @@ export const CONTACT = {
 const channel = (all: Project[], slug: string) => String(all.findIndex((p) => p.slug === slug) + 1).padStart(2, '0');
 
 /* opens a project from inside a card, the way the guide does */
-function Open({ p, className, children }: { p: Project; className: string; children: React.ReactNode }) {
+function Open({ p, className, style, children }: { p: Project; className: string; style?: React.CSSProperties; children: React.ReactNode }) {
   const { show } = useSite();
   return (
-    <a className={className} href={`/projects/${p.slug}/`}
+    <a className={className} style={style} href={`/projects/${p.slug}/`}
       onClick={(e) => {
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
         e.preventDefault();
@@ -44,8 +46,8 @@ function Projects({ slugs }: { slugs?: unknown }) {
   if (!list.length) return null;
   return (
     <div className="cards">
-      {list.map((p) => (
-        <Open key={p.slug} p={p} className="card card-project">
+      {list.map((p, i) => (
+        <Open key={p.slug} p={p} className="card crt-card card-project" style={{ '--i': i } as React.CSSProperties}>
           <span className="card-top"><span className="ch">{channel(all, p.slug)}</span><span className="card-name">{p.name}</span></span>
           <span className="card-meta">{p.role}, {p.when}</span>
           <span className="card-line">{p.line}</span>
@@ -58,7 +60,7 @@ function Projects({ slugs }: { slugs?: unknown }) {
 function Timeline() {
   const { all, sections } = useSite();
   return (
-    <div className="card card-list">
+    <div className="card crt-card card-list">
       {sections.map((s) => (
         <div key={s.id} className="tl-group">
           <span className="tl-label">{s.title}</span>
@@ -78,7 +80,7 @@ function Timeline() {
 
 function Contact() {
   return (
-    <div className="card card-list">
+    <div className="card crt-card card-list">
       <ul className="rows">
         <li><span className="row-label">Email</span><a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a></li>
         <li><span className="row-label">LinkedIn</span><a href={CONTACT.linkedin} target="_blank" rel="noopener">linkedin.com/in/daviddn</a></li>
@@ -90,7 +92,7 @@ function Contact() {
 
 function Resume() {
   return (
-    <a className="card card-resume" href={CONTACT.resume}>
+    <a className="card crt-card card-resume" href={CONTACT.resume}>
       <span className="card-name">Resume</span>
       <span className="card-meta">One page, opens as a PDF</span>
     </a>
