@@ -118,10 +118,11 @@ float calmAt(vec2 p) {
 /* 1. The signal, with phosphor persistence. One texel per CSS pixel
    across, one row per scanline down. */
 const SIGNAL = COMMON + `
-uniform sampler2D uPrev, uRamp, uEdge, uSdfA, uSdfB;
+uniform sampler2D uPrev, uRamp, uSdfA, uSdfB;
 uniform vec2 uSize;
 uniform float uPitch, uColW, uShift, uT, uStore, uLight, uWeight;
 uniform float uFlare;   // the sweeping edge's line of light, while it moves
+uniform float uEdge;    // where the screen gives way to the article
 uniform float uPrevEdge; // where the edge was last frame
 uniform vec3 uDecay, uHot, uInk;
 uniform vec3 uPtr;      // x, y, how near (0 to 1)
@@ -143,19 +144,18 @@ void main() {
   ivec2 ip = ivec2(gl_FragCoord.xy);
   float y = (float(ip.y) + 0.5) * uPitch;
   float x = gl_FragCoord.x * uColW;
-  vec2 E = texelFetch(uEdge, ivec2(ip.y, 0), 0).xy;
+  float E = uEdge;
   vec3 col = vec3(0.0);
   vec2 rel = vec2(x, y) - uPower.xy;
   /* the sweeping edge lights the whole span it crossed this frame, and a
      little beyond, so its afterglow trails as one smooth smear */
-  float lo = min(E.x, uPrevEdge), hi = max(E.x, uPrevEdge);
-  float sweep = uFlare * (x < lo - 1.0 ? 0.0 : x <= hi ? 0.55 : 0.55 * exp(-(x - hi) / 9.0) + exp(-(x - E.x) / 3.0) * step(E.x, x));
-  if (x < E.x) col = vec3(0.82, 0.9, 1.0) * sweep * 0.45;
-  if (x >= E.x && abs(rel.x) <= uPower.z && abs(rel.y) <= uPower.w + 0.5 * uPitch) {
+  float lo = min(E, uPrevEdge), hi = max(E, uPrevEdge);
+  float sweep = uFlare * (x < lo - 1.0 ? 0.0 : x <= hi ? 0.55 : 0.55 * exp(-(x - hi) / 9.0) + exp(-(x - E) / 3.0) * step(E, x));
+  if (x < E) col = vec3(0.82, 0.9, 1.0) * sweep * 0.45;
+  if (x >= E && abs(rel.x) <= uPower.z && abs(rel.y) <= uPower.w + 0.5 * uPitch) {
     /* where on the picture this beam lands: squeezed while powering on,
-       slipped sideways while the edge travels, wobbling while degaussing */
+       wobbling while degaussing */
     vec2 p = uPower.xy + rel * uPower2.xy;
-    p.x -= E.y;
     p.x += uDegauss.x * 5.0 * sin(y * 0.05 + uDegauss.y * 40.0);
     /* the pointer, a weak magnet: bends the raster toward it */
     vec2 dp = p - uPtr.xy;
@@ -241,9 +241,9 @@ void main() {
 
 /* 4. The tube */
 const TUBE = COMMON + `
-uniform sampler2D uSig, uBloom, uEdge;
+uniform sampler2D uSig, uBloom;
 uniform vec2 uSize, uRes;
-uniform float uDpr, uPitch, uLines, uStore, uK, uRadius, uLight, uT, uFrame, uFlick, uNoise;
+uniform float uEdge, uDpr, uPitch, uLines, uStore, uK, uRadius, uLight, uT, uFrame, uFlick, uNoise;
 uniform float uScan, uGrille, uWire, uBloomAmt, uSheen, uRoll, uAfter;
 uniform vec3 uGlass, uPanel;
 
@@ -278,7 +278,7 @@ void main() {
 
   float lq = q.y / uPitch;
   float l0 = floor(lq), f = lq - l0 - 0.5;
-  float edge = texelFetch(uEdge, ivec2(int(clamp(l0, 0.0, uLines - 1.0)), 0), 0).x;
+  float edge = uEdge;
   /* the guns drift apart toward the sides, by about a pixel */
   float cv = 0.25 + 1.1 * n.x * n.x;
   lo = edge > 0.5 && q.x >= edge ? edge : -1e4;
@@ -369,7 +369,7 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
   let signal: Prog, bright: Prog, blur: Prog, tube: Prog;
   let half = false, store = 1;
   let vao: WebGLVertexArrayObject;
-  let ramp: Tex, edgeTex: Tex, sdfA: Tex, sdfB: Tex;
+  let ramp: Tex, sdfA: Tex, sdfB: Tex;
   let persist: Target[] = [], bloomA: Target, bloomB: Target;
   /* which logo fields are on the GPU, and at what size the targets were made */
   let uploaded: (Sdf | null)[] = [null, null];
@@ -419,7 +419,6 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     ramp = texture(256, 1, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, gl.LINEAR);
     sdfA = texture(1, 1, gl.R16F, gl.RED, gl.FLOAT, gl.LINEAR, new Float32Array([-99]));
     sdfB = texture(1, 1, gl.R16F, gl.RED, gl.FLOAT, gl.LINEAR, new Float32Array([-99]));
-    edgeTex = texture(1, 1, gl.RG32F, gl.RG, gl.FLOAT, gl.NEAREST, new Float32Array(2));
     persist = [];
     sized = '';
     uploaded = [null, null];
@@ -433,7 +432,6 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
   /* sizes: CSS px of the screen, device pixels per CSS px (capped so a
      big window stays cheap), the scanline pitch in whole device pixels */
   let W = 0, H = 0, dpr = 1, pitch = 3, lines = 0, cols = 0;
-  let edges = new Float32Array(0);
   const size = () => {
     W = Math.max(1, main.clientWidth);
     H = Math.max(1, main.clientHeight);
@@ -460,19 +458,12 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     const bw = Math.ceil(W / 6), bh = Math.ceil(H / 6);
     bloomA = target(bw, bh);
     bloomB = target(bw, bh);
-    drop(edgeTex);
-    edgeTex = texture(lines, 1, gl.RG32F, gl.RG, gl.FLOAT, gl.NEAREST);
-    /* the next frame writes the edge into the new texture */
-    edgesReady = false;
-    edges = new Float32Array(lines * 2);
   };
 
   const palette = blender(w.palette.current ?? []);
 
-  /* The edge where the screen gives way to the article, one per
-     scanline (all the same; it moves in one step, under the static of a
-     channel change). */
-  let cutTarget: number | undefined = undefined, edgesReady = false;
+  /* the edge where the screen gives way to the article */
+  let cutTarget: number | undefined = undefined;
 
   /* the sweep: where the edge set off from, where it is going, when */
   let edgeFrom = 0, edgeTo = 0, edgeAt = -1e9, edgeNow = 0, lastEdge = 0;
@@ -597,14 +588,7 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     const cu = Math.min(1, (ms - edgeAt) / WIPE);
     const opening = edgeTo > edgeFrom;
     const ce = opening ? 1 - Math.pow(1 - cu, 3) : ease(cu);
-    const edge = edgeFrom + (edgeTo - edgeFrom) * ce;
-    if (edge !== edgeNow || !edgesReady) {
-      edgeNow = edge;
-      edgesReady = true;
-      for (let r = 0; r < lines; r++) { edges[r * 2] = edge; edges[r * 2 + 1] = 0; }
-      gl.bindTexture(gl.TEXTURE_2D, edgeTex.t);
-      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, lines, 1, gl.RG, gl.FLOAT, edges);
-    }
+    const edge = edgeNow = edgeFrom + (edgeTo - edgeFrom) * ce;
     const flare = cu < 1 ? 0.32 * Math.pow(Math.sin(Math.PI * cu), 0.6) : 0;
     const prevEdge = lastEdge;
     lastEdge = edge;
@@ -689,7 +673,7 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
       gl.bindTexture(gl.TEXTURE_2D, tex.t);
       gl.uniform1i(uu[name], unit);
     };
-    bind(0, prev, 'uPrev', u); bind(1, ramp, 'uRamp', u); bind(2, edgeTex, 'uEdge', u); bind(3, sdfA, 'uSdfA', u); bind(4, sdfB, 'uSdfB', u);
+    bind(0, prev, 'uPrev', u); bind(1, ramp, 'uRamp', u); bind(3, sdfA, 'uSdfA', u); bind(4, sdfB, 'uSdfB', u);
     gl.uniform2f(u.uSize, W, H);
     gl.uniform1f(u.uPitch, pitch);
     gl.uniform1f(u.uColW, W / cols);
@@ -698,6 +682,7 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     gl.uniform1f(u.uT, t * FIELD_PACE);
     gl.uniform1f(u.uStore, store);
     gl.uniform1f(u.uFlare, flare);
+    gl.uniform1f(u.uEdge, edge);
     gl.uniform1f(u.uPrevEdge, prevEdge);
     gl.uniform1f(u.uLight, light ? 1 : 0);
     gl.uniform1f(u.uWeight, weight);
@@ -743,7 +728,8 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.useProgram(tube.p);
     u = tube.u;
-    bind(0, next, 'uSig', u); bind(1, bloomA, 'uBloom', u); bind(2, edgeTex, 'uEdge', u);
+    bind(0, next, 'uSig', u); bind(1, bloomA, 'uBloom', u);
+    gl.uniform1f(u.uEdge, edge);
     gl.uniform2f(u.uSize, W, H);
     gl.uniform2f(u.uRes, canvas.width, canvas.height);
     gl.uniform1f(u.uDpr, canvas.width / W);
