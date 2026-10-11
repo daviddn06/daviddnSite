@@ -14,8 +14,9 @@
    Behaviour follows the main screen: a short power on (a line opening
    out), palettes blending over 900ms, the pointer brightening the
    picture near it, text on the glass (`data-calm`) dimming what is
-   behind it, the side left of `cut` blank for the article, a roll on
-   every channel change, and the logo in the strip that remains. Hidden
+   behind it, the side left of `cut` blank for the article, its edge
+   sweeping across as a line of light when a project opens or closes,
+   and the logo in the strip that remains. Hidden
    tabs stop drawing; reduced motion draws only when something changes.
 
    The privacy and 404 pages use it too, as a calm picture behind their
@@ -23,7 +24,7 @@
 import { blender } from './palette';
 import { markSdf, type Sdf } from './marks';
 import { CURVE } from './warp';
-import { TUNE, type Wants } from './crt';
+import { WIPE, type Wants } from './crt';
 
 const LOAD = 900;
 const TEXEL = 8;
@@ -151,12 +152,9 @@ export function startScreen2d(canvas0: HTMLCanvasElement, w: Wants, opts: { quie
     return c;
   };
 
-  /* channel changes roll the picture once */
-  let tuneN = w.tune?.current ?? 0, tuneAt = -1e9, rollFrom = 0;
-  const rollAt = (ms: number) => {
-    const u = (ms - tuneAt) / TUNE;
-    return u >= 1 ? 0 : rollFrom + H * ease(Math.max(0, u));
-  };
+  /* the edge where the picture gives way to the article sweeps to its
+     place: opening it settles in, closing it eases out and back */
+  let cutTarget = w.cut.current ?? 0, edgeFrom = cutTarget, edgeTo = cutTarget, edgeAt = -1e9, edgeNow = cutTarget;
 
   let raf = 0, last = performance.now(), t = Math.random() * 100, born = -1;
   const power = !still && !opts.quiet;
@@ -168,20 +166,25 @@ export function startScreen2d(canvas0: HTMLCanvasElement, w: Wants, opts: { quie
     if (born < 0) born = ms;
     const age = power ? ms - born : 1e9;
     const light = lightMq.matches;
-    const rgb = palette(w.palette.current ?? [], ms, still || ms - tuneAt < TUNE);
+    const rgb = palette(w.palette.current ?? [], ms, still);
     lift += ((near ? 1 : 0) - lift) * (still ? 1 : Math.min(1, dt / 260));
     readCalm(dt);
 
-    const tn = w.tune?.current ?? 0;
-    if (tn !== tuneN) {
-      tuneN = tn;
-      if (!still && age > LOAD) { rollFrom = rollAt(ms) % H; tuneAt = ms; }
+    const goal = w.cut.current ?? 0;
+    if (goal !== cutTarget) {
+      cutTarget = goal;
+      edgeFrom = edgeNow;
+      edgeTo = goal;
+      edgeAt = still || age < LOAD ? -1e9 : ms;
     }
-    const cut = w.cut.current ?? 0;
+    const cu = Math.min(1, (ms - edgeAt) / WIPE);
+    const ce = edgeTo > edgeFrom ? 1 - Math.pow(1 - cu, 3) : ease(cu);
+    const cut = edgeNow = edgeFrom + (edgeTo - edgeFrom) * ce;
+    const flare = cu < 1 ? Math.pow(Math.sin(Math.PI * cu), 0.6) : 0;
 
     /* the logo's room: the strip beside the open article */
     const target = w.mark.current;
-    if (target && cut > 0) lastCut = cut;
+    if (target && goal > 0) lastCut = goal;
     const vw = W - lastCut;
     const fitW = Math.max(120, Math.min(288, Math.floor((vw * 0.8) / 8) * 8));
     const fitH = Math.max(120, Math.min(240, Math.floor((H * 0.4) / 8) * 8));
@@ -248,20 +251,9 @@ export function startScreen2d(canvas0: HTMLCanvasElement, w: Wants, opts: { quie
     fctx.clip();
     fctx.imageSmoothingEnabled = true;
     fctx.imageSmoothingQuality = 'high';
-    const roll = ms - tuneAt < TUNE ? rollAt(ms) % H : 0;
-    const fieldAt = (dy: number) => fctx.drawImage(low, 0, 0, cols, rows, 0, dy, cols * TEXEL, rows * TEXEL);
-    fieldAt(roll);
-    if (roll) {
-      fieldAt(roll - H);
-      /* the blanking bar where the picture joins */
-      const k = Math.sin(Math.PI * Math.min(1, (ms - tuneAt) / TUNE));
-      const g = fctx.createLinearGradient(0, roll - 34, 0, roll + 34);
-      g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(0.5, `rgba(0,0,0,${0.85 * k})`); g.addColorStop(1, 'rgba(0,0,0,0)');
-      fctx.fillStyle = g;
-      fctx.fillRect(0, roll - 34, W, 68);
-    }
+    fctx.drawImage(low, 0, 0, cols, rows, 0, 0, cols * TEXEL, rows * TEXEL);
     if (logo && lit > 0) {
-      const lx = (lastCut + W) / 2 - logo.width / 2, ly = H / 2 - logo.height / 2 + roll;
+      const lx = (lastCut + W) / 2 - logo.width / 2, ly = H / 2 - logo.height / 2;
       const hot = `rgb(${rgb[690]},${rgb[691]},${rgb[692]})`;
       fctx.globalAlpha = lit;
       fctx.shadowColor = light ? 'rgba(10,20,45,0.5)' : hot;
@@ -273,6 +265,21 @@ export function startScreen2d(canvas0: HTMLCanvasElement, w: Wants, opts: { quie
       fctx.globalAlpha = 1;
     }
     fctx.restore();
+    /* a moving edge is a line of phosphor, its afterglow trailing behind */
+    if (flare > 0.01) {
+      const back = edgeTo > edgeFrom ? -1 : 1, R = 90;
+      const g = fctx.createLinearGradient(cut - R, 0, cut + R, 0);
+      const at = (dx: number) => Math.min(1, Math.max(0, (R + dx) / (2 * R)));
+      const a = light ? 0.5 * flare : 0.75 * flare;
+      const trail = `rgba(210,228,255,${a * 0.35})`, none = 'rgba(210,228,255,0)';
+      g.addColorStop(0, none);
+      g.addColorStop(at(back < 0 ? -6 : -4), back < 0 ? trail : none);
+      g.addColorStop(at(0), `rgba(236,244,255,${a})`);
+      g.addColorStop(at(back < 0 ? 4 : 6), back < 0 ? none : trail);
+      g.addColorStop(1, 'rgba(210,228,255,0)');
+      fctx.fillStyle = g;
+      fctx.fillRect(cut - R, 0, 2 * R, H);
+    }
     fctx.setTransform(1, 0, 0, 1, 0, 0);
 
     /* the power on: a line across, opening out, overbright */
