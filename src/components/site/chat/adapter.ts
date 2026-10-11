@@ -51,6 +51,13 @@ const kindly = (status: number, said?: string) => {
   return 'Something went wrong on my end. Try again in a moment.';
 };
 
+/* the next frame, or a moment later where frames are not running (a
+   tab in the background) */
+const frame = () => new Promise<void>((resolve) => {
+  const t = setTimeout(resolve, 50);
+  requestAnimationFrame(() => { clearTimeout(t); resolve(); });
+});
+
 export const chatAdapter = (actions: Actions): ChatModelAdapter => ({
   async *run({ messages, abortSignal }) {
     const history = messages
@@ -81,16 +88,17 @@ export const chatAdapter = (actions: Actions): ChatModelAdapter => ({
     const asked = new Set<string>();
     let n = 0;
     const soFar = () => parts.map((p) => (p.type === 'text' ? p.text : '')).join('');
+    const snapshot = () => ({ content: parts.map((p) => ({ ...p })) });
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
-    for (;;) {
-      const { value, done } = await reader.read();
-      if (done) break;
+    /* what the stream has said since the message was last handed over */
+    let changed = false;
+    let ended: { error?: string } | null = null;
+    const take = (value: Uint8Array) => {
       buffer += decoder.decode(value, { stream: true });
-      let changed = false;
       let nl: number;
-      while ((nl = buffer.indexOf('\n')) >= 0) {
+      while (!ended && (nl = buffer.indexOf('\n')) >= 0) {
         const line = buffer.slice(0, nl).trim();
         buffer = buffer.slice(nl + 1);
         if (!line.startsWith('data:')) continue;
@@ -115,14 +123,44 @@ export const chatAdapter = (actions: Actions): ChatModelAdapter => ({
           actions.act(ev.name, input);
           changed = true;
         } else if (ev.t === 'error') {
-          if (parts.length) yield { content: parts.map((p) => ({ ...p })) };
-          throw new Error(ev.v || kindly(500));
+          ended = { error: ev.v || kindly(500) };
         } else if (ev.t === 'done') {
-          if (changed) yield { content: parts.map((p) => ({ ...p })) };
-          return;
+          ended = {};
         }
       }
-      if (changed) yield { content: parts.map((p) => ({ ...p })) };
+    };
+    /* Pieces that arrive within one frame go to the screen together: the
+       message is handed over as soon as something new arrives, but at
+       most once a frame, so a quick burst of pieces costs one redraw, not
+       one each. Reading never waits on it. */
+    const read = () => { const r = reader.read(); r.catch(() => {}); return r; };
+    let next = read();
+    let eof = false;
+    let tick: Promise<null> | null = null;
+    while (!eof && !ended) {
+      const { value, done } = await next;
+      if (done) break;
+      next = read();
+      take(value);
+      if (!changed || ended) continue;
+      /* already handed over this frame: gather until the next one */
+      while (tick && !ended) {
+        const got = await Promise.race([next, tick]);
+        if (!got) break;
+        if (got.done) { eof = true; break; }
+        next = read();
+        take(got.value);
+      }
+      if (ended) break;
+      changed = false;
+      const t: Promise<null> = frame().then(() => { if (tick === t) tick = null; return null; });
+      tick = t;
+      yield snapshot();
     }
+    if (ended?.error !== undefined) {
+      if (parts.length) yield snapshot();
+      throw new Error(ended.error);
+    }
+    if (changed) yield snapshot();
   },
 });
