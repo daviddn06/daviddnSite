@@ -78,6 +78,37 @@
 @media (hover: hover) { .text-link:hover { background-size: 100% 1px; } }
 .text-link:focus-visible { background-size: 100% 1px; }
 
+/* Loading. A screenshot's frame holds a faint phosphor shimmer until the
+   image has arrived, then the image comes on over it rather than popping
+   in (Base.astro marks loaded images). Without script nothing waits. */
+html.js :is(.frame, .compare) img { opacity: 0; transition: opacity var(--calm) var(--ease); }
+html.js :is(.frame, .compare) img[data-loaded] { opacity: 1; }
+html.js .frame:has(img:not([data-loaded])) {
+  background-image: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--link) 9%, transparent) 50%, transparent);
+  background-size: 100% 200%;
+  animation: beam-scan 1.6s var(--ease) infinite;
+}
+@keyframes beam-scan { from { background-position: 0 100%; } to { background-position: 0 -100%; } }
+
+/* Without script the screen cannot draw, so the tube shows a still
+   picture in the resting colours instead of dark glass. */
+html:not(.js) .field {
+  background:
+    radial-gradient(60% 70% at 30% 30%, #7cbbe0 0%, transparent 60%),
+    radial-gradient(55% 65% at 75% 70%, #3f8fd6 0%, transparent 65%),
+    linear-gradient(135deg, #1f3a8a, #2f63c9);
+  filter: saturate(0.9) brightness(0.7);
+}
+@media (prefers-color-scheme: light) {
+  html:not(.js) .field {
+    background:
+      radial-gradient(60% 70% at 30% 30%, #e4eef8 0%, transparent 60%),
+      radial-gradient(55% 65% at 75% 70%, #98c0ec 0%, transparent 65%),
+      linear-gradient(135deg, #a9c3ec, #c2dcf2);
+    filter: none;
+  }
+}
+
 /* The plain pages: privacy, the resume and no signal. The same tube as
    the home page, its picture calm (screen2d.ts draws it, dimmed behind
    the text), and the text on the glass in the guide's manner: a header

@@ -10,7 +10,7 @@ export const hex = (h: string): RGB => {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 };
 
-/* OKLab, with a lookup table for the sRGB encode so the per cell cost stays low */
+/* OKLab, with a lookup table for the sRGB encode so converting a whole ramp stays cheap */
 const lin = (c: number) => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
 const ENC = new Uint8ClampedArray(4097);
 for (let i = 0; i <= 4096; i++) {
