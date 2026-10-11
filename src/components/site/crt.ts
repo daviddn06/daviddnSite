@@ -332,6 +332,70 @@ void main() {
 type Tex = { t: WebGLTexture; w: number; h: number };
 type Target = Tex & { fb: WebGLFramebuffer };
 
+/* The quality governor. It watches the display's real frames (the gaps
+   between animation frames) on the visitor's machine. When more than 5%
+   of frames in a 2 s window miss the refresh, it steps down one level,
+   at most once every 3 s; after 10 s of clean frames with nothing moving
+   it steps back up, and if a level it came back to fails again it stays
+   below it for the visit. The level is kept for the visit
+   (sessionStorage). Levels add up:
+     1  halation is worked out every other frame
+     2  the picture is drawn at 3/4 of its resolution (scanlines keep
+        their size, a little softer)
+     3  the glass is asked to go light (`data-lite` on the tube and a
+        `crt-quality` event), for the curve over the HTML */
+const QKEY = 'crt-quality';
+export const QMAX = 3;
+type Gov = { level: number; tick: (ms: number, moving: boolean) => void; drew: () => void; stop: () => void };
+function governor(apply: (level: number) => void): Gov {
+  let level = 0;
+  try { level = Math.min(QMAX, Math.max(0, parseInt(sessionStorage.getItem(QKEY) || '0', 10) || 0)); } catch {}
+  const ring = new Float32Array(240);
+  let n = 0, head = 0, prev = -1, born = -1, winAt = -1, frames = 0, missed = 0, quiet = true;
+  let base = 1000 / 60, changedAt = -1e9, upAt = -1e9, clean = 0, floor = 0, rate = 0;
+  const set = (to: number, ms: number) => {
+    /* back down soon after stepping up: that level does not hold here */
+    if (to > level) { if (ms - upAt < 10000) floor = to; } else upAt = ms;
+    level = to;
+    changedAt = ms;
+    clean = 0;
+    try { sessionStorage.setItem(QKEY, String(level)); } catch {}
+    apply(level);
+  };
+  const pct = (q: number) => {
+    const xs = Array.from(ring.subarray(0, n)).sort((a, b) => a - b);
+    return xs.length ? xs[Math.min(xs.length - 1, Math.floor(xs.length * q))] : 0;
+  };
+  return {
+    get level() { return level; },
+    drew: () => {},
+    stop: () => {},
+    tick: (ms, moving) => {
+      const gap = ms - prev;
+      prev = ms;
+      if (born < 0) born = ms;
+      /* a long gap is a pause (hidden, scrolled away), not a slow frame */
+      if (gap <= 0 || gap > 250) { winAt = ms; frames = missed = 0; return; }
+      ring[head] = gap; head = (head + 1) % ring.length; n = Math.min(n + 1, ring.length);
+      frames++;
+      if (gap > base * 1.5) missed++;
+      if (moving) quiet = false;
+      if (ms - winAt >= 2000) {
+        /* the refresh interval: most frames make it, so a low percentile */
+        base = Math.min(34, Math.max(4, pct(0.25)));
+        rate = frames ? missed / frames : 0;
+        if (ms - born > 3000 && ms - changedAt >= 3000) {
+          if (rate > 0.05 && level < QMAX) set(level + 1, ms);
+          else if (rate < 0.01 && quiet && !moving && level > floor) {
+            if (++clean >= 5) set(level - 1, ms);
+          } else clean = 0;
+        }
+        winAt = ms; frames = missed = 0; quiet = true;
+      }
+    },
+  };
+}
+
 export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | null {
   const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false });
   if (!gl) return null;
@@ -467,6 +531,17 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
      page uses this to stop bending what it fully covers (site.css) */
   glass.dataset.gl = '';
 
+  /* quality, stepped down by the governor when frames drop (above) */
+  let q = 0, transit = true, haloFresh = true;
+  const lite = (l: number) => { if (l >= 3) glass.dataset.lite = ''; else delete glass.dataset.lite; };
+  const gov = governor((l) => {
+    q = l;
+    lite(l);
+    glass.dispatchEvent(new CustomEvent('crt-quality', { detail: l, bubbles: true }));
+  });
+  q = gov.level;
+  lite(q);
+
   /* sizes: CSS px of the screen, device pixels per CSS px (capped so a
      big window stays cheap), the scanline pitch in whole device pixels */
   let W = 0, H = 0, dpr = 1, pitch = 3, lines = 0, cols = 0;
@@ -479,6 +554,8 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     dpr = d <= most ? d : d / Math.ceil(d / most);
     const pd = Math.max(3, Math.round(3 * dpr));
     pitch = pd / dpr;
+    /* under load, fewer pixels; the scanlines keep their size */
+    if (q >= 2) dpr *= 0.75;
     const key = `${W}x${H}@${dpr}`;
     if (key === sized) return;
     sized = key;
@@ -496,6 +573,7 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     const bw = Math.ceil(W / 6), bh = Math.ceil(H / 6);
     bloomA = target(bw, bh);
     bloomB = target(bw, bh);
+    haloFresh = true;
   };
 
   const palette = blender(w.palette.current ?? []);
@@ -649,6 +727,7 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     const flare = cu < 1 ? 0.32 * Math.pow(Math.sin(Math.PI * cu), 0.6) : 0;
     const prevEdge = lastEdge;
     lastEdge = edge;
+    transit = powering || cu < 1 || !!morph || !fresh;
     const lively = flare > 0 || edge !== prevEdge || powering;
     const skip = edge > 0.5 && darkFor >= 2 && !lively;
     glow = lively ? 32 : glow * (still ? 0 : Math.exp(-dt / 75)) * 1.002 - 0.0015;
@@ -782,28 +861,31 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     sendCalm(signal);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-    /* 2 and 3. halation */
+    /* 2 and 3. halation (under load, every other frame) */
     gl.disable(gl.SCISSOR_TEST);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, bloomA.fb);
-    gl.viewport(0, 0, bloomA.w, bloomA.h);
-    gl.useProgram(bright.p);
-    u = bright.u;
-    bind(0, next);
-    u2(u.uDst, bloomA.w, bloomA.h);
-    u2(u.uSrcTexel, 1 / cols, 1 / lines);
-    u1(u.uStore, store);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-    gl.useProgram(blur.p);
-    u = blur.u;
-    u2(u.uDst, bloomA.w, bloomA.h);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, bloomB.fb);
-    bind(0, bloomA);
-    u2(u.uDir, 1, 0);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, bloomA.fb);
-    bind(0, bloomB);
-    u2(u.uDir, 0, 1);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    if (q < 1 || haloFresh || frameNo % 2 === 0) {
+      haloFresh = false;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, bloomA.fb);
+      gl.viewport(0, 0, bloomA.w, bloomA.h);
+      gl.useProgram(bright.p);
+      u = bright.u;
+      bind(0, next);
+      u2(u.uDst, bloomA.w, bloomA.h);
+      u2(u.uSrcTexel, 1 / cols, 1 / lines);
+      u1(u.uStore, store);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      gl.useProgram(blur.p);
+      u = blur.u;
+      u2(u.uDst, bloomA.w, bloomA.h);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, bloomB.fb);
+      bind(0, bloomA);
+      u2(u.uDir, 1, 0);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, bloomA.fb);
+      bind(0, bloomB);
+      u2(u.uDir, 0, 1);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
 
     /* 4. the tube */
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -860,6 +942,7 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
   const frame = (ms: number) => {
     raf = 0;
     if (gl.isContextLost()) return;
+    gov.tick(ms, transit);
     /* the display's frame interval, eased */
     const gap = ms - tickAt;
     tickAt = ms;
@@ -870,6 +953,7 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     }
     drawnAt = ms;
     draw(ms);
+    gov.drew();
     if (!still && visible && onScreen) raf = requestAnimationFrame(frame);
   };
   const wake = () => {
@@ -917,5 +1001,7 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     canvas.removeEventListener('webglcontextlost', onLost);
     canvas.removeEventListener('webglcontextrestored', onRestored);
     delete glass.dataset.gl;
+    delete glass.dataset.lite;
+    gov.stop();
   };
 }
