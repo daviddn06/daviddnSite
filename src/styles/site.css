@@ -136,6 +136,10 @@ button { font: inherit; color: inherit; }
    shift the whole curve; clipping each layer to its own box keeps the
    bend registered with the picture in every engine */
 .under, .over { overflow: hidden; }
+/* clip, where supported, also stops the browser scrolling these layers to show a
+   focused box or a row (hidden still lets it), which shifted the whole guide
+   and chat up under the tube's top edge */
+@supports (overflow: clip) { .under, .over { overflow: clip; } }
 /* the layers pass clicks through; the article itself takes them, and its scroll */
 .under .article { pointer-events: auto; }
 .under { z-index: 0; }
