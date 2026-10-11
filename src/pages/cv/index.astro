@@ -8,7 +8,7 @@ import Base from '../../layouts/Base.astro';
 import App from '../../components/site/App';
 import { work, projects, earlier } from '../../data/work.js';
 ---
-<Base title="Resume, David Nguyen" description="David Nguyen's resume: founding AI product engineer at ShoSoft AI, business at USC Marshall." image="/og.jpg">
+<Base title="Resume, David Nguyen" description="David Nguyen's resume: founding product engineer at ShoSoft AI, business at USC Marshall." image="/og.jpg">
   <App client:load work={work} projects={projects} earlier={earlier} initial="cv" />
 <script is:inline slot="head">
   /* an application link: count the visit, then open the PDF in this tab */

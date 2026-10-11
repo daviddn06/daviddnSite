@@ -9,13 +9,13 @@ export const resume = {
   name: 'Resume',
   role: 'David (Vinh) Nguyen',
   when: 'daviddn@usc.edu',
-  line: 'Business at USC Marshall with a minor in Design for Digital Experiences. Founding AI product engineer at ShoSoft AI.',
+  line: 'Business at USC Marshall with a minor in Design for Digital Experiences. Founding product engineer at ShoSoft AI.',
   url: 'https://daviddn.dev/resume.pdf',
   tile: { type: 'image', src: '/og.jpg', w: 1200, h: 630 },
   shots: [],
   body: [
     { h: 'Professional experience' },
-    { role: ['ShoSoft AI, Los Angeles', 'Founding AI Product Engineer, May 2026 to present'] },
+    { role: ['ShoSoft AI, Los Angeles', 'Founding Product Engineer, May 2026 to present'] },
     { list: [
       'Own AI product and engineering for ShoSoft 2.0, a venue management platform (10 microservices, Auth0, Stripe, Postgres); promoted from intern in month one after authoring the AI roadmap and shipping four LLM-driven onboarding and event-creation demos in Next.js.',
       'Replicated the 2.0 stack on a self-managed VPS (10 Node services, 45 seeded events), then shipped a UI overhaul, Cmd+K search, and a 129-finding accessibility audit in Claude Code with Playwright agents verifying every route, cutting the entry bundle from 5.35 MB to 2.48 MB.',
@@ -35,7 +35,7 @@ export const resume = {
     { list: [
       'Founded a design, web development, SEO/AEO, and AI consulting studio (wedgestudio.dev) that ships all client work through agentic tooling.',
       'Built Wedge App, an AI-native client portal and agency OS (Hono, SQLite, React 19, OpenAI tool loop), and Docket, a client project dashboard.',
-      "Delivered the flagship engagement for Magic Box LA, a 200,000 sq ft DTLA venue: full redesign, self-hosted headless CMS (Payload 3, Next.js 16), first-party attribution with GA4 and Google Ads conversion tracking, CRM lead forwarding, and 15 audit defects fixed, so every paid lead is attributed correctly and the venue's ads agency can measure spend.",
+      "Delivered the flagship engagement for Magic Box LA, a 220,000 sq ft DTLA venue: full redesign, self-hosted headless CMS (Payload 3, Next.js 16), first-party attribution with GA4 and Google Ads conversion tracking, CRM lead forwarding, and 15 audit defects fixed, so every paid lead is attributed correctly and the venue's ads agency can measure spend.",
     ] },
     { h: 'Selected project' },
     { role: ['Vecka, vecka.ai, Los Angeles', 'Founder and Product Engineer, Jul 2026 to present'] },
@@ -48,7 +48,7 @@ export const resume = {
     { list: [
       'Bachelor of Science in Business Administration, Minor in Design for Digital Experiences.',
       'Presidential Scholar with Half-Tuition Merit Scholarship (~$150,000), Global Leadership Program.',
-      'Sandbox SC (Founder), Spark SC (Board Member), Global Investment Society (Academy Member), Trojan Investing Society (Member).',
+      'Spark SC (Board Member), Global Investment Society (Academy Member), Trojan Investing Society (Member).',
     ] },
     { role: ['British International School, Ho Chi Minh City', 'IB Diploma Programme, 2008 to 2024'] },
     { list: [
