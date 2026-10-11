@@ -27,12 +27,10 @@ import type { Project } from '../Media';
 /* the line above the box, one picked per new chat, from David himself,
    the way he texts */
 const HEADLINES = [
-  'ask me something.',
+  'ask me about my work.',
   'what do you want to know?',
-  'go ahead.',
-  "i'm around.",
-  'ask about the work.',
-  'yes?',
+  "ask me anything about what i've built.",
+  "ask what i'm working on right now.",
 ];
 const pickHeadline = (not?: string) => {
   const pool = HEADLINES.filter((h) => h !== not);
