@@ -314,6 +314,29 @@ function Screen({ open, all, headline, cid, named, swap, switchTo }: ScreenProps
     return () => removeEventListener('keydown', onKey);
   }, [mac]);
 
+  /* On phones the conversation stays above the on screen keyboard: the
+     visible part of the page (visualViewport) sets how far up the chat's
+     bottom sits and how far the page has been pushed, read only when the
+     keyboard moves */
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const el = slot.current;
+    if (mode !== 'bar' || !vv || !el) return;
+    let raf = 0;
+    const sync = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const kb = Math.max(0, innerHeight - vv.height - vv.offsetTop);
+        el.style.setProperty('--kb', `${Math.round(kb)}px`);
+        el.style.setProperty('--vv-top', `${Math.round(vv.offsetTop)}px`);
+      });
+    };
+    sync();
+    vv.addEventListener('resize', sync);
+    vv.addEventListener('scroll', sync);
+    return () => { cancelAnimationFrame(raf); vv.removeEventListener('resize', sync); vv.removeEventListener('scroll', sync); el.style.removeProperty('--kb'); el.style.removeProperty('--vv-top'); };
+  }, [mode]);
+
   /* Docked beside a project, the project's logo (drawn by the picture,
      crt.ts) follows this chat's \`.crt-logo-spot\`: large and centred in
      the panel with the headline under it while the chat is empty; once
@@ -367,13 +390,7 @@ function Screen({ open, all, headline, cid, named, swap, switchTo }: ScreenProps
           {/* once talking: what this chat is about, New chat, and Close */}
           <div className="chat-head" data-on={!empty || mode === 'bar' ? '' : undefined}>
             {mode === 'dock' && <span className="head-mark" aria-hidden="true" />}
-            {mode !== 'bar' && <p className="chat-topic" title={named || asked}><span key={named || asked}>{named || asked}</span></p>}
-            {mode === 'bar' && (
-              <button type="button" className="chat-tool" data-kind="history" data-on={past || menu ? '' : undefined} tabIndex={past || menu ? 0 : -1}
-                aria-expanded={menu} onClick={() => (menu ? closeMenu() : openMenu())}>
-                History
-              </button>
-            )}
+            {(mode !== 'bar' || !empty) && <p className="chat-topic" title={named || asked}><span key={named || asked}>{named || asked}</span></p>}
             <button type="button" className="chat-ctl" tabIndex={!empty ? 0 : -1} data-on={!empty ? '' : undefined} onClick={fresh}
               aria-keyshortcuts={mac ? 'Meta+K' : 'Control+K'}>
               New chat{mode !== 'bar' && <kbd>{mac ? '⌘K' : 'Ctrl K'}</kbd>}
@@ -413,7 +430,7 @@ function Screen({ open, all, headline, cid, named, swap, switchTo }: ScreenProps
           </div>
         </>}
 
-        <Composer input={input} placeholder={placeholderFor(project)} onEscape={() => (menu ? closeMenu() : mode !== 'bar' && !empty ? closeChat() : away())}
+        <Composer input={input} placeholder={narrow && project ? `Ask about ${project.name.replace(/\s+AI$/, '')}` : placeholderFor(project)} onEscape={() => (menu ? closeMenu() : mode !== 'bar' && !empty ? closeChat() : away())}
           onHistory={mode === 'bar' && chats.length ? openMenu : undefined} />
 
         <p className="chat-note">{noteFor(project)}</p>
@@ -504,6 +521,10 @@ function Wait({ wait }: { wait: number }) {
   );
 }
 
+/* a tap on send or stop leaves focus (and a phone's keyboard) in the
+   box, so nothing moves under the finger between press and release */
+const keep = (e: React.PointerEvent) => { if (e.pointerType !== 'mouse') e.preventDefault(); };
+
 function Composer({ input, placeholder, onEscape, onHistory }: { input: React.RefObject<HTMLTextAreaElement | null>; placeholder: string; onEscape: () => void; onHistory?: () => void }) {
   const length = useAuiState((s) => s.composer.text.length);
   const running = useAuiState((s) => s.thread.isRunning);
@@ -536,6 +557,7 @@ function Composer({ input, placeholder, onEscape, onHistory }: { input: React.Re
         maxRows={6}
         maxLength={MAX_CHARS}
         submitMode={held ? 'none' as const : 'enter' as const}
+        unstable_insertNewlineOnTouchEnter
         cancelOnEscape={false}
         addAttachmentOnPaste={false}
         onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); onEscape(); } }}
@@ -544,11 +566,11 @@ function Composer({ input, placeholder, onEscape, onHistory }: { input: React.Re
       <ModelPicker usage={{ left: quota.left, limit: quota.limit, team: quota.team }} />
       {/* one button that turns into stop while answering */}
       {running ? (
-        <ComposerPrimitive.Cancel className="composer-btn is-stop" aria-label="Stop">
+        <ComposerPrimitive.Cancel className="composer-btn is-stop" aria-label="Stop" onPointerDown={keep}>
           <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5" fill="currentColor" /></svg>
         </ComposerPrimitive.Cancel>
       ) : (
-        <ComposerPrimitive.Send className="composer-btn" aria-label="Send" disabled={held || undefined}>
+        <ComposerPrimitive.Send className="composer-btn" aria-label="Send" disabled={held || undefined} onPointerDown={keep}>
           <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8 13V3.5M3.8 7.4 8 3.2l4.2 4.2" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </ComposerPrimitive.Send>
       )}

@@ -547,7 +547,7 @@
 @keyframes model-no { 20% { transform: translateX(-4px); } 45% { transform: translateX(4px); } 70% { transform: translateX(-2px); } 100% { transform: none; } }
 @media (max-width: 999px) {
   .model-name, .model-caret { display: none; }
-  .model-pill { width: 32px; padding: 0; justify-content: center; }
+  .model-pill { width: 36px; height: 36px; padding: 0; justify-content: center; }
 }
 
 /* the allowance (quota.ts): only near the limit, a line over the box
@@ -1028,6 +1028,19 @@
    the logo */
 .crt-slot[data-mode="dock"][data-expanded] .chat-sheet { transform: none; }
 
+/* Touch screens: every control at least 32px to the finger, the send
+   button 44px; the hit area grows where the drawing stays small */
+@media (pointer: coarse) {
+  .cite { position: relative; }
+  .cite::after { content: ''; position: absolute; inset: -8px -6px; }
+  .source { min-height: 34px; }
+  .hist-act { height: 32px; }
+  .hist-del { width: 32px; height: 32px; margin-top: -16px; }
+  .chat-ctl, .chat-tool { min-height: 36px; }
+  .att-act { min-height: 44px; }
+  .att-row { padding-top: 11px; padding-bottom: 12px; }
+}
+
 /* Phones and narrow windows. A bar along the bottom of the screen that
    opens into a full screen conversation, over the guide and any open
    article. */
@@ -1041,7 +1054,7 @@
   .stage.is-open .over { z-index: 4; transition: z-index 0s linear var(--sweep); }
   .stage.is-open .osd { visibility: hidden; transition: visibility 0s linear var(--sweep); }
   .crt-slot[data-mode] { left: 0; right: 0; top: 0; bottom: 0; width: auto; height: auto; transform: none; z-index: 5; }
-  .chat { padding: 10px 12px max(12px, env(safe-area-inset-bottom)); }
+  .chat { padding: 10px 12px max(12px, calc(env(safe-area-inset-bottom) - var(--kb, 0px))); }
   /* the screen behind the full conversation, so nothing shows through */
   .chat::before {
     content: '';
@@ -1055,7 +1068,8 @@
   .crt-slot[data-expanded] .chat::before { opacity: 1; transition: opacity var(--chat-enter) var(--ease); }
   .chat > * { position: relative; }
   .chat-sheet { flex: 1 1 auto; }
-  .chat-head { justify-content: flex-start; padding: 0 0 4px; }
+  .chat-head { justify-content: flex-start; gap: 6px; padding: 0 0 4px; }
+  .chat-head .chat-topic { margin-right: 0; }
   /* folded into the bar, the head is out of sight and must not take
      taps meant for the article under it */
   .crt-slot[data-mode="bar"]:not([data-expanded]) .chat-head { visibility: hidden; pointer-events: none; }
@@ -1094,6 +1108,14 @@
   .crt-slot[data-mode="bar"][data-empty] .chat-body { flex: 0 0 auto; }
   .crt-slot[data-mode="bar"] .chat-title { font-size: 22px; line-height: 30px; }
   .chat-note { padding-top: 8px; font-size: 12px; }
+  /* 16px, or iOS zooms the page in when the box is focused */
+  .composer-input { font-size: 16px; }
+  .composer { padding: 6px 6px 6px 14px; }
+  .composer-btn { width: 40px; height: 40px; position: relative; }
+  .composer-btn::after { content: ''; position: absolute; inset: -2px; }
+  /* above the on screen keyboard, and clear of the home indicator */
+  .crt-slot[data-mode="bar"] .chat { top: var(--vv-top, 0px); bottom: var(--kb, 0px); }
+  .crt-slot[data-mode="bar"] .chat-body { -webkit-overflow-scrolling: touch; }
   .att { max-width: 100%; }
   .composer { padding-left: 16px; }
 }
