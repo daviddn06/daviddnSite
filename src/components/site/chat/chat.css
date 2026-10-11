@@ -171,11 +171,20 @@
   gap: 16px;
   padding: 22px 6px 28px;
   scroll-padding-bottom: 28px;
-  /* bubbles scrolling up fade out well before they reach the head */
-  mask-image: linear-gradient(to bottom, transparent 6px, #000 46px, #000 calc(100% - 12px), transparent);
+  /* bubbles scrolling up fade out well before they reach the head, but only once
+     there is something above to fade: at rest the first message is fully lit
+     (--chat-fade grows from 0 with the scroll, below) */
+  mask-image: linear-gradient(to bottom, transparent calc(var(--chat-fade) * 0.13), #000 var(--chat-fade), #000 calc(100% - 12px), transparent);
+
   transition: opacity var(--chat-enter) var(--ease), transform var(--chat-enter) var(--ease);
 }
 .chat-body::-webkit-scrollbar { display: none; }
+@property --chat-fade { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@keyframes chat-fade-in-top { from { --chat-fade: 0px; } to { --chat-fade: 46px; } }
+/* where the browser can tie it to the scroll; elsewhere there's simply no top fade */
+@supports (animation-timeline: scroll()) {
+  .chat-body { animation: chat-fade-in-top linear both; animation-timeline: scroll(self); animation-range: 0 40px; }
+}
 /* an empty conversation has nothing to scroll, so nothing to contain;
    leaving it off then spares the browser a scrolling layer of its own,
    which would otherwise keep the glass's bend running every frame */
