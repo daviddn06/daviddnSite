@@ -12,9 +12,10 @@
   --screen: #0a0d13;
   --panel: var(--screen);
   --ink: #e6edf8;
-  --muted: #7f8aa0;
-  /* quieter text that still reads over the picture */
-  --soft: rgba(230, 237, 248, 0.66);
+  --muted: #a3aec2;
+  /* quieter text that still reads over the picture: phosphor stays
+     bright, hierarchy comes from size and weight */
+  --soft: rgba(232, 239, 250, 0.86);
   --link: #8db8ff;
   --line: rgba(233, 238, 246, 0.08);
   /* phosphor: a faint halo around light text */
@@ -31,6 +32,9 @@
   --quick: 160ms;
   --calm: 320ms;
   --slow: 520ms;
+  /* the picture's edge sweeping across, as crt.ts's WIPE */
+  --sweep: 560ms;
+  --ease-io: cubic-bezier(0.65, 0, 0.35, 1);
   /* a brand's colour arriving, alongside the picture's 900ms blend */
   --brand: 700ms;
   --pad: 14px;
@@ -54,8 +58,8 @@
     --cabinet: #cfd5de;
     --screen: #eef1f6;
     --ink: #121821;
-    --muted: #6e7889;
-    --soft: rgba(18, 24, 33, 0.66);
+    --muted: #4e586a;
+    --soft: rgba(14, 20, 30, 0.8);
     --link: #2a5dcc;
     --line: rgba(18, 24, 33, 0.09);
     /* a lit room: dark text on a bright picture, a soft light halo */
@@ -259,6 +263,35 @@ button { font: inherit; color: inherit; }
   text-shadow: var(--glow);
 }
 .article::-webkit-scrollbar { display: none; }
+
+/* Opening, the article eases in behind the picture's sweeping edge;
+   closing, it eases back as the picture covers it. */
+.stage.is-open .article { animation: slide-in var(--sweep) var(--ease) both; }
+.stage:not(.is-open) .article { animation: slide-out var(--sweep) var(--ease-io) both; }
+@keyframes slide-in { from { transform: translateX(-36px); } }
+@keyframes slide-out { to { transform: translateX(-36px); } }
+
+/* Switching, the new article is wiped in over the old one by a line of
+   phosphor with a short afterglow, the old one held still beneath. */
+.stage .article.is-leaving { animation: none; pointer-events: none; }
+.stage.is-open .article.wipe-in { animation: wipe var(--sweep) var(--ease) both; }
+@keyframes wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+.wipe-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--side) - 72px);
+  width: 74px;
+  pointer-events: none;
+  background: linear-gradient(to left, var(--link) 0 2px, color-mix(in srgb, var(--link) 28%, transparent) 2px, transparent);
+  filter: drop-shadow(0 0 6px var(--link));
+  animation: wipe-line var(--sweep) var(--ease) both;
+}
+@keyframes wipe-line {
+  from { transform: translateX(0); opacity: 1; }
+  85% { opacity: 1; }
+  to { transform: translateX(var(--col)); opacity: 0; }
+}
 .article img, .article video, .article .compare { text-shadow: none; }
 
 .article-inner {
@@ -379,7 +412,7 @@ button { font: inherit; color: inherit; }
 .main { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
 /* the static of a channel change (Static.tsx), over the picture and the
    article, under the guide and the chat */
-.static { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; }
+
 .field { position: absolute; inset: 0; }
 .field canvas { position: absolute; top: 0; left: 0; }
 
@@ -443,7 +476,7 @@ button { font: inherit; color: inherit; }
 .msg-text { white-space: pre-wrap; overflow-wrap: anywhere; padding: 0 4px; }
 .msg-text a, .chat-note-act a { color: var(--link); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--link) 40%, transparent); text-underline-offset: 3px; }
 .msg-text strong { font-weight: 700; }
-.msg-error { padding: 0 4px; color: var(--muted); }
+.msg-error { padding: 0 4px; color: var(--soft); }
 .msg-retry {
   margin-left: 10px;
   padding: 0;
@@ -496,7 +529,7 @@ button { font: inherit; color: inherit; }
   text-shadow: inherit;
 }
 .composer-input::placeholder { color: var(--soft); opacity: 1; }
-.composer-count { align-self: flex-end; padding-bottom: 6px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.composer-count { align-self: flex-end; padding-bottom: 6px; color: var(--soft); font-size: 12px; font-variant-numeric: tabular-nums; }
 .composer-btn {
   flex: none;
   display: grid;
@@ -529,19 +562,19 @@ button { font: inherit; color: inherit; }
 }
 a.card:hover, a.card:focus-visible { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 55%, transparent); }
 .card-top { display: flex; align-items: baseline; gap: 8px; }
-.card .ch, .tl-name .ch { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.card .ch, .tl-name .ch { color: var(--soft); font-size: 12px; font-variant-numeric: tabular-nums; }
 .card-name { color: var(--link); font-weight: 700; transition: color var(--brand) var(--ease); }
-.card-meta { color: var(--muted); font-size: 13px; line-height: 20px; }
+.card-meta { color: var(--soft); font-size: 13px; line-height: 20px; }
 .card-line { margin-top: 4px; font-size: 13px; line-height: 20px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .card-list { gap: 12px; }
 .tl-group { display: grid; gap: 2px; }
-.tl-label, .row-label { color: var(--muted); font-size: 13px; }
+.tl-label, .row-label { color: var(--soft); font-size: 13px; }
 .tl-group li, .rows li { display: flex; justify-content: space-between; gap: 16px; }
 .tl-name { display: inline-flex; gap: 8px; color: var(--link); }
-.tl-when { color: var(--muted); font-size: 13px; text-align: right; }
+.tl-when { color: var(--soft); font-size: 13px; text-align: right; }
 .rows { display: grid; gap: 4px; }
 .rows a { color: var(--link); }
-.chat-note-act { padding: 0 4px; color: var(--muted); font-size: 13px; }
+.chat-note-act { padding: 0 4px; color: var(--soft); font-size: 13px; }
 .chat-head { display: none; }
 
 /* docked beside an open article: a slim bar; in use, a sheet over the strip */
@@ -614,11 +647,19 @@ dialog.viewer[open]::backdrop { animation: fade var(--calm) var(--ease) both; }
   .chat-head { display: flex; align-items: center; justify-content: space-between; font-weight: 700; padding: 4px 4px 2px; }
   .chat-x { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: var(--line); cursor: pointer; }
   .crt-slot[data-mode="bar"][data-expanded] .chat-body { flex: 1; }
-  /* an article takes the screen over by a channel change */
-  .article { inset: 0; width: auto; z-index: 4; visibility: hidden; }
-  .stage.is-open .article { visibility: visible; }
-  .stage.is-open .under { z-index: 3; }
-  .static { z-index: 4; }
+  /* an article slides up over the guide, its top edge a line of phosphor */
+  .article {
+    inset: 0;
+    width: auto;
+    z-index: 4;
+    transform: translateY(100%);
+    visibility: hidden;
+    box-shadow: 0 -1px 0 color-mix(in srgb, var(--link) 70%, transparent), 0 -10px 30px color-mix(in srgb, var(--link) 22%, transparent);
+    transition: transform var(--sweep) var(--ease-io), visibility 0s linear var(--sweep);
+  }
+  .stage.is-open .article { transform: none; visibility: visible; transition: transform var(--sweep) var(--ease); }
+  .stage.is-open .article, .stage:not(.is-open) .article { animation: none; }
+  .under { z-index: 3; }
   .article-inner { width: auto; max-width: 560px; margin: 0 auto; padding: 28px 24px 64px; }
   .close {
     display: grid;

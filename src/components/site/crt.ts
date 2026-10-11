@@ -52,14 +52,15 @@ export type Wants = {
   palette: RefObject<string[]>;
   mark: RefObject<string | null>;
   cut: RefObject<number>;
-  /* counts channel changes */
+  /* channel changes, no longer used by the main screen (kept for the 2D
+     screen until it moves to the slide) */
   tune?: RefObject<number>;
 };
 
-/* A channel change: static swells, the picture rolls once top to bottom
-   and lands, and SWAP ms in, under the thickest static, the screen takes
-   the new picture (App swaps the article then). TUNE is the whole of it. */
-export const SWAP = 200;
+/* How long the picture's edge takes to sweep across to reveal the article
+   (or back over it). App's wipe between two articles takes as long. */
+export const WIPE = 560;
+/* the old channel change's length, still read by screen2d.ts */
 export const TUNE = 540;
 /* how long one logo takes to flow into the next */
 const MORPH = 1100;
@@ -120,7 +121,8 @@ const SIGNAL = COMMON + `
 uniform sampler2D uPrev, uRamp, uEdge, uSdfA, uSdfB;
 uniform vec2 uSize;
 uniform float uPitch, uColW, uShift, uT, uStore, uLight, uWeight;
-uniform vec2 uRoll;     // the vertical roll in px, and how strong its dark bar is
+uniform float uFlare;   // the sweeping edge's line of light, while it moves
+uniform float uPrevEdge; // where the edge was last frame
 uniform vec3 uDecay, uHot, uInk;
 uniform vec3 uPtr;      // x, y, how near (0 to 1)
 uniform vec4 uLogo;     // centre x, y, lit, morph
@@ -143,13 +145,12 @@ void main() {
   float x = gl_FragCoord.x * uColW;
   vec2 E = texelFetch(uEdge, ivec2(ip.y, 0), 0).xy;
   vec3 col = vec3(0.0);
-  /* rolling: the picture slides down and wraps, the vertical blanking
-     bar passing over where it joins */
-  float yy = y - uRoll.x;
-  yy -= floor(yy / uSize.y) * uSize.y;
-  float roll = mix(1.0, smoothstep(0.0, 34.0, yy) * smoothstep(0.0, 34.0, uSize.y - yy), uRoll.y);
-  y = yy;
   vec2 rel = vec2(x, y) - uPower.xy;
+  /* the sweeping edge lights the whole span it crossed this frame, and a
+     little beyond, so its afterglow trails as one smooth smear */
+  float lo = min(E.x, uPrevEdge), hi = max(E.x, uPrevEdge);
+  float sweep = uFlare * (x < lo - 1.0 ? 0.0 : x <= hi ? 0.55 : 0.55 * exp(-(x - hi) / 9.0) + exp(-(x - E.x) / 3.0) * step(E.x, x));
+  if (x < E.x) col = vec3(0.82, 0.9, 1.0) * sweep * 0.45;
   if (x >= E.x && abs(rel.x) <= uPower.z && abs(rel.y) <= uPower.w + 0.5 * uPitch) {
     /* where on the picture this beam lands: squeezed while powering on,
        slipped sideways while the edge travels, wobbling while degaussing */
@@ -200,7 +201,9 @@ void main() {
     col = hue(col, fall * 0.6 * (dp.x - 0.6 * dp.y) / (abs(dp.x - 0.6 * dp.y) + 50.0));
     col = hue(col, uDegauss.x * 0.4 * sin(x * 0.012 + y * 0.009 + uDegauss.y * 9.0));
     col = mix(col, vec3(0.92, 0.96, 1.0), uPower2.z) * uPower2.w;
-    col = max(col * roll, 0.0);
+    /* a sweeping edge is a line of phosphor; the afterglow trails it */
+    col += vec3(0.82, 0.9, 1.0) * sweep;
+    col = max(col, 0.0);
   }
   vec3 prev = texelFetch(uPrev, ip, 0).rgb / uStore;
   o = vec4(max(col, prev * uDecay - 0.006) * uStore, 1.0);
@@ -424,7 +427,7 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
   /* sizes: CSS px of the screen, device pixels per CSS px (capped so a
      big window stays cheap), the scanline pitch in whole device pixels */
   let W = 0, H = 0, dpr = 1, pitch = 3, lines = 0, cols = 0;
-  let rowEdge = new Float32Array(0), edges = new Float32Array(0);
+  let edges = new Float32Array(0);
   const size = () => {
     W = Math.max(1, main.clientWidth);
     H = Math.max(1, main.clientHeight);
@@ -453,10 +456,8 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     bloomB = target(bw, bh);
     drop(edgeTex);
     edgeTex = texture(lines, 1, gl.RG32F, gl.RG, gl.FLOAT, gl.NEAREST);
-    const cut = cutTarget ?? w.cut.current ?? 0;
-    rowEdge = new Float32Array(lines).fill(cut);
     /* the next frame writes the edge into the new texture */
-    cutTarget = undefined;
+    edgesReady = false;
     edges = new Float32Array(lines * 2);
   };
 
@@ -465,14 +466,10 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
   /* The edge where the screen gives way to the article, one per
      scanline (all the same; it moves in one step, under the static of a
      channel change). */
-  let cutTarget: number | undefined = undefined;
+  let cutTarget: number | undefined = undefined, edgesReady = false;
 
-  /* channel changes: when the last began, and the roll it runs */
-  let tuneN = w.tune?.current ?? 0, tuneAt = -1e9, rollFrom = 0, rollTo = 0;
-  const rollAt = (ms: number) => {
-    const t = (ms - tuneAt) / TUNE;
-    return t >= 1 ? 0 : rollFrom + (rollTo - rollFrom) * ease(Math.max(0, t));
-  };
+  /* the sweep: where the edge set off from, where it is going, when */
+  let edgeFrom = 0, edgeTo = 0, edgeAt = -1e9, edgeNow = 0, lastEdge = 0;
   size();
   cutTarget = w.cut.current ?? 0;
 
@@ -566,7 +563,7 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
 
     /* the palette */
     /* a new channel's colours are simply there; hovering blends */
-    const rgb = palette(w.palette.current ?? [], ms, still || ms - tuneAt < TUNE);
+    const rgb = palette(w.palette.current ?? [], ms, still);
     for (let j = 0; j < 256; j++) {
       rampBytes[j * 4] = rgb[j * 3]; rampBytes[j * 4 + 1] = rgb[j * 3 + 1]; rampBytes[j * 4 + 2] = rgb[j * 3 + 2]; rampBytes[j * 4 + 3] = 255;
     }
@@ -580,29 +577,31 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     const age = ms - born;
     const powering = age < LOAD;
 
-    /* a channel change begins: the roll starts from wherever the picture
-       is (a change during a change carries on) and lands a whole turn on */
-    const tn = w.tune?.current ?? 0;
-    if (tn !== tuneN) {
-      tuneN = tn;
-      if (!still && !powering) {
-        const r = ((rollAt(ms) % H) + H) % H;
-        rollFrom = r;
-        rollTo = r < H * 0.4 ? H : 2 * H;
-        tuneAt = ms;
-      }
-    }
-    const tuning = ms - tuneAt < TUNE;
-
-    /* the edge */
+    /* The edge where the screen gives way to the article sweeps to its
+       new place: opening, it settles in (fast, then gently); closing, it
+       eases out and back in. A new goal mid sweep carries on from where
+       the edge is. While powering on it simply goes there. */
     const goal = w.cut.current ?? 0;
     if (goal !== cutTarget) {
       cutTarget = goal;
-      for (let r = 0; r < lines; r++) { rowEdge[r] = goal; edges[r * 2] = goal; edges[r * 2 + 1] = 0; }
+      edgeFrom = edgeNow;
+      edgeTo = goal;
+      edgeAt = still || powering ? -1e9 : ms;
+    }
+    const cu = Math.min(1, (ms - edgeAt) / WIPE);
+    const opening = edgeTo > edgeFrom;
+    const ce = opening ? 1 - Math.pow(1 - cu, 3) : ease(cu);
+    const edge = edgeFrom + (edgeTo - edgeFrom) * ce;
+    if (edge !== edgeNow || !edgesReady) {
+      edgeNow = edge;
+      edgesReady = true;
+      for (let r = 0; r < lines; r++) { edges[r * 2] = edge; edges[r * 2 + 1] = 0; }
       gl.bindTexture(gl.TEXTURE_2D, edgeTex.t);
       gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, lines, 1, gl.RG, gl.FLOAT, edges);
     }
-    const cu = 1;
+    const flare = cu < 1 ? 0.32 * Math.pow(Math.sin(Math.PI * cu), 0.6) : 0;
+    const prevEdge = lastEdge;
+    lastEdge = edge;
 
     /* the logo's room: the strip beside the open article */
     const target = w.mark.current;
@@ -625,9 +624,7 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
         const from = morph ? between(morph, morphE) : shape;
         /* a channel change shows the new logo at once, under the static;
            otherwise (a resize, say) one outline flows into the next */
-        const changing = performance.now() - tuneAt < TUNE;
-        if (changing) lit = 1;
-        if (from && lit > 0 && !still && !changing && from.w === got.w && from.h === got.h && from !== got) {
+        if (from && lit > 0 && !still && from.w === got.w && from.h === got.h && from !== got) {
           morph = { a: from, b: got, since: performance.now() };
         } else {
           morph = null;
@@ -693,8 +690,8 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     gl.uniform1f(u.uShift, innerWidth - W);
     gl.uniform1f(u.uT, t);
     gl.uniform1f(u.uStore, store);
-    const rt = (ms - tuneAt) / TUNE;
-    gl.uniform2f(u.uRoll, ((rollAt(ms) % H) + H) % H, tuning ? Math.sin(Math.PI * Math.min(1, rt)) : 0);
+    gl.uniform1f(u.uFlare, flare);
+    gl.uniform1f(u.uPrevEdge, prevEdge);
     gl.uniform1f(u.uLight, light ? 1 : 0);
     gl.uniform1f(u.uWeight, weight);
     gl.uniform3f(u.uDecay, still ? 0 : Math.exp(-dt / 75), still ? 0 : Math.exp(-dt / 62), still ? 0 : Math.exp(-dt / 48));

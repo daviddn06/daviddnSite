@@ -11,14 +11,21 @@ type Props = {
   /* its channel number in the guide */
   channel: string;
   open: boolean;
+  /* wiped in over the article it replaces */
+  wipe?: boolean;
+  /* the article being replaced, held still underneath for the wipe */
+  leaving?: boolean;
+  /* where that one was scrolled to */
+  startAt?: number;
   onClose: () => void;
   onZoom: (src: string, alt: string) => void;
 };
 
-export function Panel({ p, channel, open, onClose, onZoom }: Props) {
+export function Panel({ p, channel, open, wipe, leaving, startAt, onClose, onZoom }: Props) {
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => { if (open) ref.current?.scrollTo({ top: 0 }); }, [open, p?.slug]);
+  useEffect(() => { if (leaving && startAt) ref.current?.scrollTo({ top: startAt }); }, [leaving, startAt]);
 
   /* videos play only while on screen */
   useEffect(() => {
@@ -69,7 +76,7 @@ export function Panel({ p, channel, open, onClose, onZoom }: Props) {
   const label = host === 'web.archive.org' ? 'Archived site' : host;
 
   return (
-    <section ref={ref} className="article" aria-hidden={!open} inert={!open} aria-label={p?.name}>
+    <section ref={ref} className={`article${wipe ? ' wipe-in' : ''}${leaving ? ' is-leaving' : ''}`} aria-hidden={!open} inert={!open} aria-label={p?.name}>
       {p && (
         <div className="article-inner" key={p.slug}>
           <header className="article-head">
