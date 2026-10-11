@@ -15,9 +15,9 @@
    (/projects/<slug>/), so Back, Forward, reload and shared links land on
    the same view. Under 1000px the guide fills the screen and an article
    slides up over it. */
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BRAND } from '../logos/brand';
-import { DEFAULT_PALETTE, DEFAULT_PALETTE_LIGHT, Field, brandAccent, brandPalette } from './Field';
+import { DEFAULT_PALETTE, DEFAULT_PALETTE_LIGHT, Field, WIPE, brandAccent, brandPalette } from './Field';
 import { preload } from './Panel';
 
 /* how long a switch between two projects takes, the article's crossfade
@@ -226,6 +226,21 @@ export default function App({ work, projects, earlier, initial }: Props) {
      along with the picture's sweep (chat/Live.tsx) */
   const chatOpen = open;
 
+  /* With nothing open and the picture back over the article, the article
+     is out of sight, so it quietly takes the project under the pointer: a
+     click then only has to slide it in, not build and lay it out in the
+     same moment. */
+  const [covered, setCovered] = useState(!initial);
+  useEffect(() => {
+    if (open) { setCovered(false); return; }
+    const t = window.setTimeout(() => setCovered(true), WIPE + 60);
+    return () => clearTimeout(t);
+  }, [open]);
+  useEffect(() => {
+    if (open || !covered || !hot || hot === shownRef.current) return;
+    const t = window.setTimeout(() => startTransition(() => setShown(hot)), 120);
+    return () => clearTimeout(t);
+  }, [hot, open, covered]);
 
   /* the open project's colour becomes the accent for every link and mark */
   const accent = open && BRAND[open] ? brandAccent(BRAND[open].color, light) : null;
