@@ -354,6 +354,7 @@ export function startScreen2d(canvas0: HTMLCanvasElement, w: Wants, opts: { quie
   const frame = (ms: number) => {
     raf = 0;
     draw(ms);
+    canvas.closest('.tube')?.setAttribute('data-drawn', '');
     if (!still && visible) raf = requestAnimationFrame(frame);
   };
   const wake = () => {

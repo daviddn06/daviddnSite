@@ -117,6 +117,38 @@ export default function App({ work, projects, earlier, initial }: Props) {
     return stop;
   }, []);
 
+  /* Nothing on the glass shows until the screen is whole: the curve is
+     on, the live chat has taken over from the server's copy and settled
+     (a refresh restores, then starts a new conversation), and the picture
+     has drawn its first frame. Until then Base.astro holds the guide, the
+     chat and the article at nothing; then they fade in once, together.
+     A failsafe shows them anyway after 1.5s. */
+  useEffect(() => {
+    const el = tube.current;
+    if (!el) return;
+    const html = document.documentElement;
+    let done = false, quiet = 0, cap = 0;
+    const go = () => {
+      if (done) return;
+      done = true;
+      requestAnimationFrame(() => requestAnimationFrame(() => html.classList.add('on')));
+    };
+    const fail = window.setTimeout(go, 1500);
+    const check = () => {
+      if (done) return;
+      const whole = el.hasAttribute('data-curved') && el.hasAttribute('data-drawn') && !!el.querySelector('.composer-input:not([disabled])');
+      if (!whole) return;
+      /* wait for the chat to stop changing, but not for long */
+      clearTimeout(quiet);
+      quiet = window.setTimeout(go, 90);
+      if (!cap) cap = window.setTimeout(go, 400);
+    };
+    const mo = new MutationObserver(check);
+    mo.observe(el, { subtree: true, childList: true, attributes: true });
+    check();
+    return () => { mo.disconnect(); clearTimeout(fail); clearTimeout(quiet); clearTimeout(cap); };
+  }, []);
+
   const show = useCallback((s: string | null, push = true) => {
     const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const narrow = matchMedia('(max-width: 999px)').matches;

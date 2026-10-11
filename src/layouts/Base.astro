@@ -46,6 +46,9 @@ const ogImage = new URL(image ?? '/og.jpg', Astro.site);
     <!-- The tube powers on in full only the first time this browser sees
          the site: after that (remembered here, and for the tab) it is
          simply on. Clearing site data brings the power on back. -->
+    <!-- the screen's own layers wait for it to be whole (App.tsx adds `on`);
+         without script they show at once -->
+    <style is:inline>html.js .stage:not(.page) > .tube > :is(.under, .over) { opacity: 0; } html.js.on .stage:not(.page) > .tube > :is(.under, .over) { opacity: 1; transition: opacity 220ms cubic-bezier(0.2, 0, 0, 1); } @media (prefers-reduced-motion: reduce) { html.js.on .stage:not(.page) > .tube > :is(.under, .over) { transition: none; } }</style>
     <script is:inline>(function () { var k = 'dd_on', h = document.documentElement, s = false; try { s = !!(localStorage.getItem(k) || sessionStorage.getItem(k)); } catch (e) {} if (s) h.classList.add('seen'); try { localStorage.setItem(k, '1'); } catch (e) {} try { sessionStorage.setItem(k, '1'); } catch (e) {} })();</script>
     <!-- screenshots come on when they have loaded instead of popping in (details.css) -->
     <script is:inline>['load', 'error'].forEach(function (t) { document.addEventListener(t, function (e) { if (e.target.tagName === 'IMG') e.target.setAttribute('data-loaded', ''); }, true); });</script>

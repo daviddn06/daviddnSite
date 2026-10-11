@@ -1022,6 +1022,8 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     drawnAt = ms;
     draw(ms);
     gov.drew();
+    /* the page waits for this before showing what is on the glass */
+    if (!glass.hasAttribute('data-drawn')) glass.setAttribute('data-drawn', '');
     if (!still && visible && onScreen) raf = requestAnimationFrame(frame);
   };
   let dead = false;
