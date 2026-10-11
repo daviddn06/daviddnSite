@@ -575,7 +575,8 @@ function Composer({ input, placeholder, onEscape, onHistory }: { input: React.Re
   const held = quota.wait > 0;
   return (<>
     <Wait wait={quota.wait} />
-    <ComposerPrimitive.Root className="composer" data-history={onHistory ? '' : undefined} data-held={held ? '' : undefined}>
+    <ComposerPrimitive.Root className="composer" data-history={onHistory ? '' : undefined} data-held={held ? '' : undefined}
+      onPointerDown={(e) => { if (e.target === e.currentTarget) { e.preventDefault(); input.current?.focus(); } }}>
       {/* on phones, past chats are a tap away from the bar */}
       {onHistory && (
         <button type="button" className="composer-history" aria-label="History" onClick={onHistory}>

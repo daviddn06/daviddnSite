@@ -1058,10 +1058,19 @@
 /* Touch screens: every control at least 32px to the finger, the send
    button 44px; the hit area grows where the drawing stays small */
 @media (pointer: coarse) {
+  /* 44px to the finger without growing the drawing: rows grow a little,
+     small controls reach out with an invisible edge */
+  .hist-new { min-height: 44px; }
+  .hist-row { padding-top: 12px; padding-bottom: 12px; }
+  .hist-foot { min-height: 44px; }
+  .hist-act { height: 44px; }
+  .chat-head { position: relative; z-index: 2; }
+  .hist-act, .model-pill, .composer-history, .chat-x, .chat-ctl { position: relative; }
+  .hist-act::after, .model-pill::after, .composer-history::after, .chat-x::after, .chat-ctl::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%); }
+  .composer-input { min-height: 40px; padding-top: 8px; padding-bottom: 8px; }
   .cite { position: relative; }
   .cite::after { content: ''; position: absolute; inset: -8px -6px; }
   .source { min-height: 34px; }
-  .hist-act { height: 32px; }
   .hist-del { width: 32px; height: 32px; margin-top: -16px; }
   .chat-ctl, .chat-tool { min-height: 36px; }
   .att-act { min-height: 44px; }
