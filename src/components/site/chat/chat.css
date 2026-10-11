@@ -775,32 +775,45 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  margin: 24px 2px 0;
+  /* a section of the guide, spaced like Work, Projects and Earlier */
+  margin-top: 14px;
   color: var(--ink);
 }
 /* the live list takes the server's copy's place the moment it arrives */
 #crt-history-slot:has(.crt-history:not(.hist-static)) > .hist-static { display: none; }
-/* With chats, a tray: the label, the rows and Clear history. With none,
-   the tray's edge, the label and everything under New chat fold away
-   (a grid row from 1fr to 0fr), so the links under the guide glide;
-   they grow back when a chat is saved. */
-.hist-tray {
-  flex: 0 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 0;
-  border-radius: 12px;
-  background: transparent;
-  box-shadow: inset 0 0 0 1px transparent;
-  transition: padding var(--t-medium) var(--ease-in), background-color var(--t-small) var(--ease-in), box-shadow var(--t-small) var(--ease-in);
+.hist-tray { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; }
+/* New chat, a row on the channels' grid: the mark's column, the name's
+   column, the shortcut at the end on hover; the same height and radius
+   as a channel, a soft fill rather than its outline */
+.hist-new {
+  flex: none;
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  width: 100%;
+  min-height: 32px;
+  padding: 0 10px 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  text-shadow: inherit;
+  cursor: pointer;
+  transition: background-color var(--quick) var(--ease), color var(--quick) var(--ease);
 }
-.crt-history[data-on] .hist-tray {
-  padding: 8px 4px 4px;
-  background: color-mix(in srgb, var(--ink) 3.5%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 9%, transparent);
-  transition: padding var(--t-medium) var(--ease-out), background-color var(--t-small) var(--ease-out), box-shadow var(--t-small) var(--ease-out);
+.hist-new-mark { display: inline-flex; width: 17px; height: 17px; color: color-mix(in srgb, var(--ink) 80%, transparent); transition: color var(--quick) var(--ease); }
+.hist-new-key { font: inherit; font-size: 11px; color: var(--chat-quiet); letter-spacing: 0.04em; opacity: 0; transition: opacity var(--quick) var(--ease); }
+@media (hover: hover) {
+  .hist-new:hover { background: color-mix(in srgb, var(--ink) 7%, transparent); }
+  .hist-new:hover .hist-new-mark { color: var(--chat-link); }
+  .hist-new:hover .hist-new-key { opacity: 1; }
 }
+.hist-new:focus-visible { outline: 1.5px solid var(--link); outline-offset: -1px; }
+.hist-new:focus-visible .hist-new-key { opacity: 1; }
+/* the conversations and Clear history grow in under it, and fold away
+   (a grid row from 1fr to 0fr) when there are none */
 .hist-fold {
   flex: 0 1 auto;
   min-height: 0;
@@ -815,45 +828,10 @@
   transition: grid-template-rows var(--t-medium) var(--ease-out), opacity var(--t-small) var(--ease-out);
 }
 .hist-fold-in { min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
-.crt-history .hist-label { transition: opacity var(--t-small) var(--ease-out); }
-.crt-history:not([data-on]) .hist-label { opacity: 0; transition-timing-function: var(--ease-in); }
-.crt-history:not([data-on]) .hist-head { padding-bottom: 0; }
-.hist-head { transition: padding var(--t-medium) var(--ease); }
 /* the slot in the guide eases its floor with the block */
 #crt-history-slot { transition: min-height var(--t-medium) var(--ease-in); }
 /* clearing everything: the rows fade first, one after another */
 .crt-history[data-fading] .hist-list li { opacity: 0; transition: opacity var(--t-micro) var(--ease-in) calc(var(--n, 0) * 25ms); }
-.hist-head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 4px 6px 8px; }
-.hist-label {
-  color: var(--chat-quiet);
-  font-size: 10.5px;
-  line-height: 16px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-/* New chat, a small button */
-.hist-new {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 22px;
-  padding: 0 9px 0 8px;
-  border: 0;
-  border-radius: 999px;
-  background: none;
-  box-shadow: inset 0 0 0 1px var(--chat-rule);
-  color: var(--ink);
-  font: inherit;
-  font-size: 12px;
-  line-height: 1;
-  text-shadow: inherit;
-  cursor: pointer;
-  transition: box-shadow var(--quick) var(--ease), color var(--quick) var(--ease);
-}
-@media (hover: hover) { .hist-new:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 75%, transparent); color: var(--chat-link); } }
-.hist-new:focus-visible { outline: 1.5px solid var(--link); outline-offset: 1px; }
-.hist-new[aria-current] { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--chat-link) 70%, transparent); color: var(--chat-link); }
 /* shrinks with the guide down to two rows, then scrolls */
 .hist-list {
   flex: 0 1 auto;
@@ -872,25 +850,24 @@
   position: relative;
   flex: none;
   display: grid;
-  grid-template-columns: 12px 1fr auto;
+  grid-template-columns: 28px 1fr auto;
   align-items: center;
-  gap: 8px;
   width: 100%;
-  min-height: 26px;
-  padding: 0 8px;
+  min-height: 28px;
+  padding: 0 10px 0 12px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 9px;
   background: none;
-  color: color-mix(in srgb, var(--ink) 78%, transparent);
+  color: color-mix(in srgb, var(--ink) 82%, transparent);
   font: inherit;
-  font-size: 13px;
-  line-height: 18px;
+  font-size: 14px;
+  line-height: 20px;
   text-align: left;
   text-shadow: inherit;
   cursor: pointer;
   transition: background-color var(--quick) var(--ease), color var(--quick) var(--ease);
 }
-.hist-glyph { color: var(--chat-quiet); opacity: 0.8; }
+.hist-glyph { width: 15px; height: 15px; margin-left: 1px; color: var(--chat-quiet); opacity: 0.8; }
 .hist-title { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .hist-when { color: var(--chat-quiet); font-size: 11.5px; font-variant-numeric: tabular-nums; opacity: 0.85; }
 @media (hover: hover) { .hist-row:hover { background: color-mix(in srgb, var(--ink) 7%, transparent); color: var(--ink); } }
@@ -908,7 +885,7 @@
 .hist-list li.is-going { grid-template-rows: 0fr; opacity: 0; pointer-events: none; }
 .hist-del {
   position: absolute;
-  right: 4px;
+  right: 6px;
   top: 50%;
   display: grid;
   place-items: center;
@@ -929,7 +906,7 @@
 @media (hover: hover) { .hist-del:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 10%, transparent); } }
 .hist-del:focus-visible { opacity: 1; outline: 1.5px solid var(--link); outline-offset: -1px; }
 @media (hover: none) { .hist-del { opacity: 0.8; } .hist-when { visibility: hidden; } }
-.hist-foot { flex: none; display: flex; align-items: center; gap: 4px; min-height: 28px; padding: 2px 4px 0 8px; font-size: 12px; }
+.hist-foot { flex: none; display: flex; align-items: center; gap: 4px; min-height: 28px; padding: 2px 10px 0 40px; font-size: 12px; }
 .hist-foot[data-asking] { flex-wrap: wrap; padding-top: 6px; }
 .hist-ask { flex: 1 0 100%; min-width: 0; line-height: 16px; padding-bottom: 4px; color: var(--chat-quiet); animation: chat-fade var(--t-micro) var(--ease) backwards; }
 .hist-act {

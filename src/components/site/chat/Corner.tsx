@@ -33,6 +33,8 @@ const GONE = 220;
 export function Corner({ chats, current, fresh, onNew, onPick, onRemove }: Props) {
   const [slot, setSlot] = useState<HTMLElement | null>(null);
   useEffect(() => { setSlot(document.getElementById('crt-history-slot')); }, []);
+  /* once drawn, the server's copy in the guide can go (App.tsx) */
+  useEffect(() => { if (slot) dispatchEvent(new Event('dd-history-live')); }, [slot]);
   const nav = useRef<HTMLElement>(null);
   /* with chats: the label, the rows and Clear history; with none, only
      New chat stays */
@@ -87,12 +89,10 @@ export function Corner({ chats, current, fresh, onNew, onPick, onRemove }: Props
 
   if (!slot) return null;
   return createPortal(
-    <nav ref={nav} className="crt-history" data-on={on ? '' : undefined} data-fading={fading || !on ? '' : undefined} aria-label="Chat history" onKeyDown={onKey}>
+    <nav ref={nav} className="crt-history" data-on={on ? '' : undefined} data-fading={fading || !on ? '' : undefined} aria-labelledby="h-chats" onKeyDown={onKey}>
       <div className="hist-tray">
-        <div className="hist-head">
-          <h2 className="hist-label" aria-hidden={!on}>History</h2>
-          <NewChat fresh={fresh} onClick={onNew} />
-        </div>
+        <h2 id="h-chats" className="label">Chats</h2>
+        <NewChat onClick={onNew} />
         {/* the rows and Clear history fold away when there are none */}
         <div className="hist-fold" inert={!on || undefined}>
           <div className="hist-fold-in">
@@ -128,11 +128,17 @@ export function Corner({ chats, current, fresh, onNew, onPick, onRemove }: Props
   );
 }
 
-function NewChat({ fresh, onClick }: { fresh: boolean; onClick?: () => void }) {
+/* a row on the guide's grid: the mark's column, the name's column, and
+   the shortcut at the end on hover */
+function NewChat({ onClick }: { onClick?: () => void }) {
+  const mac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
   return (
-    <button type="button" className="hist-new" aria-current={fresh ? 'true' : undefined} onClick={onClick}>
-      <svg viewBox="0 0 12 12" width="9" height="9" aria-hidden="true"><path d="M6 1.5v9M1.5 6h9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
-      New chat
+    <button type="button" className="hist-new" onClick={onClick} aria-keyshortcuts={mac ? 'Meta+K' : 'Control+K'}>
+      <span className="hist-new-mark" aria-hidden="true">
+        <svg viewBox="0 0 18 18" width="17" height="17"><path d="M3 4.5A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5v6.5a1.5 1.5 0 0 1-1.5 1.5H8l-3.5 3v-3a1.5 1.5 0 0 1-1.5-1.5z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /><path d="M9 5.6v4.3M6.85 7.75h4.3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
+      </span>
+      <span className="hist-new-name">New chat</span>
+      <kbd className="hist-new-key" aria-hidden="true">{mac ? '⌘K' : 'Ctrl K'}</kbd>
     </button>
   );
 }
@@ -143,12 +149,10 @@ function NewChat({ fresh, onClick }: { fresh: boolean; onClick?: () => void }) {
    moment it arrives (chat.css); a click before then is passed on. */
 export function HistoryShell() {
   return (
-    <nav className="crt-history hist-static" aria-label="Chat history">
+    <nav className="crt-history hist-static" aria-labelledby="h-chats-ssr">
       <div className="hist-tray">
-        <div className="hist-head">
-          <h2 className="hist-label" aria-hidden="true">History</h2>
-          <NewChat fresh onClick={() => dispatchEvent(new Event('dd-new-chat'))} />
-        </div>
+        <h2 id="h-chats-ssr" className="label">Chats</h2>
+        <NewChat onClick={() => dispatchEvent(new Event('dd-new-chat'))} />
       </div>
     </nav>
   );

@@ -106,6 +106,14 @@ export default function App({ work, projects, earlier, initial }: Props) {
   const shownRef = useRef(shown);
   shownRef.current = shown;
   const [ready, setReady] = useState(false);
+  /* the guide's chat history: the server's copy until the live one is drawn
+     (chat/Corner.tsx says so), then only the live one */
+  const [historyLive, setHistoryLive] = useState(false);
+  useEffect(() => {
+    const on = () => setHistoryLive(true);
+    addEventListener('dd-history-live', on);
+    return () => removeEventListener('dd-history-live', on);
+  }, []);
   useEffect(() => { requestAnimationFrame(() => setReady(true)); }, []);
   /* everything on the screen bends with the glass (warp.ts) */
   const tube = useRef<HTMLDivElement>(null);
@@ -401,7 +409,7 @@ export default function App({ work, projects, earlier, initial }: Props) {
             </nav>
 
             {/* the chat's history, drawn here by chat/Corner.tsx */}
-            <div id="crt-history-slot"><HistoryShell /></div>
+            <div id="crt-history-slot">{!historyLive && <HistoryShell />}</div>
 
             <ul className="links">
               {LINKS.map((l) => (
