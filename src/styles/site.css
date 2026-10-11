@@ -110,6 +110,11 @@ button { font: inherit; color: inherit; }
    into it. They bend once the curve is ready; without script they sit
    flat. */
 .under, .over { position: absolute; inset: 0; pointer-events: none; }
+/* WebKit places a filter's coordinates at the layer's visible overflow,
+   not its box, so anything poking past the edge (a glow, a shadow) would
+   shift the whole curve; clipping each layer to its own box keeps the
+   bend registered with the picture in every engine */
+.under, .over { overflow: hidden; }
 /* the layers pass clicks through; the article itself takes them, and its scroll */
 .under .article { pointer-events: auto; }
 .under { z-index: 0; }

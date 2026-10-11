@@ -40,7 +40,7 @@ export function curve(tube: HTMLElement): () => void {
     svg.setAttribute('width', '0');
     svg.setAttribute('height', '0');
     svg.style.position = 'absolute';
-    svg.innerHTML = `<defs><filter id="crt-warp" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB" x="0" y="0" width="1" height="1">
+    svg.innerHTML = `<defs><filter id="crt-warp" filterUnits="objectBoundingBox" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB" x="0" y="0" width="1" height="1">
       <feImage id="crt-warp-map" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="map"/>
       <feDisplacementMap id="crt-warp-move" in="SourceGraphic" in2="map" scale="0" xChannelSelector="R" yChannelSelector="G" result="bent"/>
       <feGaussianBlur in="bent" stdDeviation="0.3" result="soft"/>
@@ -51,7 +51,6 @@ export function curve(tube: HTMLElement): () => void {
     </filter></defs>`;
     document.body.appendChild(svg);
   }
-  const filter = svg.querySelector('filter')!;
   const map = svg.querySelector('#crt-warp-map')!;
   const move = svg.querySelector('#crt-warp-move')!;
 
@@ -82,10 +81,10 @@ export function curve(tube: HTMLElement): () => void {
       }
     }
     x.putImageData(img, 0, 0);
-    for (const [k, v] of [['width', w], ['height', h]] as const) {
-      filter.setAttribute(k, String(v));
-      map.setAttribute(k, String(v));
-    }
+    /* the filter's region is the layer's own box (in its bounding box
+       units: WebKit misplaces a region given in user space now and then);
+       the map inside it is laid out in CSS pixels */
+    for (const [k, v] of [['width', w], ['height', h]] as const) map.setAttribute(k, String(v));
     map.setAttribute('href', c.toDataURL('image/png'));
     move.setAttribute('scale', String(scale));
   };
