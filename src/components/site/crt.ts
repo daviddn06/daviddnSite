@@ -587,6 +587,14 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
   const sm = (a: number, b: number, x: number) => { const u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
 
   let raf = 0, last = performance.now(), t = Math.random() * 100, born = still ? -1e9 : -1, frameNo = 0, cur = 0;
+  /* With a project open the side over the article is drawn black and
+     clear once its afterglow has gone out. `glow` bounds how bright the
+     phosphor there can still be (it fades no slower than red does, less
+     a little each frame, with room for rounding); after two frames at
+     zero both phosphor buffers hold black there, and both passes skip it.
+     The canvas starts each frame clear, so the skipped part is exactly
+     what the tube would have drawn. */
+  let glow = 32, darkFor = 0;
   const rampBytes = new Uint8Array(1024);
   const bind = (unit: number, tex: Tex) => {
     gl.activeTexture(gl.TEXTURE0 + unit);
@@ -642,6 +650,10 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     const flare = cu < 1 ? 0.32 * Math.pow(Math.sin(Math.PI * cu), 0.6) : 0;
     const prevEdge = lastEdge;
     lastEdge = edge;
+    const lively = flare > 0 || edge !== prevEdge || powering;
+    const skip = edge > 0.5 && darkFor >= 2 && !lively;
+    glow = lively ? 32 : glow * (still ? 0 : Math.exp(-dt / 75)) * 1.002 - 0.0015;
+    darkFor = glow <= 0 ? darkFor + 1 : 0;
 
     /* the logo's room: the strip beside the open article */
     const target = w.mark.current;
@@ -714,6 +726,12 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     cur = 1 - cur;
     gl.bindVertexArray(vao);
     gl.disable(gl.BLEND);
+    /* the signal is one texel per CSS px across; left of the edge it is black */
+    if (skip) {
+      const sx = Math.max(0, Math.floor(edge / (W / cols)) - 4);
+      gl.enable(gl.SCISSOR_TEST);
+      gl.scissor(sx, 0, cols - sx, lines);
+    }
     gl.bindFramebuffer(gl.FRAMEBUFFER, next.fb);
     gl.viewport(0, 0, cols, lines);
     gl.useProgram(signal.p);
@@ -746,6 +764,7 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
     /* 2 and 3. halation */
+    gl.disable(gl.SCISSOR_TEST);
     gl.bindFramebuffer(gl.FRAMEBUFFER, bloomA.fb);
     gl.viewport(0, 0, bloomA.w, bloomA.h);
     gl.useProgram(bright.p);
@@ -770,6 +789,14 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     /* 4. the tube */
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, canvas.width, canvas.height);
+    if (skip) {
+      /* a pixel of the tube sees the signal and its halation no more
+         than about 40px away, and the barrel moves it sideways by at
+         most CURVE times half the width */
+      const sx = Math.max(0, Math.floor((edge - 64 - CURVE * W / 2 - 2) * (canvas.width / W)));
+      gl.enable(gl.SCISSOR_TEST);
+      gl.scissor(sx, 0, canvas.width - sx, canvas.height);
+    }
     gl.useProgram(tube.p);
     u = tube.u;
     bind(0, next); bind(1, bloomA);
@@ -802,6 +829,7 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     u3(u.uPanel, sc[0], sc[1], sc[2]);
     sendCalm(tube);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.disable(gl.SCISSOR_TEST);
   };
 
   /* runs while visible; reduced motion draws on demand only */
