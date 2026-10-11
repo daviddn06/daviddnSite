@@ -285,7 +285,10 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
               </ThreadPrimitive.Messages>
             </ThreadPrimitive.Viewport>
             <div className="chat-hello" aria-hidden={!empty}>
-              <div><h2 className="chat-title" key={headline}>{headline}</h2></div>
+              <div>
+                <p className="msg-from chat-from">David <span className="ai-tag">AI</span></p>
+                <h2 className="chat-title" key={headline}>{headline}</h2>
+              </div>
             </div>
             {menuShown && <History chats={ordered} current={cid} on={menu} onPick={reopen} onClose={closeMenu} />}
           </div>
@@ -391,10 +394,14 @@ function UserMessage() {
   );
 }
 
+/* David's side: his first reply in a conversation carries his name and
+   an honest AI tag */
 function AssistantMessage() {
   const fresh = useFresh();
+  const first = useAuiState((s) => s.thread.messages.find((m) => m.role === 'assistant')?.id === s.message.id);
   return (
     <MessagePrimitive.Root className={`msg msg-bot${fresh ? ' is-new' : ''}`}>
+      {first && <p className="msg-from">David <span className="ai-tag">AI</span></p>}
       <MessagePrimitive.Parts>
         {({ part }) => {
           if (part.type === 'text') return <Text />;
@@ -417,10 +424,12 @@ function Card({ name, args }: { name: string; args: Record<string, unknown> }) {
   return <div className={`msg-part${fresh ? ' is-new' : ''}`}><ToolCard toolName={name} args={args} /></div>;
 }
 
-/* The answer types out at an even pace behind the beam, however the
-   pieces arrive, and is drawn the same way while typing and after, so
-   nothing reflows when it finishes: links and addresses are links and
-   **bold** is bold as soon as they are complete. */
+/* A text from David. Before the first words it is a bubble with the
+   three dots of someone typing; then the words stream into the same
+   bubble at an even pace however the pieces arrive, drawn the same way
+   while typing and after, so nothing reflows when it finishes: links and
+   addresses are links and **bold** is bold as soon as they are
+   complete. */
 const NONE = { type: 'text', text: '', status: { type: 'complete' } } as const;
 function Text() {
   const fresh = useFresh();
@@ -436,10 +445,15 @@ function Text() {
     e.preventDefault();
     site.show(slug);
   };
+  const shown = tidy(text, typing);
+  if (!shown) {
+    return typing || part?.status.type === 'running'
+      ? <p className="msg-text bubble is-typing" aria-label="David is typing"><span className="dots" aria-hidden="true"><i /><i /><i /></span></p>
+      : null;
+  }
   return (
-    <p className="msg-text" onClick={onClick}>
-      {rich(tidy(text, typing))}
-      {fresh && <span className="cursor" data-off={typing ? undefined : ''} aria-hidden="true" />}
+    <p className="msg-text bubble" onClick={onClick}>
+      {rich(shown)}
     </p>
   );
 }
