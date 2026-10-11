@@ -14,7 +14,7 @@
    (/projects/<slug>/), so Back, Forward, reload and shared links land on
    the same view. Under 1000px the guide fills the screen and an article
    slides up over it. */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BRAND } from '../logos/brand';
 import { DEFAULT_PALETTE, DEFAULT_PALETTE_LIGHT, Field, WIPE, brandAccent, brandPalette } from './Field';
 import { curve } from './warp';
@@ -36,17 +36,25 @@ const slugOf = (path: string) => path.match(/^\/projects\/([^/]+)\/?$/)?.[1] ?? 
 
 /* the time in the guide's header strip, like a set's on screen clock;
    blank until the page runs so the server and the browser agree */
-function Clock() {
+const Clock = memo(function Clock() {
   const [now, setNow] = useState('');
   useEffect(() => {
     const fmt = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
-    const tick = () => setNow(fmt.format(new Date()));
+    /* once a minute, as the minute turns, and again on coming back to the tab */
+    let id = 0;
+    const tick = () => {
+      const d = new Date();
+      setNow(fmt.format(d));
+      clearTimeout(id);
+      id = window.setTimeout(tick, 60000 - (d.getSeconds() * 1000 + d.getMilliseconds()) + 50);
+    };
     tick();
-    const id = window.setInterval(tick, 15000);
-    return () => clearInterval(id);
+    const onVis = () => { if (!document.hidden) tick(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { clearTimeout(id); document.removeEventListener('visibilitychange', onVis); };
   }, []);
   return <span className="osd-clock" aria-hidden="true">{now}</span>;
-}
+});
 
 export default function App({ work, projects, earlier, initial }: Props) {
   const all = useMemo(() => [...work, ...projects, ...earlier], [work, projects, earlier]);
