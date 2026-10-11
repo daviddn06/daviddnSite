@@ -278,10 +278,15 @@
 /* Citations (cite.tsx): a numbered chip after a claim, tinted with the
    project's colour, and the reply's sources lined up under it */
 .cite {
-  display: inline-grid;
-  place-items: center;
-  min-width: 17px;
-  height: 17px;
+  /* a superscript: its number sits on the text's baseline, then the chip is lifted
+     by position so the line's height never changes */
+  position: relative;
+  top: -0.42em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
   margin: 0 1px 0 3px;
   padding: 0 4px;
   border: 0;
@@ -294,7 +299,7 @@
   line-height: 1;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  vertical-align: 0.42em;
+  vertical-align: baseline;
   text-shadow: none;
   cursor: pointer;
   transition: box-shadow var(--chat-quick) var(--ease), background-color var(--chat-quick) var(--ease);
