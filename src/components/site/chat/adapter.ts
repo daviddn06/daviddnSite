@@ -43,6 +43,22 @@ type Part =
 const textOf = (m: ThreadMessage) =>
   m.content.map((p) => (p.type === 'text' ? p.text : '')).join('').trim();
 
+/* what a reply put on screen, so the next turn knows a card already answered,
+   even when the reply had no words of its own */
+const SHOWN: Record<string, (a: Record<string, any>) => string> = {
+  show_timeline: () => 'the timeline card',
+  show_contact: () => 'the contact card',
+  show_resume: () => 'the resume card',
+  show_projects: (a) => `project cards for ${(a.slugs || []).join(', ')}`,
+  open_project: (a) => `the ${a.slug} project, opened beside the chat`,
+  close_project: () => 'the home screen, project closed',
+};
+const historyOf = (m: ThreadMessage) => {
+  const text = textOf(m);
+  const shown = m.content.flatMap((p) => (p.type === 'tool-call' && SHOWN[p.toolName] ? [SHOWN[p.toolName](p.args || {})] : []));
+  return shown.length ? `${text}${text ? '\n\n' : ''}(on screen: ${shown.join('; ')})` : text;
+};
+
 const visitor = () => {
   try { return localStorage.getItem('dd_v'); } catch { return null; }
 };
@@ -68,7 +84,7 @@ export const chatAdapter = (actions: Actions): ChatModelAdapter => ({
   async *run({ messages, abortSignal }) {
     const history = messages
       .filter((m) => m.role === 'user' || m.role === 'assistant')
-      .map((m) => ({ role: m.role, content: m.role === 'user' ? textOf(m).slice(0, MAX_CHARS) : textOf(m) }))
+      .map((m) => ({ role: m.role, content: m.role === 'user' ? textOf(m).slice(0, MAX_CHARS) : historyOf(m) }))
       .filter((m) => m.content)
       .slice(-MAX_TURNS);
 
