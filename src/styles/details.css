@@ -146,7 +146,7 @@ html:not(.js) .field {
   font-size: 14px;
 }
 /* the text comes on with the picture, a beat after it */
-.doc-col { animation: page-in var(--slow) var(--ease) 120ms both; }
+.doc-col { animation: page-in var(--slow) var(--ease) 120ms backwards; }
 @keyframes page-on { to { opacity: 1; } }
 @keyframes page-in { from { opacity: 0; transform: translateY(4px); filter: brightness(1.6); } }
 

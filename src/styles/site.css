@@ -279,7 +279,7 @@ button { font: inherit; color: inherit; }
 
 /* Opening, the article eases in behind the picture's sweeping edge;
    closing, it eases back as the picture covers it. */
-.stage.is-open .article { animation: slide-in var(--sweep) var(--ease) both; }
+.stage.is-open .article { animation: slide-in var(--sweep) var(--ease) backwards; }
 .stage:not(.is-open) .article { animation: slide-out var(--sweep) var(--ease-io) both; }
 @keyframes slide-in { from { transform: translateX(-36px); } }
 @keyframes slide-out { to { transform: translateX(-36px); } }
@@ -435,11 +435,11 @@ button { font: inherit; color: inherit; }
 
 /* Text on the glass comes on with the picture, as the tube warms up,
    rather than floating on a dark screen before it */
-.osd, .chat { animation: warm 240ms steps(3, end) 680ms both; }
+.osd, .chat { animation: warm 240ms steps(3, end) 680ms backwards; }
 /* the chat fades in wherever it moves to (the strip, or back to the
    middle), each place its own animation so a move restarts it */
-.crt-slot[data-mode="center"] { animation: chat-here var(--calm) var(--ease) both; }
-.crt-slot[data-mode="dock"] { animation: chat-there var(--calm) var(--ease) both; }
+.crt-slot[data-mode="center"] { animation: chat-here var(--calm) var(--ease) backwards; }
+.crt-slot[data-mode="dock"] { animation: chat-there var(--calm) var(--ease) backwards; }
 @keyframes chat-here { from { opacity: 0; } }
 @keyframes chat-there { from { opacity: 0; } }
 @keyframes warm { from { opacity: 0; } 60% { opacity: 0.55; } }
