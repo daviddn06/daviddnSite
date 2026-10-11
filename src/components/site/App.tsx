@@ -92,6 +92,14 @@ export default function App({ work, projects, earlier, initial }: Props) {
   /* the article in front; a switch hands it to `outgoing` as it is and
      starts a new one */
   const [slot, setSlot] = useState(0);
+  /* with a project open, the article for the project under the pointer,
+     built ahead out of sight (its own key, so a click only brings it to
+     the front: nothing to build or lay out in that moment) */
+  const [pre, setPre] = useState<{ slug: string; key: number } | null>(null);
+  const preRef = useRef(pre);
+  preRef.current = pre;
+  const slotRef = useRef(slot);
+  slotRef.current = slot;
   const openRef = useRef(open);
   openRef.current = open;
   const shownRef = useRef(shown);
@@ -118,15 +126,19 @@ export default function App({ work, projects, earlier, initial }: Props) {
     if (s) {
       if (was && shownRef.current && !still && !narrow) {
         /* the content on screen now, as it looks this instant */
-        const art = document.querySelector<HTMLElement>('.article:not(.is-leaving)');
+        const art = document.querySelector<HTMLElement>('.article:not(.is-leaving):not(.is-pre)');
         const inner = art?.querySelector<HTMLElement>('.article-inner');
         const from = inner ? +getComputedStyle(inner).opacity : 1;
-        const gone = { slug: shownRef.current, id: outId.current, at: art?.scrollTop ?? 0, from };
-        setSlot(++outId.current);
+        const gone = { slug: shownRef.current, id: slotRef.current, at: art?.scrollTop ?? 0, from };
+        setSlot(preRef.current?.slug === s ? preRef.current.key : ++outId.current);
         setOutgoing((list) => [...list.filter((o) => o.slug !== s), gone].slice(-3));
         clearTimeout(swap.current);
         swap.current = window.setTimeout(() => setOutgoing([]), SWITCH + 60);
-      } else setOutgoing([]);
+      } else {
+        setOutgoing([]);
+        if (preRef.current?.slug === s) setSlot(preRef.current.key);
+      }
+      setPre(null);
       setShown(s);
     }
     const p = find(s);
@@ -220,7 +232,7 @@ export default function App({ work, projects, earlier, initial }: Props) {
     /* the article in front (they come and go as projects switch, so it is
        looked up each time; they all share one size) */
     const sync = () => {
-      const el = box.querySelector<HTMLElement>('.article:not(.is-leaving)');
+      const el = box.querySelector<HTMLElement>('.article:not(.is-leaving):not(.is-pre)');
       if (el) setCol(narrow.matches ? 0 : el.offsetLeft + el.offsetWidth);
     };
     sync();
@@ -249,6 +261,12 @@ export default function App({ work, projects, earlier, initial }: Props) {
     const t = window.setTimeout(() => startTransition(() => setShown(hot)), 120);
     return () => clearTimeout(t);
   }, [hot, open, covered]);
+  useEffect(() => {
+    if (!open) { setPre(null); return; }
+    if (!hot || hot === open || hot === preRef.current?.slug) return;
+    const t = window.setTimeout(() => startTransition(() => setPre({ slug: hot, key: ++outId.current })), 120);
+    return () => clearTimeout(t);
+  }, [hot, open]);
 
   /* the open project's colour becomes the accent for every link and mark */
   const accent = open && BRAND[open] ? brandAccent(BRAND[open].color, light) : null;
@@ -275,6 +293,9 @@ export default function App({ work, projects, earlier, initial }: Props) {
             scrolled) rather than a copy built again in the click; one list,
             so the key carries it from the front to the fading copies */}
         {[
+          pre && pre.slug !== shown && (
+            <Panel key={`a${pre.key}`} p={find(pre.slug) ?? null} open={false} pre onClose={close} onZoom={onZoom} />
+          ),
           <Panel
             key={`a${slot}`}
             p={find(shown) ?? null}

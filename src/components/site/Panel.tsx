@@ -16,6 +16,8 @@ type Props = {
   swapping?: boolean;
   /* a copy of an article being replaced, fading out over the new one */
   leaving?: boolean;
+  /* built ahead, out of sight, for the project under the pointer */
+  pre?: boolean;
   /* where that one was scrolled to, and how visible it was */
   startAt?: number;
   from?: number;
@@ -25,7 +27,7 @@ type Props = {
 
 /* drawn again only when its own props change, not on every hover or step
    of the slide around it */
-export const Panel = memo(function Panel({ p, open, swapping, leaving, startAt, from, onClose, onZoom }: Props) {
+export const Panel = memo(function Panel({ p, open, swapping, leaving, pre, startAt, from, onClose, onZoom }: Props) {
   const ref = useRef<HTMLElement>(null);
   /* where the article is scrolled to, kept as it scrolls, so a scroll it
      is already at need not be asked of the browser (which would lay out a
@@ -71,8 +73,8 @@ export const Panel = memo(function Panel({ p, open, swapping, leaving, startAt, 
   }, [p?.slug, open]);
 
   return (
-    <section ref={ref} className={`article${swapping ? ' swap-in' : ''}${leaving ? ' is-leaving' : ''}`}
-      style={leaving ? ({ '--from': from ?? 1 } as CSSProperties) : undefined} aria-hidden={!open} inert={!open} aria-label={p?.name}>
+    <section ref={ref} className={`article${swapping ? ' swap-in' : ''}${leaving ? ' is-leaving' : ''}${pre ? ' is-pre' : ''}`}
+      style={leaving ? ({ '--from': from ?? 1 } as CSSProperties) : pre ? { visibility: 'hidden' } : undefined} aria-hidden={!open} inert={!open} aria-label={p?.name}>
       {p && <Body key={p.slug} p={p} onClose={onClose} onZoom={onZoom} />}
     </section>
   );

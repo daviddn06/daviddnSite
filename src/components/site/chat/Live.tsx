@@ -59,7 +59,7 @@ const useFresh = () => {
    article, how far down it they are, and the kind of screen */
 const readContext = (open: string | null): Context => {
   const viewport = matchMedia(NARROW).matches ? 'phone' : 'desktop';
-  const art = open ? document.querySelector<HTMLElement>('.article') : null;
+  const art = open ? document.querySelector<HTMLElement>('.article:not(.is-pre)') : null;
   if (!art) return { section: '', scrolled: 0, viewport };
   const max = art.scrollHeight - art.clientHeight;
   const scrolled = max > 0 ? Math.max(0, Math.min(100, Math.round((art.scrollTop / max) * 100))) : 0;
