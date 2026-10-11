@@ -127,6 +127,7 @@
   cursor: pointer;
   transition: box-shadow var(--chat-quick) var(--ease), color var(--chat-quick) var(--ease);
 }
+.chat-ctl:not([data-on]) { visibility: hidden; }
 .chat-ctl kbd {
   font: inherit;
   font-size: 11px;
@@ -956,6 +957,31 @@
   cursor: pointer;
 }
 .composer-history:focus-visible { outline: 1.5px solid var(--link); outline-offset: 1px; }
+
+/* the phone's History: a delete on each row, Clear history at its foot */
+.chat-menu li { position: relative; display: grid; grid-template-rows: 1fr; transition: grid-template-rows var(--t-small) var(--ease), opacity var(--t-micro) var(--ease); }
+.chat-menu li > .chat-row { min-height: 0; overflow: hidden; padding-right: 44px; }
+.chat-menu li.is-going { grid-template-rows: 0fr; opacity: 0; }
+.chat-row-del {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-top: -18px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: var(--chat-quiet);
+  cursor: pointer;
+}
+.chat-row-del:focus-visible { outline: 1.5px solid var(--link); outline-offset: -2px; }
+.chat-menu-foot { padding: 6px 12px 0; }
+.chat-menu-foot .hist-act:first-of-type { margin-left: -8px; }
+@media (pointer: coarse) { .chat-menu .chat-row { min-height: 44px; } }
 
 /* Docked beside an open article: a real conversation panel filling the
    room right of the article, under the project's logo (crt.ts keeps the

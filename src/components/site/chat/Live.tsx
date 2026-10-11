@@ -270,6 +270,8 @@ function Screen({ open, all, headline, cid, named, swap, switchTo }: ScreenProps
   }, [mode, pinned, running, menu]);
 
   const openMenu = () => { setChats(listChats()); setMenu(true); };
+  /* out of this browser only; the chat on screen among them starts over */
+  const removeChat = (ids: string[] | 'all') => { removeChats(ids); if (!empty && (ids === 'all' || ids.includes(cid))) switchTo(null); };
   /* ends the conversation on screen (it stays in History) and goes back
      to the empty chat */
   const closeChat = () => { setMenu(false); setPinned(false); if (!empty) switchTo(null); input.current?.blur(); };
@@ -419,7 +421,7 @@ function Screen({ open, all, headline, cid, named, swap, switchTo }: ScreenProps
                 <h2 className="chat-title" key={headline}>{headline}</h2>
               </div>
             </div>
-            {menuShown && <History chats={ordered} current={cid} on={menu} onPick={reopen} onClose={closeMenu} />}
+            {menuShown && <History chats={ordered} current={cid} on={menu} onPick={reopen} onClose={closeMenu} onRemove={removeChat} />}
           </div>
         </div>
 
@@ -439,24 +441,32 @@ function Screen({ open, all, headline, cid, named, swap, switchTo }: ScreenProps
       </AwayContext.Provider>
     </div>
     <Corner chats={ordered} current={cid} fresh={empty} onNew={fresh} onPick={reopen}
-      onRemove={(ids) => { removeChats(ids); if (!empty && (ids === 'all' || ids.includes(cid))) switchTo(null); }} />
+      onRemove={removeChat} />
   </>);
 }
 
 /* History, a small on screen menu over the conversation: past chats
    newest first, numbered like the channels, the one on screen marked.
    Up and down move through it, Enter opens one, Escape goes back. */
-function History({ chats, current, on, onPick, onClose }: { chats: Convo[]; current: string; on: boolean; onPick: (c: Convo) => void; onClose: () => void }) {
+function History({ chats, current, on, onPick, onClose, onRemove }: { chats: Convo[]; current: string; on: boolean; onPick: (c: Convo) => void; onClose: () => void; onRemove: (ids: string[] | 'all') => void }) {
   const list = useRef<HTMLUListElement>(null);
+  const [asking, setAsking] = useState(false);
+  const [going, setGoing] = useState<string[]>([]);
+  /* a row folds away, then goes; everything at once fades and closes */
+  const drop = (ids: string[] | 'all') => {
+    setAsking(false);
+    setGoing(ids === 'all' ? chats.map((c) => c.id) : ids);
+    window.setTimeout(() => { onRemove(ids); setGoing([]); if (ids === 'all' || ids.length >= chats.length) onClose(); }, still() ? 0 : 220);
+  };
   useEffect(() => {
     if (!on) return;
-    const rows = list.current?.querySelectorAll<HTMLButtonElement>('button');
+    const rows = list.current?.querySelectorAll<HTMLButtonElement>('.chat-row');
     const here = list.current?.querySelector<HTMLButtonElement>('[aria-current]');
     (here ?? rows?.[0])?.focus({ preventScroll: true });
     here?.scrollIntoView({ block: 'nearest' });
   }, [on]);
   const onKey = (e: React.KeyboardEvent) => {
-    const rows = [...(list.current?.querySelectorAll<HTMLButtonElement>('button') ?? [])];
+    const rows = [...(list.current?.querySelectorAll<HTMLButtonElement>('.chat-row') ?? [])];
     const i = rows.indexOf(document.activeElement as HTMLButtonElement);
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
@@ -469,15 +479,27 @@ function History({ chats, current, on, onPick, onClose }: { chats: Convo[]; curr
       <p className="chat-menu-label">Past chats</p>
       <ul ref={list}>
         {chats.map((c, i) => (
-          <li key={c.id} style={{ "--n": i } as React.CSSProperties}>
+          <li key={c.id} style={{ "--n": i } as React.CSSProperties} className={going.includes(c.id) ? 'is-going' : undefined}>
             <button type="button" className="chat-row" aria-current={c.id === current ? 'true' : undefined} onClick={() => onPick(c)}>
               <span className="ch">{String(chats.length - i).padStart(2, '0')}</span>
               <span className="chat-row-title">{nameOf(c)}</span>
               <span className="chat-row-when">{c.id === current ? 'Now' : when(c.updated)}</span>
             </button>
+            <button type="button" className="chat-row-del" aria-label={`Delete ${nameOf(c)}`} onClick={() => drop([c.id])}>
+              <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+            </button>
           </li>
         ))}
       </ul>
+      <div className="hist-foot chat-menu-foot" data-asking={asking ? '' : undefined}>
+        {asking ? <>
+          <span className="hist-ask">Removes them from this browser.</span>
+          <button type="button" className="hist-act is-yes" onClick={() => drop('all')}>Clear</button>
+          <button type="button" className="hist-act" onClick={() => setAsking(false)}>Cancel</button>
+        </> : (
+          <button type="button" className="hist-act" onClick={() => setAsking(true)}>Clear history</button>
+        )}
+      </div>
     </div>
   );
 }
