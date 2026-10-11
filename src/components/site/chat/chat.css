@@ -510,6 +510,51 @@
   .model-pill { width: 32px; padding: 0; justify-content: center; }
 }
 
+/* the allowance (quota.ts): only near the limit, a line over the box
+   with a thin segmented bar that drains; a short wait counts down in a
+   chip; when the day is used up, a note takes the box's place */
+.quota {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  min-height: 24px;
+  padding: 0 6px 6px;
+  color: var(--chat-quiet);
+  font-size: 12px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+  animation: chat-fade var(--chat-enter) var(--ease) backwards;
+}
+.quota-bar { display: inline-flex; gap: 2px; }
+.quota-bar i {
+  width: 6px;
+  height: 3px;
+  border-radius: 1px;
+  background: var(--chat-rule);
+  transition: background-color 400ms var(--ease), box-shadow 400ms var(--ease);
+}
+.quota-bar i[data-on] { background: var(--chat-link); box-shadow: 0 0 4px color-mix(in srgb, var(--chat-link) 60%, transparent); }
+.quota-wait {
+  padding: 2px 9px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px var(--chat-rule);
+  color: var(--ink);
+  font-weight: 700;
+}
+.composer[data-held] .composer-btn { opacity: 0.35; box-shadow: none; cursor: default; }
+.composer-done {
+  justify-content: center;
+  padding: 12px 18px;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 21px;
+  text-align: center;
+  animation: chat-fade var(--chat-enter) var(--ease) backwards;
+}
+.composer-done a { color: var(--chat-link); text-decoration: underline; text-underline-offset: 3px; }
+
 .chat-note {
   flex: none;
   padding-top: 10px;

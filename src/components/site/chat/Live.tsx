@@ -23,6 +23,8 @@ import { listChats, newId, putChat, setCurrent, titleOf, when, type Convo, type 
 import { NARROW, noteFor, placeholderFor, still, type Mode } from './shared';
 import { Corner } from './Corner';
 import { ModelPicker } from './Model';
+import { NEAR, readQuota, writeQuota, type Quota } from './quota';
+import { CONTACT } from './cards';
 import { Chip, CiteContext, MARK, Sources, citesOf, holdPartial, useGo, type Cite } from './cite';
 import type { Project } from '../Media';
 
@@ -101,6 +103,8 @@ export function Live({ first, ...site }: Site & { first: Convo | null }) {
       if (name === 'open_project' && typeof input.slug === 'string' && s.all.some((p) => p.slug === input.slug)) s.show(input.slug);
       if (name === 'close_project') s.show(null);
     },
+    quota: (left, limit) => writeQuota({ left, limit }),
+    limit: (kind, retry, limit) => writeQuota({ left: kind === 'day' ? 0 : readQuota()?.left ?? limit, limit, kind, until: Date.now() + retry * 1000 }),
   }), []);
   const runtime = useLocalRuntime(adapter, { initialMessages: first ? fromStored(first.messages) : [] });
   const born = useRef(typeof performance !== 'undefined' ? performance.now() : 0);
@@ -432,11 +436,67 @@ function History({ chats, current, on, onPick, onClose }: { chats: Convo[]; curr
   );
 }
 
+/* the allowance as it stands, ticking while a short wait runs down */
+function useQuota() {
+  const [q, setQ] = useState<Quota | null>(() => readQuota());
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const sync = () => { setQ(readQuota()); setNow(Date.now()); };
+    addEventListener('dd-quota', sync);
+    return () => removeEventListener('dd-quota', sync);
+  }, []);
+  const waiting = q?.until && q.until > now ? q : null;
+  useEffect(() => {
+    if (!waiting) return;
+    const id = window.setInterval(() => {
+      const t = Date.now();
+      setNow(t);
+      if (waiting.until! <= t) setQ(readQuota());
+    }, waiting.kind === 'minute' ? 250 : 30000);
+    return () => clearInterval(id);
+  }, [waiting]);
+  return {
+    left: q?.left ?? null,
+    limit: q?.limit ?? 100,
+    wait: waiting?.kind === 'minute' ? Math.ceil((waiting.until! - now) / 1000) : 0,
+    done: waiting?.kind === 'day',
+  };
+}
+
+/* close to the limit: how many are left, and a bar that drains */
+function Meter({ left, wait }: { left: number | null; wait: number }) {
+  const near = left !== null && left <= NEAR;
+  if (!near && !wait) return null;
+  return (
+    <div className="quota" role="status">
+      {wait > 0 && <span className="quota-wait">try again in {wait}s</span>}
+      {near && <>
+        <span className="quota-bar" aria-hidden="true">
+          {Array.from({ length: NEAR }, (_, i) => <i key={i} data-on={i < left! ? '' : undefined} />)}
+        </span>
+        <span className="quota-left">{left === 1 ? '1 message' : `${left} messages`} left today</span>
+      </>}
+    </div>
+  );
+}
+
 function Composer({ input, placeholder, onEscape, onHistory }: { input: React.RefObject<HTMLTextAreaElement | null>; placeholder: string; onEscape: () => void; onHistory?: () => void }) {
   const length = useAuiState((s) => s.composer.text.length);
   const running = useAuiState((s) => s.thread.isRunning);
-  return (
-    <ComposerPrimitive.Root className="composer" data-history={onHistory ? '' : undefined}>
+  const quota = useQuota();
+  /* the day's messages are used up: the conversation stays, the box
+     gives way to a note */
+  if (quota.done) {
+    return (
+      <div className="composer composer-done" role="status">
+        <p>that's it for today. it resets tomorrow, or email me at <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>.</p>
+      </div>
+    );
+  }
+  const held = quota.wait > 0;
+  return (<>
+    <Meter left={quota.left} wait={quota.wait} />
+    <ComposerPrimitive.Root className="composer" data-history={onHistory ? '' : undefined} data-held={held ? '' : undefined}>
       {/* on phones, past chats are a tap away from the bar */}
       {onHistory && (
         <button type="button" className="composer-history" aria-label="History" onClick={onHistory}>
@@ -451,7 +511,7 @@ function Composer({ input, placeholder, onEscape, onHistory }: { input: React.Re
         rows={1}
         maxRows={6}
         maxLength={MAX_CHARS}
-        submitMode="enter"
+        submitMode={held ? 'none' as const : 'enter' as const}
         cancelOnEscape={false}
         addAttachmentOnPaste={false}
         onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); onEscape(); } }}
@@ -464,12 +524,12 @@ function Composer({ input, placeholder, onEscape, onHistory }: { input: React.Re
           <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5" fill="currentColor" /></svg>
         </ComposerPrimitive.Cancel>
       ) : (
-        <ComposerPrimitive.Send className="composer-btn" aria-label="Send">
+        <ComposerPrimitive.Send className="composer-btn" aria-label="Send" disabled={held || undefined}>
           <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8 13V3.5M3.8 7.4 8 3.2l4.2 4.2" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </ComposerPrimitive.Send>
       )}
     </ComposerPrimitive.Root>
-  );
+  </>);
 }
 
 function UserMessage() {
