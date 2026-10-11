@@ -33,6 +33,24 @@ export type Project = {
 
 export const brand = (slug: string) => BRAND[slug] ?? { color: '#222', ink: '#fff', name: slug, wordmark: false };
 
+/* A frame waiting for its image shimmers (details.css). Off screen that
+   shimmer is never seen, but it would still repaint the article, and the
+   bent glass over it, every frame; so it only runs while in view. */
+let shimmer: IntersectionObserver | null = null;
+const watchShimmer = (el: HTMLElement | null) => {
+  if (!el || typeof IntersectionObserver === 'undefined') return undefined;
+  shimmer ??= new IntersectionObserver((entries) => {
+    for (const e of entries) (e.target as HTMLElement).style.animationPlayState = e.isIntersecting ? '' : 'paused';
+  });
+  shimmer.observe(el);
+  /* once the image is in, there is nothing left to watch */
+  const img = el.querySelector('img');
+  const done = () => shimmer?.unobserve(el);
+  if (!img || img.complete) done();
+  else { img.addEventListener('load', done, { once: true }); img.addEventListener('error', done, { once: true }); }
+  return done;
+};
+
 /* One image or video. Images open full size, videos loop while on screen. */
 export function Frame({ m, alt, sizes, onZoom }: { m: Media; alt: string; sizes: string; onZoom: (src: string, alt: string) => void }) {
   const tall = m.h > m.w;
@@ -47,7 +65,7 @@ export function Frame({ m, alt, sizes, onZoom }: { m: Media; alt: string; sizes:
     );
   }
   return (
-    <button type="button" className={`frame${tall ? ' tall' : ''}`} style={style} onClick={() => onZoom(m.src, alt)} aria-label={`View larger, ${alt}`}>
+    <button type="button" ref={watchShimmer} className={`frame${tall ? ' tall' : ''}`} style={style} onClick={() => onZoom(m.src, alt)} aria-label={`View larger, ${alt}`}>
       <img
         src={m.small}
         srcSet={`${m.small} ${tall ? 400 : 800}w, ${m.src} ${tall ? 780 : 1600}w`}
