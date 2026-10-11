@@ -356,46 +356,32 @@ a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
 .chat-row[aria-current] .ch, .chat-row[aria-current] .chat-row-when { color: var(--chat-link); }
 .chat-menu[data-on] li { animation: chat-rise 360ms var(--ease) backwards; animation-delay: calc(min(var(--n, 0), 8) * 24ms); }
 
-/* History in the bottom left corner, under the guide and in its column
-   (Corner.tsx sets its top to just below the guide's panel). Its rows
-   line up with the guide's channels. */
-/* the list holds New chat and History, so the chat's own buttons step aside */
+/* History, in the guide under the channels (Corner.tsx). Its rows line
+   up with the guide's channels and it scrolls with the guide. */
+/* the list holds New message and History, so the chat's own buttons step aside */
 .crt-slot[data-history="full"] .chat-tool { display: none; }
 
 .crt-history {
   --chat-rule: var(--rule, rgba(200, 220, 255, 0.3));
   --chat-quiet: var(--soft, rgba(236, 242, 252, 0.9));
   --chat-link: color-mix(in srgb, var(--link) 62%, #fff);
-  position: absolute;
-  z-index: 2;
-  left: calc(var(--inset) + 8px);
-  bottom: var(--inset);
-  width: calc(var(--panel-w) - 16px);
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  margin-top: 14px;
   color: var(--ink);
-  text-shadow: var(--glow, 0 0 0 transparent), 0 0 1px rgba(2, 5, 14, 0.75), 0 0 5px rgba(2, 5, 14, 0.45);
-  pointer-events: none;
   opacity: 0;
-  visibility: hidden;
-  transform: translateY(6px);
-  transition: opacity var(--quick, 160ms) cubic-bezier(0.4, 0, 1, 1), transform var(--quick, 160ms) cubic-bezier(0.4, 0, 1, 1), visibility 0s linear var(--quick, 160ms);
+  transform: translateY(4px);
+  transition: opacity var(--quick, 160ms) cubic-bezier(0.4, 0, 1, 1), transform var(--quick, 160ms) cubic-bezier(0.4, 0, 1, 1);
 }
-.crt-history[data-on] {
-  opacity: 1;
-  visibility: visible;
-  transform: none;
-  transition: opacity var(--calm, 320ms) var(--ease), transform var(--calm, 320ms) var(--ease), visibility 0s;
-}
-.crt-history[data-on] > * { pointer-events: auto; }
+.crt-history:not([data-on]) { display: none; }
+.crt-history[data-on] { opacity: 1; transform: none; animation: chat-fade var(--calm, 320ms) var(--ease) backwards; }
 .hist-label {
   flex: none;
   display: flex;
   align-items: center;
   gap: 10px;
   margin: 0 12px 4px;
-  color: var(--ink);
+  color: var(--soft, var(--ink));
   font-size: 11px;
   line-height: 16px;
   font-weight: 700;
@@ -405,6 +391,7 @@ a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
 .hist-label::after { content: ''; flex: 1; height: 1px; background: var(--chat-rule); }
 .hist-list {
   min-height: 0;
+  max-height: 268px;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: none;
@@ -446,9 +433,8 @@ a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
 .hist-list li.is-new { animation: chat-rise 360ms var(--ease) backwards; }
 
 @media (prefers-color-scheme: light) {
-  .crt-history { --chat-link: color-mix(in srgb, var(--link) 80%, #000); text-shadow: var(--glow, 0 0 0 transparent), 0 0 1px rgba(255, 255, 255, 0.9), 0 0 5px rgba(255, 255, 255, 0.6); }
+  .crt-history { --chat-link: color-mix(in srgb, var(--link) 80%, #000); }
 }
-@media (max-width: 999px) { .crt-history { display: none; } }
 
 /* on phones, a list button at the start of the bar */
 .composer-history {

@@ -1,71 +1,35 @@
-/* History in the bottom left corner of the screen, under the guide, in
-   its column (Live.tsx renders it beside the chat, on the same curved
-   layer as the guide).
+/* History, in the guide (the sidebar), under the channels and above the
+   links: Live.tsx renders it beside the chat and it is drawn into the
+   guide's `#crt-history-slot` (App.tsx), so it scrolls with the guide
+   and sits on the same curved layer, on phones too.
 
-   A standing list composed like the guide's channels: New chat at the
-   top, then every past conversation, newest first, numbered in the order
-   they were started (so a chat keeps its number), titled by its first
-   question, with how long ago it was last used. The one on screen is
-   marked; with a fresh chat on screen, New chat is. Up and down move
-   through it, Enter opens. It fills the room the guide leaves below it
-   and scrolls when long, and appears once there is something in it.
+   Composed like the guide's channels: New message at the top, then every
+   past conversation, newest first, numbered in the order they were
+   started (so a chat keeps its number), titled by its first question,
+   with how long ago it was last used. The one on screen is marked; with a
+   fresh chat on screen, New message is. Up and down move through it,
+   Enter opens. Long lists scroll inside it. It appears once there is
+   something in it.
 
-   When the window is too short to leave room under the guide it stands
-   down, and the chat's own History and New chat buttons take over
-   (`onRoom`). Phones reach History from the chat bar (Composer in
-   Live.tsx).
-
-   Only opacity and transform move, and only when something changes; the
-   room is measured when the guide or the screen changes size, not per
-   frame. */
+   Only opacity and transform move, and only when something changes. */
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ago, when, type Convo } from './store';
 
-/* the least room worth standing in: the label, New chat and two chats */
-const ROOM = 128;
-const GAP = 16;
-
 type Props = {
-  /* there is a guide to stand under (not on phones) */
-  enabled: boolean;
   chats: Convo[];
   current: string;
   /* the conversation on screen has nothing in it yet */
   fresh: boolean;
   onNew: () => void;
   onPick: (c: Convo) => void;
-  /* tells the chat whether the list is standing, so it can hide its own
-     History and New chat buttons */
-  onRoom: (room: boolean) => void;
 };
 
-export function Corner({ enabled, chats, current, fresh, onNew, onPick, onRoom }: Props) {
+export function Corner({ chats, current, fresh, onNew, onPick }: Props) {
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => { setSlot(document.getElementById('crt-history-slot')); }, []);
   const nav = useRef<HTMLElement>(null);
-
-  /* the room under the guide: from just below its panel to the bottom of
-     the screen */
-  const [room, setRoom] = useState(false);
-  useEffect(() => {
-    const el = nav.current;
-    const layer = el?.offsetParent as HTMLElement | null;
-    const guide = document.querySelector<HTMLElement>('.osd-panel');
-    if (!enabled || !el || !layer || !guide) { setRoom(false); return; }
-    const measure = () => {
-      const top = guide.getBoundingClientRect().bottom - layer.getBoundingClientRect().top + GAP;
-      const bottom = parseFloat(getComputedStyle(el).bottom) || 0;
-      const fits = layer.clientHeight - top - bottom >= ROOM;
-      el.style.top = `${Math.round(top)}px`;
-      setRoom(fits);
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(guide);
-    ro.observe(layer);
-    return () => ro.disconnect();
-  }, [enabled]);
-
-  const on = enabled && room && chats.length > 0;
-  useEffect(() => { onRoom(enabled && room); }, [enabled, room, onRoom]);
+  const on = chats.length > 0;
 
   /* rows that arrive after the list is first drawn rise in */
   const seen = useRef<Set<string> | null>(null);
@@ -87,12 +51,14 @@ export function Corner({ enabled, chats, current, fresh, onNew, onPick, onRoom }
     const i = rows.indexOf(document.activeElement as HTMLButtonElement);
     if (i < 0) return;
     e.preventDefault();
+    e.stopPropagation();
     rows[Math.max(0, Math.min(rows.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1)))]?.focus();
   };
 
-  return (
+  if (!slot) return null;
+  return createPortal(
     <nav ref={nav} className="crt-history" data-on={on ? '' : undefined} aria-label="Chat history" aria-hidden={!on} inert={!on || undefined} onKeyDown={onKey}>
-      <p className="hist-label">History</p>
+      <h2 className="hist-label">History</h2>
       <button type="button" className="hist-row hist-new" aria-current={fresh ? 'true' : undefined} onClick={onNew}>
         <span className="ch" aria-hidden="true">
           <svg viewBox="0 0 12 12" width="10" height="10"><path d="M6 1.5v9M1.5 6h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
@@ -111,6 +77,7 @@ export function Corner({ enabled, chats, current, fresh, onNew, onPick, onRoom }
           </li>
         ))}
       </ul>
-    </nav>
+    </nav>,
+    slot,
   );
 }

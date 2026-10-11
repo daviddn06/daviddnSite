@@ -306,6 +306,9 @@ export default function App({ work, projects, earlier, initial }: Props) {
               ))}
             </nav>
 
+            {/* the chat's history, drawn here by chat/Corner.tsx */}
+            <div id="crt-history-slot" />
+
             <ul className="links">
               {LINKS.map((l) => (
                 <li key={l.label}><a className="link" href={l.url} target={l.url.startsWith('http') ? '_blank' : undefined} rel="noopener">{l.label}</a></li>

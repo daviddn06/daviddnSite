@@ -217,10 +217,10 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
   /* newest first by when each was started, so continuing an older chat
      never reshuffles the list under the pointer */
   const ordered = useMemo(() => [...chats].sort((a, b) => b.at - a.at), [chats]);
-  /* History stands in the bottom left corner, under the guide, when
-     there is room for it (Corner.tsx); then it holds New chat and History
-     and the chat's own buttons step aside */
-  const [standing, setStanding] = useState(false);
+  /* History is listed in the guide (Corner.tsx), which holds New message
+     too, so the chat's own buttons step aside except on phones, where the
+     conversation covers the guide */
+  const standing = mode !== 'bar';
   const [menu, setMenu] = useState(false);
   const menuShown = usePresence(menu, 200);
 
@@ -298,8 +298,7 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
         <div className="chat-rest" />
       </ThreadPrimitive.Root>
     </div>
-    <Corner enabled={mode !== 'bar'} chats={ordered} current={cid} fresh={empty}
-      onNew={fresh} onPick={reopen} onRoom={setStanding} />
+    <Corner chats={ordered} current={cid} fresh={empty} onNew={fresh} onPick={reopen} />
   </>);
 }
 
