@@ -156,7 +156,8 @@ void main() {
     /* where on the picture this beam lands: squeezed while powering on,
        wobbling while degaussing */
     vec2 p = uPower.xy + rel * uPower2.xy;
-    p.x += uDegauss.x * 5.0 * sin(y * 0.05 + uDegauss.y * 40.0);
+    /* (each effect below is skipped where it would add exactly nothing) */
+    if (uDegauss.x != 0.0) p.x += uDegauss.x * 5.0 * sin(y * 0.05 + uDegauss.y * 40.0);
     /* the pointer, a weak magnet: bends the raster toward it */
     vec2 dp = p - uPtr.xy;
     float fall = exp(-dot(dp, dp) / 9800.0) * uPtr.z;
@@ -170,7 +171,7 @@ void main() {
     float v = 0.5 + (wave(vec2(c.x * 0.12 + uT * 0.18, c.y * 0.12 - uT * 0.07), uT) - 0.5) * 1.5 + 0.14 * sin(uT * 0.11);
     float shade = 0.8 + 0.22 * wave(vec2(c.y * 0.084 + 40.0, c.x * 0.084 - 20.0), uT * 0.7);
     vec2 dc = dp / 12.0;
-    v += 0.16 * uPtr.z * exp(-dot(dc, dc) / 111.0);
+    if (uPtr.z != 0.0) v += 0.16 * uPtr.z * exp(-dot(dc, dc) / 111.0);
 
     /* the logo, from two distance fields blended while morphing */
     float L = 0.0;
@@ -201,8 +202,8 @@ void main() {
       col *= 1.0 + 0.35 * white * (1.0 - uLight);
     }
     /* colour purity: the magnet and the degauss tint the picture */
-    col = hue(col, fall * 0.6 * (dp.x - 0.6 * dp.y) / (abs(dp.x - 0.6 * dp.y) + 50.0));
-    col = hue(col, uDegauss.x * 0.4 * sin(x * 0.012 + y * 0.009 + uDegauss.y * 9.0));
+    if (fall != 0.0) col = hue(col, fall * 0.6 * (dp.x - 0.6 * dp.y) / (abs(dp.x - 0.6 * dp.y) + 50.0));
+    if (uDegauss.x != 0.0) col = hue(col, uDegauss.x * 0.4 * sin(x * 0.012 + y * 0.009 + uDegauss.y * 9.0));
     col = mix(col, vec3(0.92, 0.96, 1.0), uPower2.z) * uPower2.w;
     /* a sweeping edge is a line of phosphor; the afterglow trails it */
     col += vec3(0.82, 0.9, 1.0) * sweep;
