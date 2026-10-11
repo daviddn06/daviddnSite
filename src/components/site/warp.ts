@@ -7,9 +7,10 @@
    It is an SVG filter, `#crt-warp`: a displacement map, made here for the
    tube's current size, tells every point of the screen which point of
    the flat layout it shows. Browsers sample that map without smoothing,
-   so where the curve moves things by more than a pixel the result is
-   softened a touch (a beam's spot is soft there anyway), while the
-   middle of the screen, which barely moves, stays sharp. Layers opt in with the `on-glass` class
+   so where the curve moves things by more than a couple of pixels the
+   result is softened a touch, more toward the corners (a beam's spot is
+   soft there anyway), while the middle of the screen, which barely
+   moves, stays sharp. Layers opt in with the `on-glass` class
    (filter: url(#crt-warp) in site.css). The map is rebuilt when the tube
    changes size. Clicks still land on the flat layout; the curve is only
    a few pixels away from it near the edges.
@@ -76,7 +77,7 @@ export function curve(tube: HTMLElement): () => void {
         img.data[o] = Math.round(((sx - px) / scale + 0.5) * 255);
         img.data[o + 1] = Math.round(((sy - py) / scale + 0.5) * 255);
         /* how much this point moves, as the mask for the softening */
-        img.data[o + 2] = Math.round(Math.min(1, Math.hypot(sx - px, sy - py) / 2) * 255);
+        img.data[o + 2] = Math.round(Math.min(1, Math.max(0, Math.hypot(sx - px, sy - py) - 2) / 6) * 255);
         img.data[o + 3] = 255;
       }
     }

@@ -40,10 +40,12 @@ export const fromLab = (L: number, A: number, B: number, out: Float32Array | Uin
   out[o + 2] = enc(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s);
 };
 
-/* The resting palette, a sweep of blues the field moves through, from
-   deep indigo to a pale sky. */
-export const DEFAULT_PALETTE = ['#1f3a8a', '#2f63c9', '#3f8fd6', '#7cbbe0'];
-export const DEFAULT_PALETTE_LIGHT = ['#5b82d4', '#79a2e4', '#98c0ec', '#c2dcf2'];
+/* The resting palette, the blues the field moves through. Calmed
+   2026-10-11 (David): mostly deep navy, its highlights about half as
+   bright as before and closer together, so nothing bright ever sits
+   under text. A project's colours (hover, open) keep their full range. */
+export const DEFAULT_PALETTE = ['#0b1530', '#11214a', '#19306a', '#264486'];
+export const DEFAULT_PALETTE_LIGHT = ['#9fb3da', '#aabde0', '#b6c7e6', '#c3d2ec'];
 
 /* A brand's palette: neighbouring hues around its colour at mid tones,
    so every brand reads as a soft field rather than a hard ramp. Near

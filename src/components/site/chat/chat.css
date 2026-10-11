@@ -26,7 +26,7 @@
   --chat-link: color-mix(in srgb, var(--link) 62%, #fff);
   /* the screen's phosphor glow, with the dark halo pulled a little
      tighter around each letter */
-  --chat-halo: var(--glow, 0 0 0 transparent), 0 0 1px rgba(2, 5, 14, 0.75), 0 0 5px rgba(2, 5, 14, 0.45);
+  --chat-halo: var(--body-glow, 0 0 1.5px rgba(2, 5, 14, 0.65)), 0 0 4px rgba(2, 5, 14, 0.25);
   --chat-box-halo: 0 0 0 1px rgba(2, 5, 14, 0.22), 0 0 10px rgba(2, 5, 14, 0.22);
 
   position: absolute;
@@ -44,7 +44,7 @@
   .crt-slot {
     --chat-rule: var(--rule, rgba(18, 24, 33, 0.22));
     --chat-link: color-mix(in srgb, var(--link) 80%, #000);
-    --chat-halo: var(--glow, 0 0 0 transparent), 0 0 1px rgba(255, 255, 255, 0.9), 0 0 5px rgba(255, 255, 255, 0.6);
+    --chat-halo: var(--body-glow, 0 0 1.5px rgba(255, 255, 255, 0.8)), 0 0 4px rgba(255, 255, 255, 0.35);
     --chat-box-halo: 0 0 0 1px rgba(255, 255, 255, 0.3), 0 0 10px rgba(255, 255, 255, 0.3);
   }
 }

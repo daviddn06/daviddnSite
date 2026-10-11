@@ -59,6 +59,9 @@ export type Wants = {
 /* How long the picture's edge takes to sweep across to reveal the article
    (or back over it). App's wipe between two articles takes as long. */
 export const WIPE = 560;
+/* how fast the field drifts and rolls through its colours, against the
+   pace it had at first (calmed to barely noticeable) */
+const FIELD_PACE = 0.3;
 /* how long one logo takes to flow into the next */
 const MORPH = 1100;
 /* the power on, after which the edge animates normally */
@@ -183,8 +186,10 @@ void main() {
       float dn = length(lp / uLogoBox.zw) / 1.42;
       L = cov * clamp(uLogo.z * 1.7 - dn * 0.7, 0.0, 1.0);
     }
-    v = mix(v, 0.42, calm * 0.5);
-    shade = mix(shade, 0.9, calm * 0.6);
+    /* behind text the picture flattens toward its middle tone, so its
+       brightest highlights never sit under a line of text */
+    v = mix(v, 0.38, calm * 0.75);
+    shade = mix(shade, 0.86, calm * 0.8);
     col = texture(uRamp, vec2((clamp(v, 0.0, 1.0) * 255.0 + 0.5) / 256.0, 0.5)).rgb * shade;
     if (L > 0.0) {
       /* on dark the edges warm through the palette's bright tone before
@@ -306,7 +311,7 @@ void main() {
 
   /* calm behind text on the glass: dimmer, flatter, quieter */
   float calm = calmAt(p);
-  scr = mix(scr, uLight > 0.5 ? mix(scr, uPanel, 0.62) : scr * 0.48, calm * 0.88);
+  scr = mix(scr, uLight > 0.5 ? mix(scr, uPanel, 0.62) : scr * 0.44, calm * 0.88);
   bloom *= 1.0 - calm * 0.6;
 
   /* where the raster is: the tube's rounded rectangle, starting at the
@@ -689,7 +694,8 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     gl.uniform1f(u.uPitch, pitch);
     gl.uniform1f(u.uColW, W / cols);
     gl.uniform1f(u.uShift, innerWidth - W);
-    gl.uniform1f(u.uT, t);
+    /* the field drifts at a barely noticeable pace (David, 2026-10-11) */
+    gl.uniform1f(u.uT, t * FIELD_PACE);
     gl.uniform1f(u.uStore, store);
     gl.uniform1f(u.uFlare, flare);
     gl.uniform1f(u.uPrevEdge, prevEdge);
