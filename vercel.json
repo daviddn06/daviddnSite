@@ -1,0 +1,11 @@
+{
+  "redirects": [
+    { "source": "/v2", "destination": "/", "permanent": true },
+    { "source": "/v2/projects/:slug*", "destination": "/projects/:slug*", "permanent": true },
+    { "source": "/v3", "destination": "/", "permanent": true },
+    { "source": "/agent", "destination": "/", "permanent": true },
+    { "source": "/projects", "destination": "/", "permanent": true },
+    { "source": "/projects.html", "destination": "/", "permanent": true },
+    { "source": "/projects/:slug.html", "destination": "/projects/:slug/", "permanent": true }
+  ]
+}

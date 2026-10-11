@@ -1,0 +1,576 @@
+/* daviddn.dev. The whole page is an old CRT: a dark cabinet edge, and
+   the tube filling the window. On the glass, like a TV's on screen
+   display, David's name, a line and the channels (his work). Behind them
+   the colour field (crt.ts). The article lies under the field and is
+   revealed by it; it takes as much width as it needs and the field keeps
+   a strip. Text on the glass glows a little and is crossed by the same
+   scanlines as the picture. One type size, one link colour, one curve.
+   Motion is off for reduced motion. */
+
+:root {
+  --cabinet: #050608;
+  --screen: #0a0d13;
+  --panel: var(--screen);
+  --ink: #e6edf8;
+  --muted: #7f8aa0;
+  /* quieter text that still reads over the picture */
+  --soft: rgba(230, 237, 248, 0.66);
+  --link: #8db8ff;
+  --line: rgba(233, 238, 246, 0.08);
+  /* phosphor: a faint halo around light text */
+  --glow: 0 0 10px rgba(150, 190, 255, 0.28), 0 0 1px rgba(200, 220, 255, 0.35);
+  --scanline: rgba(0, 0, 0, 0.2);
+  --sans: 'Libre Franklin', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --pad: 14px;
+  --radius: 26px;
+  /* the guide down the left of the screen */
+  --side: 300px;
+  /* the scanline pitch, set by the screen to match its own lines */
+  --scan: 3px;
+  /* the article's width: text keeps a reading measure, screens use the
+     whole column so their UI reads at a size close to the text; the
+     field always keeps a strip */
+  --col: min(1060px, calc(100vw - 2 * var(--pad) - var(--side) - 320px));
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --cabinet: #cfd5de;
+    --screen: #eef1f6;
+    --ink: #121821;
+    --muted: #6e7889;
+    --soft: rgba(18, 24, 33, 0.66);
+    --link: #2a5dcc;
+    --line: rgba(18, 24, 33, 0.09);
+    /* a lit room: dark text on a bright picture, no halo */
+    --glow: none;
+    --scanline: rgba(30, 40, 60, 0.07);
+    color-scheme: light;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--cabinet);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 24px;
+  font-weight: 500;
+  -webkit-font-smoothing: antialiased;
+}
+
+img, video { display: block; max-width: 100%; }
+h1, h2, p, figure { margin: 0; }
+ul { margin: 0; padding: 0; list-style: none; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; border-radius: 3px; }
+::selection { background: var(--link); color: var(--screen); }
+
+/* The set. The cabinet is only a thin dark edge; the tube is the window. */
+
+.stage { position: fixed; inset: 0; padding: var(--pad); }
+.tube {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--screen);
+  isolation: isolate;
+}
+
+/* The glass over everything: the same scanlines as the picture, the
+   tube's edge falling into shadow, a soft reflection high on the left. */
+.glass {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    radial-gradient(120% 70% at 18% 4%, rgba(255, 255, 255, 0.035), transparent 55%),
+    repeating-linear-gradient(to bottom, var(--scanline) 0 1px, transparent 1px var(--scan));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+    inset 0 0 48px 6px rgba(0, 0, 0, 0.55);
+}
+@media (prefers-color-scheme: light) {
+  .glass {
+    background:
+      radial-gradient(120% 70% at 18% 4%, rgba(255, 255, 255, 0.45), transparent 55%),
+      repeating-linear-gradient(to bottom, var(--scanline) 0 1px, transparent 1px var(--scan));
+    box-shadow: inset 0 0 0 1px rgba(20, 30, 50, 0.08), inset 0 0 44px 4px rgba(40, 55, 80, 0.18);
+  }
+}
+
+/* The on screen display: the guide down the left of the glass */
+
+.osd {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--side);
+  display: flex;
+  flex-direction: column;
+  padding: 36px 28px 32px 40px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  text-shadow: var(--glow);
+}
+.osd::-webkit-scrollbar { display: none; }
+
+.name { font-size: 15px; line-height: 24px; font-weight: 700; }
+.bio { margin-top: 16px; }
+
+.lists { margin-top: 24px; display: grid; gap: 20px; }
+.label { font-size: inherit; font-weight: inherit; color: var(--muted); }
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--link);
+  transition: color 700ms var(--ease), opacity 160ms var(--ease);
+}
+@media (hover: hover) { .link:hover { opacity: 0.72; } }
+.link .x { flex: none; opacity: 0.85; }
+/* channel numbers, quiet and even */
+.channel .ch {
+  min-width: 22px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  transition: color 700ms var(--ease);
+}
+.channel.active .ch { color: var(--link); }
+
+.links { margin-top: auto; padding-top: 32px; }
+
+/* The article, on the screen beside the guide. It lies under the field,
+   which blanks to reveal it. */
+
+.article {
+  position: absolute;
+  top: 0;
+  left: var(--side);
+  bottom: 0;
+  width: var(--col);
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--screen);
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  text-shadow: var(--glow);
+}
+.article::-webkit-scrollbar { display: none; }
+.article img, .article video, .article .compare { text-shadow: none; }
+
+.article-inner {
+  width: var(--col);
+  padding: 36px 40px 72px 8px;
+}
+
+.article-head { display: flex; align-items: center; justify-content: space-between; }
+.article-head .name { font-weight: 700; }
+.close { display: none; }
+
+.article p { margin-top: 16px; max-width: 620px; }
+.article .sub { margin-top: 40px; font-size: inherit; font-weight: 700; }
+.article .sub + p { margin-top: 8px; }
+.meta-line { color: var(--muted); }
+.meta-line a { color: var(--link); transition: color 700ms var(--ease); }
+@media (hover: hover) { .meta-line a:hover { opacity: 0.72; } }
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin: 32px 0 8px;
+  padding: 20px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.stats dt { font-size: 24px; line-height: 32px; font-weight: 700; color: var(--ink); }
+.stats dd { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 18px; }
+
+.shot { margin-top: 24px; }
+.shot + .shot { margin-top: 32px; }
+.shot figcaption { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 20px; }
+
+.frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  border-radius: 6px;
+  background: rgba(127, 127, 127, 0.08);
+  cursor: zoom-in;
+}
+.frame img, .frame video { width: 100%; height: 100%; object-fit: cover; }
+.frame::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--line); pointer-events: none; }
+.frame.tall { border-radius: 14px; }
+.shot > .frame.tall { max-width: 200px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }
+
+/* Before and after. The before image is clipped to the handle. */
+
+.compare {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  background: rgba(127, 127, 127, 0.08);
+  user-select: none;
+  touch-action: pan-y;
+}
+.compare img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.compare-before { position: absolute; inset: 0; clip-path: inset(0 calc(100% - var(--x)) 0 0); }
+.compare-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--x);
+  width: 2px;
+  margin-left: -1px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+}
+.compare-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border-radius: 50%;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 4.5 2.5 8 6 11.5M10 4.5 13.5 8 10 11.5' fill='none' stroke='%230a0d13' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px no-repeat;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+.compare-tag {
+  position: absolute;
+  bottom: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(10, 13, 19, 0.72);
+  color: #e9eef6;
+  font-size: 12px;
+  line-height: 20px;
+  pointer-events: none;
+}
+.compare-tag.left { left: 10px; }
+.compare-tag.right { right: 10px; }
+.compare input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: ew-resize;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.compare:has(input:focus-visible) { outline: 1.5px solid var(--link); outline-offset: 2px; }
+
+/* The screen, over the article; the article shows where the screen
+   has blanked. The canvas fills the box and the picture is anchored to
+   its right edge in the drawing (crt.ts). */
+
+.main { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.field { position: absolute; inset: 0; }
+.field canvas { position: absolute; top: 0; left: 0; }
+
+/* The chat, on the glass (chat/Chat.tsx). `#crt-chat-slot` is its box:
+   centred in the picture while nothing is open, docked to the bottom of
+   the strip beside an open article, a bar along the bottom on phones.
+   Its text glows like the rest of the screen; the box to type in is a
+   pane of darker glass. */
+.crt-slot {
+  position: absolute;
+  z-index: 2;
+  left: calc(var(--side) + (100% - var(--side)) / 2);
+  top: 50%;
+  width: min(620px, calc(100% - var(--side) - 96px));
+  height: min(600px, calc(100% - 72px));
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  text-shadow: var(--glow);
+}
+.chat {
+  pointer-events: auto;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 10px;
+}
+/* empty, the line, the box and the suggestions sit together in the middle */
+.crt-slot[data-mode="center"][data-empty] .chat { inset: 0; top: auto; bottom: 50%; transform: translateY(50%); }
+.chat-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 8px 4px 4px;
+  mask-image: linear-gradient(to bottom, transparent, #000 28px);
+}
+/* short conversations sit just above the box */
+.chat-body > :first-child { margin-top: auto; }
+.chat-body::-webkit-scrollbar { display: none; }
+.crt-slot[data-empty] .chat-body { mask-image: none; }
+.crt-slot[data-mode="center"][data-empty] .chat-body { overflow: visible; }
+
+.chat-hello { padding: 0 4px 6px; }
+.chat-title { font-weight: 700; }
+.chat-sub { color: var(--soft); }
+
+.msg { display: flex; flex-direction: column; gap: 10px; }
+.msg-user { align-items: flex-end; }
+.msg-user p {
+  max-width: 84%;
+  padding: 7px 13px;
+  border-radius: 14px 14px 4px 14px;
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.msg-text { white-space: pre-wrap; overflow-wrap: anywhere; padding: 0 4px; }
+.msg-text a, .chat-note-act a { color: var(--link); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--link) 40%, transparent); text-underline-offset: 3px; }
+.msg-text strong { font-weight: 700; }
+.msg-error { padding: 0 4px; color: var(--muted); }
+.msg-retry {
+  margin-left: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--link);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* the beam, waiting at the end of the line */
+.cursor {
+  display: inline-block;
+  width: 0.5em;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: -0.17em;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+  animation: beam 1.1s ease-in-out infinite;
+}
+.msg-bot > .cursor { margin: 0 4px; }
+@keyframes beam { 50% { opacity: 0.2; } }
+
+/* the box to type in */
+.composer {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 8px 8px 8px 16px;
+  border-radius: 18px;
+  background: rgba(6, 9, 15, 0.62);
+  box-shadow: inset 0 0 0 1px rgba(200, 220, 255, 0.12), 0 10px 40px rgba(0, 0, 0, 0.35);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  transition: box-shadow 200ms var(--ease);
+}
+.composer:focus-within { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 55%, transparent), 0 10px 40px rgba(0, 0, 0, 0.35); }
+.composer-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 32px;
+  padding: 4px 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  line-height: 24px;
+  text-shadow: inherit;
+}
+.composer-input::placeholder { color: var(--muted); opacity: 1; }
+.composer-count { align-self: flex-end; padding-bottom: 6px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.composer-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--link);
+  color: var(--screen);
+  cursor: pointer;
+  transition: background-color 700ms var(--ease), opacity 160ms var(--ease);
+}
+.composer-btn:disabled { opacity: 0.3; cursor: default; }
+.composer-btn.is-stop { background: color-mix(in srgb, var(--ink) 85%, transparent); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 2px 0 0; }
+.chip {
+  padding: 5px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(6, 9, 15, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(200, 220, 255, 0.12);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 20px;
+  text-shadow: inherit;
+  cursor: pointer;
+  transition: box-shadow 160ms var(--ease), color 160ms var(--ease);
+}
+@media (hover: hover) { .chip:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 60%, transparent); color: var(--link); } }
+.chat-privacy { padding: 0 6px; color: var(--soft); font-size: 12px; line-height: 18px; }
+.chat-privacy a { text-decoration: underline; text-underline-offset: 3px; }
+
+/* cards inside answers */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: box-shadow 160ms var(--ease);
+}
+a.card:hover, a.card:focus-visible { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 55%, transparent); }
+.card-top { display: flex; align-items: baseline; gap: 8px; }
+.card .ch, .tl-name .ch { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.card-name { color: var(--link); font-weight: 700; transition: color 700ms var(--ease); }
+.card-meta { color: var(--muted); font-size: 13px; line-height: 20px; }
+.card-line { margin-top: 4px; font-size: 13px; line-height: 20px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.card-list { gap: 12px; }
+.tl-group { display: grid; gap: 2px; }
+.tl-label, .row-label { color: var(--muted); font-size: 13px; }
+.tl-group li, .rows li { display: flex; justify-content: space-between; gap: 16px; }
+.tl-name { display: inline-flex; gap: 8px; color: var(--link); }
+.tl-when { color: var(--muted); font-size: 13px; text-align: right; }
+.rows { display: grid; gap: 4px; }
+.rows a { color: var(--link); }
+.chat-note-act { padding: 0 4px; color: var(--muted); font-size: 13px; }
+.chat-head { display: none; }
+
+/* docked beside an open article: a slim bar; in use, a sheet over the strip */
+.crt-slot[data-mode="dock"] {
+  left: calc(var(--side) + var(--col) + 14px);
+  right: 14px;
+  top: auto;
+  bottom: 14px;
+  width: auto;
+  height: 46%;
+  transform: none;
+}
+.crt-slot[data-mode="dock"] .cards { grid-template-columns: 1fr; }
+.crt-slot:is([data-mode="dock"], [data-mode="bar"]):not([data-expanded]) :is(.chat-body, .chips, .chat-privacy, .chat-head) { display: none; }
+.crt-slot[data-mode="dock"][data-expanded] .chat {
+  padding: 12px 10px 10px;
+  border-radius: 20px;
+  background: rgba(6, 9, 15, 0.5);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  box-shadow: inset 0 0 0 1px rgba(200, 220, 255, 0.08);
+}
+
+@media (prefers-color-scheme: light) {
+  .composer { background: rgba(250, 251, 253, 0.78); box-shadow: inset 0 0 0 1px rgba(18, 24, 33, 0.1), 0 10px 30px rgba(30, 45, 80, 0.12); }
+  .composer:focus-within { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 50%, transparent), 0 10px 30px rgba(30, 45, 80, 0.12); }
+  .chip { background: rgba(250, 251, 253, 0.7); box-shadow: inset 0 0 0 1px rgba(18, 24, 33, 0.1); }
+  .card { background: rgba(255, 255, 255, 0.55); }
+  .crt-slot[data-mode="dock"][data-expanded] .chat { background: rgba(244, 246, 250, 0.82); box-shadow: inset 0 0 0 1px rgba(18, 24, 33, 0.08); }
+  .cursor { box-shadow: none; }
+}
+
+/* A page of plain text on the tube (privacy) */
+.doc {
+  height: 100%;
+  overflow-y: auto;
+  padding: 56px 40px 72px;
+  text-shadow: var(--glow);
+}
+.doc > * { max-width: 560px; margin-left: auto; margin-right: auto; }
+.doc p { margin-top: 16px; }
+.doc .doc-back { margin-top: 32px; }
+
+/* Text on the glass comes on with the picture, as the tube warms up,
+   rather than floating on a dark screen before it */
+.osd, .chat { animation: warm 240ms steps(3, end) 680ms both; }
+@keyframes warm { from { opacity: 0; } 60% { opacity: 0.55; } }
+
+/* Full size viewer */
+
+dialog.viewer { max-width: min(94vw, 1600px); max-height: 92vh; padding: 0; border: 0; background: transparent; overflow: visible; cursor: zoom-out; }
+dialog.viewer img { max-height: 92vh; width: auto; margin: 0 auto; border-radius: 8px; }
+dialog.viewer::backdrop { background: color-mix(in srgb, var(--panel) 94%, transparent); }
+dialog.viewer[open] img { animation: rise 360ms var(--ease) both; }
+dialog.viewer[open]::backdrop { animation: fade 300ms var(--ease) both; }
+
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+@keyframes fade { from { opacity: 0; } }
+
+/* Phones and narrow windows. The guide fills the screen, the chat is a
+   bar along its bottom, and an article slides up over it. */
+
+@media (max-width: 999px) {
+  :root { --pad: 8px; --radius: 22px; --side: 0px; }
+  .osd { width: auto; right: 0; padding: 32px 24px 96px; }
+  .crt-slot[data-mode] { left: 12px; right: 12px; top: auto; bottom: 12px; width: auto; height: 56px; transform: none; }
+  /* opened, the conversation takes the whole screen */
+  .crt-slot[data-mode="bar"][data-expanded] { inset: 0; height: auto; z-index: 3; }
+  .crt-slot[data-mode="bar"][data-expanded] .chat { padding: 18px 16px max(14px, env(safe-area-inset-bottom)); background: var(--screen); }
+  .chat-head { display: flex; align-items: center; justify-content: space-between; font-weight: 700; padding: 4px 4px 2px; }
+  .chat-x { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: var(--line); cursor: pointer; }
+  .crt-slot[data-mode="bar"][data-expanded] .chat-body { flex: 1; }
+  .article {
+    inset: 0;
+    width: auto;
+    z-index: 4;
+    transform: translateY(100%);
+    visibility: hidden;
+    transition: transform 420ms var(--ease), visibility 0s linear 420ms;
+  }
+  .stage.is-open .article { transform: none; visibility: visible; transition: transform 420ms var(--ease); }
+  .article-inner { width: auto; max-width: 560px; margin: 0 auto; padding: 28px 24px 64px; }
+  .close {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    margin: -4px -8px -4px 0;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--line);
+    cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+

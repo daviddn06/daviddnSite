@@ -1,0 +1,301 @@
+/* Project logos. Static at rest. One short motion when the pointer enters
+   the nearest .logo-host (or the logo), when keyboard focus lands inside it,
+   or on a tap. useLogoPlay sets [data-play] on .plogo for the motion's length
+   and removes it only after the motion has finished, so every motion ends
+   exactly at rest and never snaps. Nothing loops, nothing autoplays.
+   Marks draw in currentColor. A brand color shows only mid motion.
+   Transform units below are the mark's own viewBox units. */
+
+.plogo {
+  --plogo-size: 36px;
+  display: inline-block;
+  flex: none;
+  inline-size: var(--plogo-size);
+  block-size: var(--plogo-size);
+  line-height: 0;
+  vertical-align: middle;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+
+  /* brand accents, light surfaces */
+  --pl-vecka: #2563eb;
+  --pl-handoff: #3b78d7;
+  --pl-hyre: #5a4ff2;
+  --pl-de: #a746f0;
+  --pl-sho: #ff4f6e;
+  --pl-swire-t: #8fb6dc;
+  --pl-swire-b: #5f8fc2;
+}
+@media (prefers-color-scheme: dark) {
+  :where(:root:not([data-theme])) .plogo {
+    --pl-vecka: #8aafff;
+    --pl-handoff: #7eaaf0;
+    --pl-hyre: #a59dff;
+    --pl-de: #d38cff;
+    --pl-sho: #ff7089;
+    --pl-swire-t: #b3d0ee;
+    --pl-swire-b: #86acd8;
+  }
+}
+:where(:root[data-theme='dark'], :root[data-theme='midnight']) .plogo {
+  --pl-vecka: #8aafff;
+  --pl-handoff: #7eaaf0;
+  --pl-hyre: #a59dff;
+  --pl-de: #d38cff;
+  --pl-sho: #ff7089;
+  --pl-swire-t: #b3d0ee;
+  --pl-swire-b: #86acd8;
+}
+
+/* On a brand tile (the color prop), the mark is drawn in the tile's ink and
+   the motion carries it alone. Accents fold into the ink so nothing vanishes
+   into the tile. ShoSoft's stage light keeps its coral, it crosses a light disc. */
+.plogo.plogo--ink {
+  --pl-vecka: currentColor;
+  --pl-handoff: currentColor;
+  --pl-hyre: currentColor;
+  --pl-de: currentColor;
+  --pl-swire-t: currentColor;
+  --pl-swire-b: currentColor;
+}
+
+.plogo > svg {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+  fill: currentColor;
+}
+.plogo svg * {
+  transform-box: view-box;
+}
+
+/* Lockups keep the brand's proportions: the height is set, the width follows. */
+.plogo.plock {
+  block-size: var(--plogo-size);
+}
+/* The wordmark breathes a step away from the mark and settles back. */
+.plock[data-play] .pl-word { animation: pl-word 560ms both; }
+@keyframes pl-word {
+  0% { transform: translateX(0); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
+  38% { transform: translateX(var(--pl-dx, 4px)); animation-timing-function: cubic-bezier(0.55, 0, 0.3, 1); }
+  72% { transform: translateX(calc(var(--pl-dx, 4px) * -0.15)); animation-timing-function: ease-in-out; }
+  100% { transform: translateX(0); }
+}
+
+@keyframes pl-tint {
+  0%, 100% { fill: currentColor; }
+  30%, 62% { fill: var(--pl-accent); }
+}
+
+/* ── Vecka. The three Gather forms drift out from the open centre while the
+   mark turns a little, then gather back. */
+.lg-vecka { --pl-accent: var(--pl-vecka); }
+.lg-vecka .v-g { transform-origin: 256px 262px; }
+.lg-vecka[data-play] > svg { animation: pl-tint 580ms ease both; }
+.lg-vecka[data-play] .v-g { animation: pl-vecka-turn 580ms both; }
+.lg-vecka[data-play] .v-a { animation: pl-vecka-a 580ms both; }
+.lg-vecka[data-play] .v-b { animation: pl-vecka-b 580ms both; }
+.lg-vecka[data-play] .v-c { animation: pl-vecka-c 580ms both; }
+@keyframes pl-vecka-turn {
+  0% { transform: rotate(0deg); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
+  40% { transform: rotate(10deg); animation-timing-function: cubic-bezier(0.55, 0, 0.3, 1); }
+  76% { transform: rotate(-1.5deg); animation-timing-function: ease-in-out; }
+  100% { transform: rotate(0deg); }
+}
+@keyframes pl-vecka-a {
+  0% { transform: translate(0, 0); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
+  40% { transform: translate(-12.2px, 6.9px); animation-timing-function: cubic-bezier(0.55, 0, 0.3, 1); }
+  76% { transform: translate(1.8px, -1px); animation-timing-function: ease-in-out; }
+  100% { transform: translate(0, 0); }
+}
+@keyframes pl-vecka-b {
+  0% { transform: translate(0, 0); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
+  40% { transform: translate(9.8px, 9.9px); animation-timing-function: cubic-bezier(0.55, 0, 0.3, 1); }
+  76% { transform: translate(-1.4px, -1.4px); animation-timing-function: ease-in-out; }
+  100% { transform: translate(0, 0); }
+}
+@keyframes pl-vecka-c {
+  0% { transform: translate(0, 0); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
+  40% { transform: translate(2.9px, -13.7px); animation-timing-function: cubic-bezier(0.55, 0, 0.3, 1); }
+  76% { transform: translate(-0.4px, 2px); animation-timing-function: ease-in-out; }
+  100% { transform: translate(0, 0); }
+}
+
+/* ── Wedge. The hexagon lifts apart into its four layers, cut at its own
+   vertex rows, then stacks back together. */
+.lg-wedge[data-play] .w-l1 { animation: pl-wedge-1 560ms 40ms both; }
+.lg-wedge[data-play] .w-l2 { animation: pl-wedge-2 560ms both; }
+.lg-wedge[data-play] .w-l3 { animation: pl-wedge-3 560ms both; }
+.lg-wedge[data-play] .w-l4 { animation: pl-wedge-4 560ms 40ms both; }
+@keyframes pl-wedge-1 {
+  0% { transform: translateY(0); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
+  42% { transform: translateY(-1.6px); animation-timing-function: cubic-bezier(0.55, 0, 0.3, 1); }
+  76% { transform: translateY(0.2px); animation-timing-function: ease-in-out; }
+  100% { transform: translateY(0); }
+}
+@keyframes pl-wedge-2 {
+  0% { transform: translateY(0); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
+  42% { transform: translateY(-0.55px); animation-timing-function: cubic-bezier(0.55, 0, 0.3, 1); }
+  76% { transform: translateY(0.08px); animation-timing-function: ease-in-out; }
+  100% { transform: translateY(0); }
+}
+@keyframes pl-wedge-3 {
+  0% { transform: translateY(0); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
+  42% { transform: translateY(0.55px); animation-timing-function: cubic-bezier(0.55, 0, 0.3, 1); }
+  76% { transform: translateY(-0.08px); animation-timing-function: ease-in-out; }
+  100% { transform: translateY(0); }
+}
+@keyframes pl-wedge-4 {
+  0% { transform: translateY(0); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
+  42% { transform: translateY(1.6px); animation-timing-function: cubic-bezier(0.55, 0, 0.3, 1); }
+  76% { transform: translateY(-0.2px); animation-timing-function: ease-in-out; }
+  100% { transform: translateY(0); }
+}
+
+/* ── Reve. The mirrored bars fold toward the spine and open again, one
+   wing beat. */
+.lg-reve .r-wl,
+.lg-reve .r-wr { transform-origin: 91px 74px; }
+.lg-reve[data-play] .r-wl,
+.lg-reve[data-play] .r-wr { animation: pl-reve-wing 560ms both; }
+.lg-reve[data-play] .r-sp { animation: pl-reve-body 560ms both; }
+@keyframes pl-reve-wing {
+  0% { transform: translateY(0) scaleX(1); animation-timing-function: cubic-bezier(0.3, 0, 0.3, 1); }
+  38% { transform: translateY(-3px) scaleX(0.74); animation-timing-function: cubic-bezier(0.5, 0, 0.3, 1); }
+  72% { transform: translateY(0.4px) scaleX(1.04); animation-timing-function: ease-in-out; }
+  100% { transform: translateY(0) scaleX(1); }
+}
+@keyframes pl-reve-body {
+  0% { transform: translateY(0); animation-timing-function: cubic-bezier(0.3, 0, 0.3, 1); }
+  38% { transform: translateY(-3px); animation-timing-function: cubic-bezier(0.5, 0, 0.3, 1); }
+  72% { transform: translateY(0.4px); animation-timing-function: ease-in-out; }
+  100% { transform: translateY(0); }
+}
+
+/* ── ShoSoft. A stage light crosses the disc while the S turns on its mark,
+   like a performer finding the light. */
+.lg-shosoft .s-g { transform-origin: 156px 156px; }
+.lg-shosoft .s-spot { opacity: 0; transform: translate(-290px, 70px); }
+.lg-shosoft .s-stop { stop-color: var(--pl-sho); stop-opacity: 0.95; }
+.lg-shosoft .s-stop-mid { stop-opacity: 0.5; }
+.lg-shosoft .s-stop-end { stop-opacity: 0; }
+.lg-shosoft[data-play] .s-spot { animation: pl-sho-spot 620ms cubic-bezier(0.45, 0.05, 0.35, 1) both; }
+.lg-shosoft[data-play] .s-g { animation: pl-sho-turn 620ms both; }
+@keyframes pl-sho-spot {
+  0% { opacity: 1; transform: translate(-290px, 70px); }
+  100% { opacity: 1; transform: translate(290px, -70px); }
+}
+@keyframes pl-sho-turn {
+  0% { transform: rotate(0deg); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
+  36% { transform: rotate(-9deg); animation-timing-function: cubic-bezier(0.55, 0, 0.3, 1); }
+  72% { transform: rotate(1.5deg); animation-timing-function: ease-in-out; }
+  100% { transform: rotate(0deg); }
+}
+
+/* ── Handoff. The crossbar is handed across. It slides into the right post
+   while a fresh one comes out of the left, and the posts give and catch. */
+.lg-handoff { --pl-accent: var(--pl-handoff); }
+.lg-handoff[data-play] .h-bar { animation: pl-ho-bar 580ms both, pl-tint 580ms ease both; }
+.lg-handoff[data-play] .h-l { animation: pl-ho-give 580ms both; }
+.lg-handoff[data-play] .h-r { animation: pl-ho-catch 580ms both; }
+@keyframes pl-ho-bar {
+  0% { transform: translateX(0); animation-timing-function: cubic-bezier(0.5, 0, 0.75, 0.4); }
+  40% { transform: translateX(20.3px); animation-timing-function: step-end; }
+  40.1% { transform: translateX(-20.3px); animation-timing-function: cubic-bezier(0.2, 0.8, 0.3, 1); }
+  100% { transform: translateX(0); }
+}
+@keyframes pl-ho-give {
+  0% { transform: translateX(0); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
+  16% { transform: translateX(-0.9px); animation-timing-function: ease-in-out; }
+  40%, 100% { transform: translateX(0); }
+}
+@keyframes pl-ho-catch {
+  0%, 34% { transform: translateX(0); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
+  48% { transform: translateX(1.4px); animation-timing-function: cubic-bezier(0.55, 0, 0.3, 1); }
+  72% { transform: translateX(-0.25px); animation-timing-function: ease-in-out; }
+  100% { transform: translateX(0); }
+}
+
+/* ── Digital Enterprise. The e rolls off the d and clicks back into it, the
+   d gives a little on the catch. */
+.lg-digital-enterprise { --pl-accent: var(--pl-de); }
+.lg-digital-enterprise .d-e { transform-origin: 411px 247px; }
+.lg-digital-enterprise[data-play] > svg { animation: pl-tint 580ms ease both; }
+.lg-digital-enterprise[data-play] .d-e { animation: pl-de-e 580ms both; }
+.lg-digital-enterprise[data-play] .d-d { animation: pl-de-d 580ms both; }
+@keyframes pl-de-e {
+  0% { transform: translate(0, 0) rotate(0deg); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
+  36% { transform: translate(16px, -8px) rotate(-11deg); animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.5); }
+  56% { transform: translate(-3px, 0) rotate(1.5deg); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
+  78% { transform: translate(0.8px, 0) rotate(-0.4deg); animation-timing-function: ease-in-out; }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+@keyframes pl-de-d {
+  0%, 52% { transform: translateX(0); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
+  62% { transform: translateX(-7px); animation-timing-function: ease-in-out; }
+  100% { transform: translateX(0); }
+}
+
+/* ── HYRE. The H is two halves turned around one centre. They shake hands,
+   a firm up and down, and let go. */
+.lg-hyre { --pl-accent: var(--pl-hyre); }
+.lg-hyre[data-play] > svg { animation: pl-tint 580ms ease both; }
+.lg-hyre[data-play] .y-l { animation: pl-hyre-l 580ms both; }
+.lg-hyre[data-play] .y-r { animation: pl-hyre-r 580ms both; }
+@keyframes pl-hyre-l {
+  0% { transform: translateY(0); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
+  26% { transform: translateY(-30px); animation-timing-function: cubic-bezier(0.5, 0, 0.3, 1); }
+  54% { transform: translateY(13px); animation-timing-function: cubic-bezier(0.5, 0, 0.3, 1); }
+  78% { transform: translateY(-3.5px); animation-timing-function: ease-in-out; }
+  100% { transform: translateY(0); }
+}
+@keyframes pl-hyre-r {
+  0% { transform: translateY(0); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
+  26% { transform: translateY(30px); animation-timing-function: cubic-bezier(0.5, 0, 0.3, 1); }
+  54% { transform: translateY(-13px); animation-timing-function: cubic-bezier(0.5, 0, 0.3, 1); }
+  78% { transform: translateY(3.5px); animation-timing-function: ease-in-out; }
+  100% { transform: translateY(0); }
+}
+
+/* ── Swire. The chevron swipes forward, top half leading, and springs back.
+   Its two tones return mid swipe. */
+.lg-swire { --sw-top: 0.6; }
+.lg-swire.plogo--ink { --sw-top: 0.74; }
+.lg-swire .w-t { opacity: var(--sw-top); }
+.lg-swire[data-play] .w-t { animation: pl-sw-go 560ms both, pl-sw-tint-t 560ms ease both; }
+.lg-swire[data-play] .w-b { animation: pl-sw-go 560ms 60ms both, pl-sw-tint-b 560ms 60ms ease both; }
+@keyframes pl-sw-go {
+  0% { transform: translateX(0); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
+  38% { transform: translateX(19px); animation-timing-function: cubic-bezier(0.55, 0, 0.3, 1); }
+  72% { transform: translateX(-3px); animation-timing-function: ease-in-out; }
+  100% { transform: translateX(0); }
+}
+@keyframes pl-sw-tint-t {
+  0%, 100% { fill: currentColor; opacity: var(--sw-top); }
+  30%, 62% { fill: var(--pl-swire-t); opacity: 1; }
+}
+@keyframes pl-sw-tint-b {
+  0%, 100% { fill: currentColor; }
+  30%, 62% { fill: var(--pl-swire-b); }
+}
+
+/* ── AVA Media. The three letters hop in turn, a quick wave through the
+   word. */
+.lg-ava-media[data-play] .a-1 { animation: pl-ava-hop 440ms both; }
+.lg-ava-media[data-play] .a-v { animation: pl-ava-hop 440ms 70ms both; }
+.lg-ava-media[data-play] .a-2 { animation: pl-ava-hop 440ms 140ms both; }
+@keyframes pl-ava-hop {
+  0% { transform: translateY(0); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
+  38% { transform: translateY(-24px); animation-timing-function: cubic-bezier(0.55, 0, 0.6, 1); }
+  70% { transform: translateY(3px); animation-timing-function: ease-in-out; }
+  100% { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plogo,
+  .plogo * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -1,0 +1,22 @@
+---
+/* daviddn.dev/cv/ opens the resume. It exists so a resume link sent with an
+   application (daviddn.dev/cv/?r=<tag>) is counted like any other visit before
+   the PDF loads, which a direct link to the PDF never could be. */
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>David Nguyen, resume</title>
+    <script is:inline src="/a/t.js"></script>
+    <script is:inline>
+      setTimeout(function () { if (window.__ddFlush) window.__ddFlush(); location.replace('/resume.pdf'); }, 350);
+    </script>
+    <noscript><meta http-equiv="refresh" content="0; url=/resume.pdf" /></noscript>
+  </head>
+  <body style="font: 15px system-ui, sans-serif; padding: 24px">
+    <a href="/resume.pdf">Open the resume</a>
+  </body>
+</html>
