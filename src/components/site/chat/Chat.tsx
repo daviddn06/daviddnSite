@@ -25,7 +25,7 @@
    Changing where the chat sits (a project opening) fades it out and in
    rather than sliding it across the screen. Reduced motion turns it all
    off. */
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import './chat.css';
 import { SiteContext, type Site } from './cards';
 import { firstChat, type Convo } from './store';
@@ -38,7 +38,9 @@ let live: Promise<typeof import('./Live')> | null = null;
 const loadLive = () => (live ??= import('./Live'));
 if (typeof window !== 'undefined') loadLive();
 
-export function Chat(props: Site) {
+/* drawn again only when what it is given changes (the open project), not
+   on every hover in the guide */
+export const Chat = memo(function Chat(props: Site) {
   /* the server renders a still copy; the live chat takes over once the
      page is running and its code (Live.tsx, loaded on its own) is here */
   const [first, setFirst] = useState<{ convo: Convo | null; Live: typeof import('./Live').Live } | null>(null);
@@ -53,7 +55,7 @@ export function Chat(props: Site) {
       {first ? <first.Live {...props} first={first.convo} /> : <Still open={props.open} all={props.all} />}
     </SiteContext.Provider>
   );
-}
+});
 
 /* the chat before it is live: the same layout, nothing to do yet (the
    headline stays blank so a different one never flashes in) */
