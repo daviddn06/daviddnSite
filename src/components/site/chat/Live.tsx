@@ -2,7 +2,7 @@
    with the site's adapter. It is loaded on its own, right after the page
    starts, so the rest of the screen does not wait for it; until it is
    here the still copy in Chat.tsx holds its place. */
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   ActionBarPrimitive,
   AssistantRuntimeProvider,
@@ -90,7 +90,7 @@ const fromStored = (list: Stored[]): ThreadMessageLike[] =>
   list.map((m) => ({ ...m, status: m.role === 'assistant' ? { type: 'complete', reason: 'unknown' } : undefined }));
 
 
-export function Live({ first, ...site }: Site & { first: Convo | null }) {
+export function Live({ first, draft, ...site }: Site & { first: Convo | null; draft?: import('./Chat').Draft | null }) {
   const siteRef = useRef(site);
   siteRef.current = site;
   const convo = useRef<{ id: string; at: number; topic?: string }>({ id: first?.id ?? newId(), at: first?.at ?? Date.now(), topic: first?.topic });
@@ -113,6 +113,18 @@ export function Live({ first, ...site }: Site & { first: Convo | null }) {
     limit: (kind, retry, limit) => writeQuota({ left: kind === 'day' ? 0 : readQuota()?.left ?? limit, limit, kind, until: Date.now() + retry * 1000 }),
   }), []);
   const runtime = useLocalRuntime(adapter, { initialMessages: first ? fromStored(first.messages) : [] });
+  /* what was typed into the still box before this loaded, with its focus
+     and caret */
+  useLayoutEffect(() => {
+    if (!draft) return;
+    if (draft.text) runtime.thread.composer.setText(draft.text);
+    requestAnimationFrame(() => {
+      const ta = document.querySelector<HTMLTextAreaElement>('#crt-chat-slot .composer-input');
+      if (!ta) return;
+      if (draft.focused) ta.focus({ preventScroll: true });
+      try { ta.setSelectionRange(draft.start, draft.end); } catch { /* not focusable yet */ }
+    });
+  }, []);
   const born = useRef(typeof performance !== 'undefined' ? performance.now() : 0);
 
   /* keep the conversation once it has a question in it */

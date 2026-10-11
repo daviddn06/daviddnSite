@@ -32,37 +32,60 @@ import { firstChat, type Convo } from './store';
 import { noteFor, placeholderFor } from './shared';
 import type { Project } from '../Media';
 
-/* the live chat's code, asked for as soon as this runs in the browser so
-   it loads alongside the rest of the page rather than inside it */
+/* The live chat's code (Live.tsx) is fetched once the page has painted
+   and the browser is idle (at most about two seconds in), or at once
+   when the visitor reaches for the box, whichever comes first, so it
+   never competes with the screen starting up. Until it is here the
+   still copy below holds its exact place and takes typing; what was
+   typed, the focus and the caret carry over. */
 let live: Promise<typeof import('./Live')> | null = null;
 const loadLive = () => (live ??= import('./Live'));
-if (typeof window !== 'undefined') loadLive();
+
+export type Draft = { text: string; focused: boolean; start: number; end: number };
 
 /* drawn again only when what it is given changes (the open project), not
    on every hover in the guide */
 export const Chat = memo(function Chat(props: Site) {
-  /* the server renders a still copy; the live chat takes over once the
-     page is running and its code (Live.tsx, loaded on its own) is here */
-  const [first, setFirst] = useState<{ convo: Convo | null; Live: typeof import('./Live').Live } | null>(null);
+  const [first, setFirst] = useState<{ convo: Convo | null; Live: typeof import('./Live').Live; draft: Draft | null } | null>(null);
+  const [want, setWant] = useState(false);
   useEffect(() => {
-    let on = true;
-    loadLive().then(({ Live }) => { if (on) setFirst({ convo: firstChat(), Live }); });
-    return () => { on = false; };
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    let id = 0;
+    const go = () => setWant(true);
+    /* after the first paint, then when idle */
+    const raf = requestAnimationFrame(() => {
+      id = w.requestIdleCallback ? w.requestIdleCallback(go, { timeout: 2200 }) : window.setTimeout(go, 1200);
+    });
+    return () => { cancelAnimationFrame(raf); if (w.cancelIdleCallback) w.cancelIdleCallback(id); else clearTimeout(id); };
   }, []);
+  useEffect(() => {
+    if (!want) return;
+    let on = true;
+    loadLive().then(({ Live }) => {
+      if (!on) return;
+      /* what the visitor already typed into the still box */
+      const ta = document.querySelector<HTMLTextAreaElement>('#crt-chat-slot .composer-input');
+      const draft = ta && ta.value ? { text: ta.value, focused: document.activeElement === ta, start: ta.selectionStart, end: ta.selectionEnd }
+        : ta && document.activeElement === ta ? { text: '', focused: true, start: 0, end: 0 } : null;
+      setFirst({ convo: firstChat(), Live, draft });
+    });
+    return () => { on = false; };
+  }, [want]);
   const site = useMemo(() => props, [props.all, props.sections, props.open, props.show]);
   return (
     <SiteContext.Provider value={site}>
-      {first ? <first.Live {...props} first={first.convo} /> : <Still open={props.open} all={props.all} />}
+      {first ? <first.Live {...props} first={first.convo} draft={first.draft} /> : <Still open={props.open} all={props.all} onReach={() => setWant(true)} />}
     </SiteContext.Provider>
   );
 });
 
 /* the chat before it is live: the same layout, nothing to do yet (the
    headline stays blank so a different one never flashes in) */
-function Still({ open, all }: { open: string | null; all: Project[] }) {
+function Still({ open, all, onReach }: { open: string | null; all: Project[]; onReach: () => void }) {
   const p = all.find((x) => x.slug === open);
   return (
-    <div id="crt-chat-slot" className="crt-slot" data-mode={open ? 'dock' : 'center'} data-empty="">
+    <div id="crt-chat-slot" className="crt-slot" data-mode={open ? 'dock' : 'center'} data-empty=""
+      onPointerDown={onReach} onFocus={onReach} onKeyDown={onReach}>
       <div className="chat">
         <div className="chat-sheet">
           <div className="chat-head" />
@@ -72,8 +95,18 @@ function Still({ open, all }: { open: string | null; all: Project[] }) {
           </div>
         </div>
         <div className="composer">
-          <textarea className="composer-input" rows={1} placeholder={placeholderFor(p)} aria-label="Message" disabled />
-          <span className="composer-btn" aria-hidden="true" />
+          <textarea className="composer-input" rows={1} placeholder={placeholderFor(p)} aria-label="Message" />
+          {/* the model pill and the send button, as the live ones are drawn */}
+          <span className="model" aria-hidden="true">
+            <span className="model-pill">
+              <svg viewBox="0 0 16 16" width="13" height="13"><path d="M8 1.8l1.5 4.2 4.2 1.5-4.2 1.5L8 13.2 6.5 9 2.3 7.5 6.5 6z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /></svg>
+              <span className="model-name">Haiku 5.5</span>
+              <svg className="model-caret" viewBox="0 0 10 10" width="8" height="8" style={{ transform: 'rotate(180deg)' }}><path d="M2 6.5l3-3 3 3" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </span>
+          </span>
+          <span className="composer-btn is-still" aria-hidden="true">
+            <svg viewBox="0 0 16 16" width="14" height="14"><path d="M8 13V3.5M3.8 7.4 8 3.2l4.2 4.2" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </span>
         </div>
         <p className="chat-note">{noteFor(p)}</p>
         <div className="chat-rest" />
@@ -81,4 +114,3 @@ function Still({ open, all }: { open: string | null; all: Project[] }) {
     </div>
   );
 }
-

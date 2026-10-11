@@ -455,6 +455,7 @@
   transition: background-color var(--brand) var(--ease), opacity var(--chat-quick) var(--ease), transform var(--chat-quick) var(--ease), box-shadow var(--chat-quick) var(--ease);
   animation: chat-fade var(--chat-quick) var(--ease);
 }
+.composer-btn.is-still { opacity: 0.35; box-shadow: none; cursor: default; }
 .composer-btn:disabled { opacity: 0.35; box-shadow: none; cursor: default; }
 @media (hover: hover) { .composer-btn:not(:disabled):hover { transform: scale(1.06); } }
 .composer-btn:not(:disabled):active { transform: scale(0.94); }
