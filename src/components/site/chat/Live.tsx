@@ -2,7 +2,7 @@
    with the site's adapter. It is loaded on its own, right after the page
    starts, so the rest of the screen does not wait for it; until it is
    here the still copy in Chat.tsx holds its place. */
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   ActionBarPrimitive,
   AssistantRuntimeProvider,
@@ -154,20 +154,38 @@ export function Live({ first, ...site }: Site & { first: Convo | null }) {
   );
 }
 
-/* where the chat sits now. A change of place fades the chat out, moves
-   it while it is invisible, and fades it in; changing back midway just
-   fades in again where it was. */
-function usePlace(target: Mode) {
-  const [shown, setShown] = useState(target);
-  const [fade, setFade] = useState<'out' | 'in' | undefined>();
-  useEffect(() => {
-    if (target === shown) { setFade((f) => (f === 'out' ? 'in' : f)); return; }
-    if (still()) { setShown(target); return; }
-    setFade('out');
-    const t = window.setTimeout(() => { setShown(target); setFade('in'); }, 170);
-    return () => clearTimeout(t);
-  }, [target, shown]);
-  return [shown, fade, () => setFade(undefined)] as const;
+/* Where the chat sits now. A change of place between the middle and
+   the panel beside an article never hides the conversation: it moves at
+   once in the layout, and is drawn gliding there from where it was (a
+   FLIP on the conversation, transform only), on the same timeline as the
+   picture's sweep. A change midway glides on from wherever it is drawn.
+   Phones (the bar) just switch. */
+const GLIDE = 560;
+function usePlace(target: Mode, slot: React.RefObject<HTMLDivElement | null>) {
+  const before = useRef<DOMRect | null>(null);
+  const last = useRef(target);
+  /* read before React changes the page: where the conversation is drawn
+     this instant, mid glide or not */
+  if (target !== last.current) {
+    const el = slot.current?.querySelector<HTMLElement>('.chat');
+    before.current = el && last.current !== 'bar' && target !== 'bar' ? el.getBoundingClientRect() : null;
+    last.current = target;
+  }
+  useLayoutEffect(() => {
+    const el = slot.current?.querySelector<HTMLElement>('.chat');
+    const a = before.current;
+    before.current = null;
+    if (!el || !a || still()) return;
+    el.getAnimations().forEach((x) => x.cancel());
+    const b = el.getBoundingClientRect();
+    if (!b.width) return;
+    const s = a.width / b.width;
+    el.animate([
+      { transformOrigin: '0 100%', transform: `translate(${a.left - b.left}px, ${a.bottom - b.bottom}px) scale(${s})` },
+      { transformOrigin: '0 100%', transform: 'none' },
+    ], { duration: GLIDE, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
+  }, [target, slot]);
+  return [target, undefined, () => {}] as const;
 }
 
 /* keeps something mounted while it animates away */
@@ -205,7 +223,7 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
     mq.addEventListener('change', sync);
     return () => mq.removeEventListener('change', sync);
   }, []);
-  const [mode, fade, faded] = usePlace(narrow ? 'bar' : open ? 'dock' : 'center');
+  const [mode, fade, faded] = usePlace(narrow ? 'bar' : open ? 'dock' : 'center', slot);
 
   /* past conversations, for History */
   const [chats, setChats] = useState<Convo[]>(() => listChats());
