@@ -106,6 +106,18 @@ export function startScreen2d(canvas0: HTMLCanvasElement, w: Wants, opts: { quie
     return lines;
   };
 
+  /* the corners' shadow, made once per size and theme */
+  let vig: CanvasGradient | null = null, vigFor = '';
+  const vignette = (CW: number, CH: number, light: boolean) => {
+    const key = `${CW}x${CH}${light}`;
+    if (key === vigFor && vig) return vig;
+    vigFor = key;
+    vig = ctx.createRadialGradient(CW / 2, CH / 2, Math.min(CW, CH) * 0.45, CW / 2, CH / 2, Math.hypot(CW, CH) * 0.55);
+    vig.addColorStop(0, 'rgba(0,0,0,0)');
+    vig.addColorStop(1, light ? 'rgba(30,45,70,0.2)' : 'rgba(0,0,0,0.34)');
+    return vig;
+  };
+
   const palette = blender(w.palette.current ?? []);
 
   /* the pointer brightens the picture near it, easing in and out */
@@ -123,6 +135,7 @@ export function startScreen2d(canvas0: HTMLCanvasElement, w: Wants, opts: { quie
      box are eased, as in crt.ts, so the quiet never pops or jumps */
   const calm = new Float32Array(CALMS * 5);
   const eased = new WeakMap<Element, { c: number; r: number[] }>();
+  const box = [0, 0, 0, 0];
   let calmN = 0;
   const readCalm = (dt: number) => {
     calmN = 0;
@@ -131,14 +144,15 @@ export function startScreen2d(canvas0: HTMLCanvasElement, w: Wants, opts: { quie
       if (calmN >= CALMS) break;
       const goal = parseFloat(el.dataset.calm || '0') || 0;
       const a = el.getBoundingClientRect();
-      const box = [a.left - b.left, a.top - b.top, a.width, a.height];
+      box[0] = a.left - b.left; box[1] = a.top - b.top; box[2] = a.width; box[3] = a.height;
       let z = eased.get(el);
-      if (!z) { z = { c: 0, r: box }; eased.set(el, z); }
+      if (!z) { z = { c: 0, r: box.slice() }; eased.set(el, z); }
       const k = still ? 1 : 1 - Math.exp(-dt / 190);
       z.c += (goal - z.c) * k;
       if (a.width && a.height) for (let i = 0; i < 4; i++) z.r[i] += (box[i] - z.r[i]) * k;
       if (z.c < 0.002 || !z.r[2] || !z.r[3]) continue;
-      calm.set([z.r[0], z.r[1], z.r[2], z.r[3], z.c], calmN * 5);
+      const o = calmN * 5;
+      calm[o] = z.r[0]; calm[o + 1] = z.r[1]; calm[o + 2] = z.r[2]; calm[o + 3] = z.r[3]; calm[o + 4] = z.c;
       calmN++;
     }
   };
@@ -330,10 +344,7 @@ export function startScreen2d(canvas0: HTMLCanvasElement, w: Wants, opts: { quie
     ctx.globalCompositeOperation = 'source-atop';
     ctx.fillStyle = scanlines(light)!;
     ctx.fillRect(0, 0, CW, CH);
-    const v = ctx.createRadialGradient(CW / 2, CH / 2, Math.min(CW, CH) * 0.45, CW / 2, CH / 2, Math.hypot(CW, CH) * 0.55);
-    v.addColorStop(0, 'rgba(0,0,0,0)');
-    v.addColorStop(1, light ? 'rgba(30,45,70,0.2)' : 'rgba(0,0,0,0.34)');
-    ctx.fillStyle = v;
+    ctx.fillStyle = vignette(CW, CH, light);
     ctx.fillRect(0, 0, CW, CH);
     ctx.globalCompositeOperation = 'source-over';
   };
