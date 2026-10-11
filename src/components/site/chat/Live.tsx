@@ -24,16 +24,16 @@ import { NARROW, noteFor, placeholderFor, still, type Mode } from './shared';
 import { Corner } from './Corner';
 import type { Project } from '../Media';
 
-/* the line above the box, one picked per new chat, in the chat's own
-   voice: casual, warm, a little cheeky */
+/* the line above the box, one picked per new chat, from David himself,
+   the way he texts */
 const HEADLINES = [
-  'ask me anything about david',
-  'what do you wanna know about david?',
-  "david's out building stuff. ask me instead",
-  "hey. curious what david's been up to?",
-  'i know a lot about david. try me',
-  "go ahead, ask me about david's work",
-  "david's busy shipping. i'm the one you can bug",
+  "hey, it's david. ask me anything",
+  'what do you wanna know?',
+  "i'm probably building something. text me",
+  'hi! ask me about my work',
+  "hey. what's on your mind?",
+  "ask me what i'm working on right now",
+  "go ahead, i'll text you back",
 ];
 const pickHeadline = (not?: string) => {
   const pool = HEADLINES.filter((h) => h !== not);
@@ -268,7 +268,7 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
         <div className="chat-sheet">
           <div className="chat-head">
             <button type="button" className="chat-tool" data-on={!empty ? '' : undefined} tabIndex={!empty ? 0 : -1} onClick={fresh}>
-              New chat
+              New message
             </button>
             <button type="button" className="chat-tool" data-on={past || menu ? '' : undefined} tabIndex={past || menu ? 0 : -1}
               aria-expanded={menu} onClick={() => (menu ? closeMenu() : openMenu())}>

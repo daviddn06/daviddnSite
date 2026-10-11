@@ -4,7 +4,7 @@
    on the glass.
 
    Like ChatGPT. With nothing said yet it is one line picked at random
-   above the box and "Ask anything about David." under it. Once talking,
+   above the box and "David can make mistakes. Check important info." under it. Once talking,
    the box settles to the bottom and the conversation reads down from the
    top, each question pinned to the top as it is asked.
 
@@ -12,7 +12,7 @@
    switching and closing projects keep it, and every message tells the
    server which project is open and where the visitor is in it. With a
    project open the chat docks to the bottom of the strip beside the
-   article as a slim bar ("Ask anything about ShoSoft") that opens upward
+   article ("Text David about ShoSoft") that opens upward
    while in use. Under 1000px it is a bar along the bottom of the screen
    that opens into a full screen conversation.
 
