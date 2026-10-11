@@ -31,15 +31,17 @@ const source = (x: number, y: number, w: number, h: number) => {
 };
 
 /* the bend itself, as one SVG filter: the displacement, and the softening
-   where it moves things far */
-const filter = (id: string) => `<filter id="${id}" filterUnits="objectBoundingBox" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB" x="0" y="0" width="1" height="1">
+   where it moves things far. The fast one is the displacement alone: the
+   softening costs the browser five more passes over the layer, every
+   frame the layer is bent in the compositor (see `curve`). */
+const filter = (id: string, fast = false) => `<filter id="${id}" filterUnits="objectBoundingBox" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB" x="0" y="0" width="1" height="1">
       <feImage class="crt-warp-map" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="map"/>
-      <feDisplacementMap class="crt-warp-move" in="SourceGraphic" in2="map" scale="0" xChannelSelector="R" yChannelSelector="G" result="bent"/>
+      <feDisplacementMap class="crt-warp-move" in="SourceGraphic" in2="map" scale="0" xChannelSelector="R" yChannelSelector="G" result="bent"/>${fast ? '' : `
       <feGaussianBlur in="bent" stdDeviation="0.3" result="soft"/>
       <feColorMatrix in="map" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 1 0 0" result="edge"/>
       <feComposite in="soft" in2="edge" operator="in" result="soft-edge"/>
       <feComposite in="bent" in2="edge" operator="out" result="sharp-middle"/>
-      <feComposite in="soft-edge" in2="sharp-middle" operator="arithmetic" k2="1" k3="1"/>
+      <feComposite in="soft-edge" in2="sharp-middle" operator="arithmetic" k2="1" k3="1"/>`}
     </filter>`;
 
 /* Builds (or rebuilds) the filter for a tube, and keeps it in step with
@@ -49,7 +51,18 @@ const filter = (id: string) => `<filter id="${id}" filterUnits="objectBoundingBo
    the chat, the scanlines). `#crt-warp-under` bends the article's layer
    only as far right as the article reaches: right of it that layer is
    empty, and while a project is open it is bent again every frame, so
-   the browser is spared the empty part of the screen. */
+   the browser is spared the empty part of the screen.
+
+   Each has a fast twin without the softening. A layer that holds a
+   scrolling box (the article, a chat with messages) is bent again in the
+   compositor every frame, softening and all, so while anything on the
+   tube moves (a scroll, an answer streaming in, the article sliding or
+   wiping) every layer switches to its fast twin (`data-moving` on the
+   tube, site.css) and back about 150ms after it settles. The difference
+   is a third of a pixel of blur toward the corners, gone while things
+   move. On a
+   machine that cannot keep up, the screen's governor marks the tube
+   `data-lite` (crt.ts) and every layer stays on its fast twin. */
 export function curve(tube: HTMLElement): () => void {
   let svg = document.getElementById('crt-warp-svg') as unknown as SVGSVGElement | null;
   if (!svg) {
@@ -59,12 +72,12 @@ export function curve(tube: HTMLElement): () => void {
     svg.setAttribute('width', '0');
     svg.setAttribute('height', '0');
     svg.style.position = 'absolute';
-    svg.innerHTML = `<defs>${filter('crt-warp')}${filter('crt-warp-under')}</defs>`;
+    svg.innerHTML = `<defs>${filter('crt-warp')}${filter('crt-warp-under')}${filter('crt-warp-fast', true)}${filter('crt-warp-under-fast', true)}</defs>`;
     document.body.appendChild(svg);
   }
   const maps = svg.querySelectorAll('.crt-warp-map');
   const moves = svg.querySelectorAll('.crt-warp-move');
-  const under = svg.querySelector('#crt-warp-under')!;
+  const unders = svg.querySelectorAll('#crt-warp-under, #crt-warp-under-fast');
   const layer = tube.querySelector<HTMLElement>('.under');
 
   let last = '', most = 0;
@@ -119,7 +132,7 @@ export function curve(tube: HTMLElement): () => void {
     const next = String(x1 / w);
     if (next === span) return;
     span = next;
-    under.setAttribute('width', next);
+    for (const u of unders) u.setAttribute('width', next);
   };
   const watched = new Set<Element>();
   const ro = new ResizeObserver(() => { build(); fit(); });
@@ -133,5 +146,45 @@ export function curve(tube: HTMLElement): () => void {
   const mo = new MutationObserver(track);
   if (layer) mo.observe(layer, { childList: true });
   track();
-  return () => { ro.disconnect(); mo.disconnect(); };
+
+  /* motion: the tube's layers are fast while anything on it moves, and
+     for HOLD ms after */
+  const HOLD = 150;
+  let until = 0, timer = 0;
+  const settle = () => {
+    timer = 0;
+    if (until > performance.now() || sliding()) { timer = window.setTimeout(settle, HOLD); return; }
+    delete tube.dataset.moving;
+  };
+  const moving = (el: EventTarget | Node | null) => {
+    if (!(el instanceof Node) || !tube.contains(el)) return;
+    until = performance.now() + HOLD;
+    if (!('moving' in tube.dataset)) tube.dataset.moving = '';
+    if (!timer) timer = window.setTimeout(settle, HOLD);
+  };
+  /* the article's own motion (sliding in or out, a wipe) runs as CSS
+     animations; endless ones (a screenshot's shimmer) do not count */
+  const sliding = () => !!layer && layer.getAnimations({ subtree: true }).some((a) =>
+    a.playState === 'running' && a.effect?.getComputedTiming().iterations !== Infinity);
+  const onScroll = (e: Event) => moving(e.target);
+  const onAnim = (e: Event) => { if (layer?.contains(e.target as Node)) moving(e.target); };
+  tube.addEventListener('scroll', onScroll, { capture: true, passive: true });
+  tube.addEventListener('animationstart', onAnim, true);
+  /* an answer streaming into the chat */
+  const typed = new MutationObserver((records) => {
+    for (const r of records) {
+      const el = r.target instanceof Element ? r.target : r.target.parentElement;
+      if (el?.closest('.crt-slot')) { moving(el); return; }
+    }
+  });
+  const over = tube.querySelector('.over.on-glass');
+  if (over) typed.observe(over, { childList: true, characterData: true, subtree: true });
+
+  return () => {
+    ro.disconnect(); mo.disconnect(); typed.disconnect();
+    tube.removeEventListener('scroll', onScroll, true);
+    tube.removeEventListener('animationstart', onAnim, true);
+    clearTimeout(timer);
+    delete tube.dataset.moving;
+  };
 }

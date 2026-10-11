@@ -143,6 +143,11 @@ button { font: inherit; color: inherit; }
 .tube[data-curved] .on-glass { filter: url(#crt-warp); }
 /* the article's layer bends only over the article's column (warp.ts) */
 .tube[data-curved] .under.on-glass { filter: url(#crt-warp-under); }
+/* while anything on the tube moves, and on a machine that cannot keep up (the
+   screen's governor marks the tube `data-lite`), the curve without its
+   softening (warp.ts) */
+.tube[data-curved]:is([data-moving], [data-lite]) .on-glass { filter: url(#crt-warp-fast); }
+.tube[data-curved]:is([data-moving], [data-lite]) .under.on-glass { filter: url(#crt-warp-under-fast); }
 /* the chat panel's box beside an open project, only to tell the picture
    where to calm down (crt.ts reads `data-calm`); it draws nothing */
 .dock-calm { position: absolute; left: calc(var(--side) + var(--col) + 24px); right: 24px; top: var(--logo-zone, 196px); bottom: 18px; pointer-events: none; }
