@@ -27,11 +27,22 @@ type Props = {
    of the slide around it */
 export const Panel = memo(function Panel({ p, open, swapping, leaving, startAt, from, onClose, onZoom }: Props) {
   const ref = useRef<HTMLElement>(null);
+  /* where the article is scrolled to, kept as it scrolls, so a scroll it
+     is already at need not be asked of the browser (which would lay out a
+     just drawn article in the middle of the click that opened it) */
+  const at = useRef(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const onScroll = () => { at.current = el.scrollTop; };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
 
   /* before the first frame, so a new article never shows the old one's
      scroll, and a leaving copy never shows the top */
-  useLayoutEffect(() => { if (open && !leaving) ref.current?.scrollTo({ top: 0 }); }, [open, leaving, p?.slug]);
-  useLayoutEffect(() => { if (leaving && startAt) ref.current?.scrollTo({ top: startAt }); }, [leaving, startAt]);
+  useLayoutEffect(() => { if (open && !leaving && at.current) ref.current?.scrollTo({ top: 0 }); }, [open, leaving, p?.slug]);
+  useLayoutEffect(() => { if (leaving && startAt && startAt !== at.current) ref.current?.scrollTo({ top: startAt }); }, [leaving, startAt]);
 
   /* videos play only while on screen, and never in a hidden tab */
   useEffect(() => {
