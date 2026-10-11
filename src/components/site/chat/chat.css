@@ -356,19 +356,10 @@ a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
 .chat-row[aria-current] .ch, .chat-row[aria-current] .chat-row-when { color: var(--chat-link); }
 .chat-menu[data-on] li { animation: chat-rise 360ms var(--ease) backwards; animation-delay: calc(min(var(--n, 0), 8) * 24ms); }
 
-/* History in the bottom right corner (Corner.tsx). On a wide screen
-   with nothing open it stands there as a list composed like the guide's
-   channels, and the chat centres itself between the guide and it. */
-.crt-slot, .crt-history, .hist-toggle { --hist-w: 248px; }
-/* narrower, only the toggle sits there, so less is kept clear */
-@media (min-width: 1000px) and (max-width: 1199px) { .crt-slot { --hist-w: 104px; } }
-@media (min-width: 1000px) {
-  .crt-slot[data-mode="center"] {
-    left: calc(var(--side) + (100% - var(--side) - var(--hist-w) - 2 * var(--inset)) / 2);
-    width: min(660px, calc(100% - var(--side) - var(--hist-w) - 2 * var(--inset) - 48px));
-  }
-}
-/* the list holds New chat, so the chat's own buttons step aside */
+/* History in the bottom left corner, under the guide and in its column
+   (Corner.tsx sets its top to just below the guide's panel). Its rows
+   line up with the guide's channels. */
+/* the list holds New chat and History, so the chat's own buttons step aside */
 .crt-slot[data-history="full"] .chat-tool { display: none; }
 
 .crt-history {
@@ -377,13 +368,12 @@ a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
   --chat-link: color-mix(in srgb, var(--link) 62%, #fff);
   position: absolute;
   z-index: 2;
-  right: var(--inset);
+  left: calc(var(--inset) + 8px);
   bottom: var(--inset);
-  width: var(--hist-w);
-  max-height: min(46%, 420px);
+  width: calc(var(--panel-w) - 16px);
   display: flex;
   flex-direction: column;
-  padding: 8px 0 0;
+  justify-content: flex-end;
   color: var(--ink);
   text-shadow: var(--glow, 0 0 0 transparent), 0 0 1px rgba(2, 5, 14, 0.75), 0 0 5px rgba(2, 5, 14, 0.45);
   pointer-events: none;
@@ -393,17 +383,18 @@ a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
   transition: opacity var(--quick, 160ms) cubic-bezier(0.4, 0, 1, 1), transform var(--quick, 160ms) cubic-bezier(0.4, 0, 1, 1), visibility 0s linear var(--quick, 160ms);
 }
 .crt-history[data-on] {
-  pointer-events: auto;
   opacity: 1;
   visibility: visible;
   transform: none;
   transition: opacity var(--calm, 320ms) var(--ease), transform var(--calm, 320ms) var(--ease), visibility 0s;
 }
+.crt-history[data-on] > * { pointer-events: auto; }
 .hist-label {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 0 12px 6px;
+  margin: 0 12px 4px;
   color: var(--ink);
   font-size: 11px;
   line-height: 16px;
@@ -415,19 +406,22 @@ a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
 .hist-list {
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   scrollbar-width: none;
   display: grid;
   align-content: start;
-  gap: 2px;
-  padding-bottom: 4px;
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent);
+  padding-bottom: 2px;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent);
 }
 .hist-list::-webkit-scrollbar { display: none; }
+/* a row, the same measure as a channel in the guide */
 .hist-row {
+  position: relative;
+  flex: none;
   display: grid;
   grid-template-columns: 28px 1fr auto;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
   min-height: 32px;
   padding: 0 10px 0 12px;
@@ -435,7 +429,7 @@ a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
   border-radius: 9px;
   background: none;
   color: var(--ink);
-  font-size: 14px;
+  font: inherit;
   text-align: left;
   text-shadow: inherit;
   cursor: pointer;
@@ -444,55 +438,17 @@ a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
 .hist-row .ch { color: var(--chat-quiet); font-size: 12px; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; display: flex; }
 .hist-title { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .hist-when { color: var(--chat-quiet); font-size: 12px; font-variant-numeric: tabular-nums; }
-.hist-new { margin-bottom: 2px; }
 @media (hover: hover) { .hist-row:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 70%, transparent); } }
 .hist-row:focus-visible { outline: none; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 85%, transparent), 0 0 14px color-mix(in srgb, var(--link) 22%, transparent); }
-/* the one on screen, marked the way the guide marks its open channel */
-.hist-row { position: relative; }
+/* the one on screen */
 .hist-row[aria-current]::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px; border-radius: 1px; background: var(--chat-link); box-shadow: 0 0 8px color-mix(in srgb, var(--chat-link) 60%, transparent); }
 .hist-row[aria-current] .ch, .hist-row[aria-current] .hist-when { color: var(--chat-link); }
 .hist-list li.is-new { animation: chat-rise 360ms var(--ease) backwards; }
 
-/* no room to stand: a small toggle in the same corner, clear of the
-   docked chat's bar */
-.hist-toggle {
-  position: absolute;
-  z-index: 2;
-  right: var(--inset);
-  bottom: var(--inset);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 30px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 9px;
-  background: none;
-  box-shadow: inset 0 0 0 1px var(--rule, rgba(200, 220, 255, 0.3));
-  color: var(--ink);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  text-shadow: var(--glow, 0 0 0 transparent), 0 0 1px rgba(2, 5, 14, 0.75), 0 0 5px rgba(2, 5, 14, 0.45);
-  cursor: pointer;
-  pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(4px);
-  transition: opacity var(--quick, 160ms) cubic-bezier(0.4, 0, 1, 1), transform var(--quick, 160ms) cubic-bezier(0.4, 0, 1, 1), visibility 0s linear var(--quick, 160ms), box-shadow var(--quick, 160ms) var(--ease);
+@media (prefers-color-scheme: light) {
+  .crt-history { --chat-link: color-mix(in srgb, var(--link) 80%, #000); text-shadow: var(--glow, 0 0 0 transparent), 0 0 1px rgba(255, 255, 255, 0.9), 0 0 5px rgba(255, 255, 255, 0.6); }
 }
-.hist-toggle[data-on] {
-  pointer-events: auto;
-  opacity: 1;
-  visibility: visible;
-  transform: none;
-  transition: opacity var(--calm, 320ms) var(--ease) 120ms, transform var(--calm, 320ms) var(--ease) 120ms, visibility 0s, box-shadow var(--quick, 160ms) var(--ease);
-}
-.hist-toggle[data-where="dock"] { right: 16px; bottom: 98px; }
-@media (hover: hover) { .hist-toggle:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 70%, transparent); } }
-.hist-toggle:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
-.hist-count { color: var(--soft, rgba(236, 242, 252, 0.9)); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+@media (max-width: 999px) { .crt-history { display: none; } }
 
 /* on phones, a list button at the start of the bar */
 .composer-history {
@@ -510,12 +466,6 @@ a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
   cursor: pointer;
 }
 .composer-history:focus-visible { outline: 1.5px solid var(--link); outline-offset: 1px; }
-
-@media (prefers-color-scheme: light) {
-  .crt-history { --chat-link: color-mix(in srgb, var(--link) 80%, #000); text-shadow: var(--glow, 0 0 0 transparent), 0 0 1px rgba(255, 255, 255, 0.9), 0 0 5px rgba(255, 255, 255, 0.6); }
-  .hist-toggle { text-shadow: var(--glow, 0 0 0 transparent), 0 0 1px rgba(255, 255, 255, 0.9), 0 0 5px rgba(255, 255, 255, 0.6); }
-}
-@media (max-width: 999px) { .crt-history, .hist-toggle { display: none; } }
 
 /* Docked beside an open article: a real conversation panel filling the
    room right of the article, under the project's logo (crt.ts keeps the

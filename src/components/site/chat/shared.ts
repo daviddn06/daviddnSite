@@ -9,5 +9,3 @@ export const placeholderFor = (p?: Project) => (p ? `Ask anything about ${short(
 export const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 export const NARROW = '(max-width: 999px)';
 export type Mode = 'center' | 'dock' | 'bar';
-/* wide enough for History to stand in the corner beside the chat */
-export const WIDE = '(min-width: 1200px)';

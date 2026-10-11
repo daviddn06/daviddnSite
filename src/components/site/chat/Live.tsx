@@ -20,8 +20,8 @@ import {
 import { chatAdapter, MAX_CHARS, type Context } from './adapter';
 import { SiteContext, ToolCard, type Site } from './cards';
 import { listChats, newId, putChat, setCurrent, titleOf, when, type Convo, type Stored } from './store';
-import { NARROW, WIDE, noteFor, placeholderFor, still, type Mode } from './shared';
-import { Corner, type CornerLayout } from './Corner';
+import { NARROW, noteFor, placeholderFor, still, type Mode } from './shared';
+import { Corner } from './Corner';
 import type { Project } from '../Media';
 
 /* the line above the box, one picked per new chat, in the chat's own
@@ -217,16 +217,10 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
   /* newest first by when each was started, so continuing an older chat
      never reshuffles the list under the pointer */
   const ordered = useMemo(() => [...chats].sort((a, b) => b.at - a.at), [chats]);
-  /* History stands in the bottom right corner when there is room for it,
-     and folds into a toggle there when there is not (Corner.tsx) */
-  const [roomy, setRoomy] = useState(() => matchMedia(WIDE).matches);
-  useEffect(() => {
-    const mq = matchMedia(WIDE);
-    const sync = () => setRoomy(mq.matches);
-    mq.addEventListener('change', sync);
-    return () => mq.removeEventListener('change', sync);
-  }, []);
-  const corner: CornerLayout = mode === 'bar' ? 'none' : mode === 'center' && roomy ? 'full' : 'toggle';
+  /* History stands in the bottom left corner, under the guide, when
+     there is room for it (Corner.tsx); then it holds New chat and History
+     and the chat's own buttons step aside */
+  const [standing, setStanding] = useState(false);
   const [menu, setMenu] = useState(false);
   const menuShown = usePresence(menu, 200);
 
@@ -249,7 +243,7 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
   useEffect(() => {
     if (!menu && (mode === 'center' || !pinned)) return;
     const onDown = (e: PointerEvent) => {
-      if (slot.current?.contains(e.target as Node) || (e.target as Element)?.closest?.('.hist-toggle')) return;
+      if (slot.current?.contains(e.target as Node)) return;
       setMenu(false);
       if (!running) setPinned(false);
     };
@@ -261,7 +255,7 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
 
   return (<>
     <div id="crt-chat-slot" ref={slot} className="crt-slot" data-mode={mode} data-fade={fade}
-      data-history={corner}
+      data-history={standing ? 'full' : undefined}
       data-expanded={expanded ? '' : undefined}
       data-empty={empty ? '' : undefined}
       data-menu={menu ? '' : undefined}
@@ -304,8 +298,8 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
         <div className="chat-rest" />
       </ThreadPrimitive.Root>
     </div>
-    <Corner layout={corner} place={mode} away={menu || (expanded && mode === 'dock')} chats={ordered} current={cid} fresh={empty}
-      onNew={fresh} onPick={reopen} onOpen={openMenu} />
+    <Corner enabled={mode !== 'bar'} chats={ordered} current={cid} fresh={empty}
+      onNew={fresh} onPick={reopen} onRoom={setStanding} />
   </>);
 }
 
