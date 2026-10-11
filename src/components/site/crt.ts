@@ -373,7 +373,7 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
   let persist: Target[] = [], bloomA: Target, bloomB: Target;
   /* which logo fields are on the GPU, and at what size the targets were made */
   let uploaded: (Sdf | null)[] = [null, null];
-  let sized = '';
+  let sized = '', rampOn = false;
 
   const texture = (wd: number, ht: number, internal: number, format: number, type: number, filter: number, data: ArrayBufferView | null = null): Tex => {
     const t = gl.createTexture()!;
@@ -396,6 +396,33 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     gl.clear(gl.COLOR_BUFFER_BIT);
     return { ...tx, fb };
   };
+  /* Uniforms are sent only when their value changes; most hold still
+     from frame to frame. `set` remembers what each location last got. */
+  const set = new Map<WebGLUniformLocation, Float64Array>();
+  const same = (l: WebGLUniformLocation, a: number, b = 0, c = 0, d = 0) => {
+    let v = set.get(l);
+    if (!v) { v = new Float64Array(4).fill(NaN); set.set(l, v); }
+    if (v[0] === a && v[1] === b && v[2] === c && v[3] === d) return true;
+    v[0] = a; v[1] = b; v[2] = c; v[3] = d;
+    return false;
+  };
+  const u1 = (l: WebGLUniformLocation, a: number) => { if (!same(l, a)) gl.uniform1f(l, a); };
+  const u2 = (l: WebGLUniformLocation, a: number, b: number) => { if (!same(l, a, b)) gl.uniform2f(l, a, b); };
+  const u3 = (l: WebGLUniformLocation, a: number, b: number, c: number) => { if (!same(l, a, b, c)) gl.uniform3f(l, a, b, c); };
+  const u4 = (l: WebGLUniformLocation, a: number, b: number, c: number, d: number) => { if (!same(l, a, b, c, d)) gl.uniform4f(l, a, b, c, d); };
+  /* the calm zones, shared by two programs, sent when they move */
+  const calmSent = new Map<WebGLProgram, Float32Array>();
+  const sendCalm = (pr: Prog) => {
+    let v = calmSent.get(pr.p);
+    if (!v) { v = new Float32Array(CALMS * 5).fill(NaN); calmSent.set(pr.p, v); }
+    let diff = false;
+    for (let i = 0; i < CALMS * 4; i++) if (v[i] !== calmBoxes[i]) { diff = true; break; }
+    for (let i = 0; !diff && i < CALMS; i++) if (v[CALMS * 4 + i] !== calmAmts[i]) diff = true;
+    if (!diff) return;
+    v.set(calmBoxes); v.set(calmAmts, CALMS * 4);
+    gl.uniform4fv(pr.u['uCalm[0]'], calmBoxes);
+    gl.uniform1fv(pr.u['uCalmAmt[0]'], calmAmts);
+  };
   const drop = (x: Tex | Target | undefined) => {
     if (!x) return;
     gl.deleteTexture(x.t);
@@ -415,6 +442,18 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
       drop(probe);
     }
     store = half ? 1 : 0.5;
+    /* each sampler reads a fixed texture unit, set once */
+    const units = (pr: Prog, names: string[]) => {
+      gl.useProgram(pr.p);
+      names.forEach((n, i) => gl.uniform1i(pr.u[n], i));
+    };
+    units(signal, ['uPrev', 'uRamp', 'uSdfA', 'uSdfB']);
+    units(bright, ['uSrc']);
+    units(blur, ['uSrc']);
+    units(tube, ['uSig', 'uBloom']);
+    set.clear();
+    calmSent.clear();
+    rampOn = false;
     vao = gl.createVertexArray()!;
     ramp = texture(256, 1, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, gl.LINEAR);
     sdfA = texture(1, 1, gl.R16F, gl.RED, gl.FLOAT, gl.LINEAR, new Float32Array([-99]));
@@ -549,6 +588,10 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
 
   let raf = 0, last = performance.now(), t = Math.random() * 100, born = still ? -1e9 : -1, frameNo = 0, cur = 0;
   const rampBytes = new Uint8Array(1024);
+  const bind = (unit: number, tex: Tex) => {
+    gl.activeTexture(gl.TEXTURE0 + unit);
+    gl.bindTexture(gl.TEXTURE_2D, tex.t);
+  };
 
   const draw = (ms: number) => {
     const dt = Math.min(64, ms - last);
@@ -561,11 +604,18 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     /* the palette */
     /* a new channel's colours are simply there; hovering blends */
     const rgb = palette(w.palette.current ?? [], ms, still);
+    /* uploaded only when it changed, which at rest is never */
+    let fresh = rampOn;
     for (let j = 0; j < 256; j++) {
-      rampBytes[j * 4] = rgb[j * 3]; rampBytes[j * 4 + 1] = rgb[j * 3 + 1]; rampBytes[j * 4 + 2] = rgb[j * 3 + 2]; rampBytes[j * 4 + 3] = 255;
+      const o = j * 4, k = j * 3;
+      if (rampBytes[o] !== rgb[k] || rampBytes[o + 1] !== rgb[k + 1] || rampBytes[o + 2] !== rgb[k + 2]) fresh = false;
+      rampBytes[o] = rgb[k]; rampBytes[o + 1] = rgb[k + 1]; rampBytes[o + 2] = rgb[k + 2]; rampBytes[o + 3] = 255;
     }
-    gl.bindTexture(gl.TEXTURE_2D, ramp.t);
-    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 256, 1, gl.RGBA, gl.UNSIGNED_BYTE, rampBytes);
+    if (!fresh) {
+      gl.bindTexture(gl.TEXTURE_2D, ramp.t);
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 256, 1, gl.RGBA, gl.UNSIGNED_BYTE, rampBytes);
+      rampOn = true;
+    }
 
     lift += ((near ? 1 : 0) - lift) * (still ? 0 : Math.min(1, dt / 260));
 
@@ -668,37 +718,31 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     gl.viewport(0, 0, cols, lines);
     gl.useProgram(signal.p);
     let u = signal.u;
-    const bind = (unit: number, tex: Tex, name: string, uu: Record<string, WebGLUniformLocation>) => {
-      gl.activeTexture(gl.TEXTURE0 + unit);
-      gl.bindTexture(gl.TEXTURE_2D, tex.t);
-      gl.uniform1i(uu[name], unit);
-    };
-    bind(0, prev, 'uPrev', u); bind(1, ramp, 'uRamp', u); bind(3, sdfA, 'uSdfA', u); bind(4, sdfB, 'uSdfB', u);
-    gl.uniform2f(u.uSize, W, H);
-    gl.uniform1f(u.uPitch, pitch);
-    gl.uniform1f(u.uColW, W / cols);
-    gl.uniform1f(u.uShift, innerWidth - W);
+    bind(0, prev); bind(1, ramp); bind(2, sdfA); bind(3, sdfB);
+    u2(u.uSize, W, H);
+    u1(u.uPitch, pitch);
+    u1(u.uColW, W / cols);
+    u1(u.uShift, innerWidth - W);
     /* the field drifts at a barely noticeable pace (David, 2026-10-11) */
-    gl.uniform1f(u.uT, t * FIELD_PACE);
-    gl.uniform1f(u.uStore, store);
-    gl.uniform1f(u.uFlare, flare);
-    gl.uniform1f(u.uEdge, edge);
-    gl.uniform1f(u.uPrevEdge, prevEdge);
-    gl.uniform1f(u.uLight, light ? 1 : 0);
-    gl.uniform1f(u.uWeight, weight);
-    gl.uniform3f(u.uDecay, still ? 0 : Math.exp(-dt / 75), still ? 0 : Math.exp(-dt / 62), still ? 0 : Math.exp(-dt / 48));
+    u1(u.uT, t * FIELD_PACE);
+    u1(u.uStore, store);
+    u1(u.uFlare, flare);
+    u1(u.uEdge, edge);
+    u1(u.uPrevEdge, prevEdge);
+    u1(u.uLight, light ? 1 : 0);
+    u1(u.uWeight, weight);
+    u3(u.uDecay, still ? 0 : Math.exp(-dt / 75), still ? 0 : Math.exp(-dt / 62), still ? 0 : Math.exp(-dt / 48));
     const HOT = 230 * 3;
-    gl.uniform3f(u.uHot, rgb[HOT] / 255, rgb[HOT + 1] / 255, rgb[HOT + 2] / 255);
-    gl.uniform3f(u.uInk, light ? 1 : 252 / 255, light ? 1 : 246 / 255, light ? 1 : 238 / 255);
-    gl.uniform3f(u.uPtr, px, py, lift);
+    u3(u.uHot, rgb[HOT] / 255, rgb[HOT + 1] / 255, rgb[HOT + 2] / 255);
+    u3(u.uInk, light ? 1 : 252 / 255, light ? 1 : 246 / 255, light ? 1 : 238 / 255);
+    u3(u.uPtr, px, py, lift);
     const showLogo = !!shape && lit > 0;
-    gl.uniform4f(u.uLogo, (lastCut + W) / 2, logoY, showLogo ? lit : 0, morph ? morphE : 1);
-    gl.uniform4f(u.uLogoBox, sdfB.w, sdfB.h, fitW / 2, fitH / 2);
-    gl.uniform4f(u.uPower, cx, cy, hw, hh);
-    gl.uniform4f(u.uPower2, done ? 1 : Math.min(12, fullW / hw), done ? 1 : Math.min(12, fullH / hh), white, over);
-    gl.uniform2f(u.uDegauss, dg, age / 1000);
-    gl.uniform4fv(u['uCalm[0]'], calmBoxes);
-    gl.uniform1fv(u['uCalmAmt[0]'], calmAmts);
+    u4(u.uLogo, (lastCut + W) / 2, logoY, showLogo ? lit : 0, morph ? morphE : 1);
+    u4(u.uLogoBox, sdfB.w, sdfB.h, fitW / 2, fitH / 2);
+    u4(u.uPower, cx, cy, hw, hh);
+    u4(u.uPower2, done ? 1 : Math.min(12, fullW / hw), done ? 1 : Math.min(12, fullH / hh), white, over);
+    u2(u.uDegauss, dg, age / 1000);
+    sendCalm(signal);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
     /* 2 and 3. halation */
@@ -706,21 +750,21 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     gl.viewport(0, 0, bloomA.w, bloomA.h);
     gl.useProgram(bright.p);
     u = bright.u;
-    bind(0, next, 'uSrc', u);
-    gl.uniform2f(u.uDst, bloomA.w, bloomA.h);
-    gl.uniform2f(u.uSrcTexel, 1 / cols, 1 / lines);
-    gl.uniform1f(u.uStore, store);
+    bind(0, next);
+    u2(u.uDst, bloomA.w, bloomA.h);
+    u2(u.uSrcTexel, 1 / cols, 1 / lines);
+    u1(u.uStore, store);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.useProgram(blur.p);
     u = blur.u;
-    gl.uniform2f(u.uDst, bloomA.w, bloomA.h);
+    u2(u.uDst, bloomA.w, bloomA.h);
     gl.bindFramebuffer(gl.FRAMEBUFFER, bloomB.fb);
-    bind(0, bloomA, 'uSrc', u);
-    gl.uniform2f(u.uDir, 1, 0);
+    bind(0, bloomA);
+    u2(u.uDir, 1, 0);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindFramebuffer(gl.FRAMEBUFFER, bloomA.fb);
-    bind(0, bloomB, 'uSrc', u);
-    gl.uniform2f(u.uDir, 0, 1);
+    bind(0, bloomB);
+    u2(u.uDir, 0, 1);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
     /* 4. the tube */
@@ -728,36 +772,35 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.useProgram(tube.p);
     u = tube.u;
-    bind(0, next, 'uSig', u); bind(1, bloomA, 'uBloom', u);
-    gl.uniform1f(u.uEdge, edge);
-    gl.uniform2f(u.uSize, W, H);
-    gl.uniform2f(u.uRes, canvas.width, canvas.height);
-    gl.uniform1f(u.uDpr, canvas.width / W);
-    gl.uniform1f(u.uPitch, pitch);
-    gl.uniform1f(u.uLines, lines);
-    gl.uniform1f(u.uStore, store);
-    gl.uniform1f(u.uK, CURVE);
-    gl.uniform1f(u.uRadius, 16);
-    gl.uniform1f(u.uLight, light ? 1 : 0);
-    gl.uniform1f(u.uT, t);
-    gl.uniform1f(u.uFrame, still ? 0 : frameNo % 997);
-    gl.uniform1f(u.uFlick, still ? 1 : 1 + (Math.random() - 0.5) * 0.012);
+    bind(0, next); bind(1, bloomA);
+    u1(u.uEdge, edge);
+    u2(u.uSize, W, H);
+    u2(u.uRes, canvas.width, canvas.height);
+    u1(u.uDpr, canvas.width / W);
+    u1(u.uPitch, pitch);
+    u1(u.uLines, lines);
+    u1(u.uStore, store);
+    u1(u.uK, CURVE);
+    u1(u.uRadius, 16);
+    u1(u.uLight, light ? 1 : 0);
+    u1(u.uT, t);
+    u1(u.uFrame, still ? 0 : frameNo % 997);
+    u1(u.uFlick, still ? 1 : 1 + (Math.random() - 0.5) * 0.012);
     const power = still ? 1 : sm(300, 900, age);
-    gl.uniform1f(u.uNoise, (light ? 0.02 : 0.035) * power);
-    gl.uniform1f(u.uScan, light ? 0.45 : 1);
-    gl.uniform1f(u.uGrille, (light ? 0.035 : 0.06) * Math.min(1, dpr / 2 + 0.25));
-    gl.uniform1f(u.uWire, light ? 0.05 : 0.09);
-    gl.uniform1f(u.uBloomAmt, light ? 0.1 : 0.26);
-    gl.uniform1f(u.uSheen, 0);
-    gl.uniform1f(u.uRoll, still ? 0 : light ? 0.015 : 0.03);
-    gl.uniform1f(u.uAfter, light ? 0 : 1);
+    u1(u.uNoise, (light ? 0.02 : 0.035) * power);
+    u1(u.uScan, light ? 0.45 : 1);
+    u1(u.uGrille, (light ? 0.035 : 0.06) * Math.min(1, dpr / 2 + 0.25));
+    u1(u.uWire, light ? 0.05 : 0.09);
+    u1(u.uBloomAmt, light ? 0.1 : 0.26);
+    u1(u.uSheen, 0);
+    u1(u.uRoll, still ? 0 : light ? 0.015 : 0.03);
+    u1(u.uAfter, light ? 0 : 1);
     /* the glass is the page's screen colour, so the picture's margins
        and the blanked side meet without a seam */
     const sc = screenColour(light);
-    gl.uniform3f(u.uGlass, sc[0], sc[1], sc[2]);
-    gl.uniform3f(u.uPanel, sc[0], sc[1], sc[2]);
-    gl.uniform4fv(u['uCalm[0]'], calmBoxes);
-    gl.uniform1fv(u['uCalmAmt[0]'], calmAmts);
+    u3(u.uGlass, sc[0], sc[1], sc[2]);
+    u3(u.uPanel, sc[0], sc[1], sc[2]);
+    sendCalm(tube);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   };
 
