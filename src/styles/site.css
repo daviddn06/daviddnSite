@@ -24,8 +24,16 @@
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --pad: 14px;
   --radius: 26px;
-  /* the guide down the left of the screen */
-  --side: 300px;
+  /* panes of darker glass on the picture: the guide, the chat's box,
+     its sheet and its cards */
+  --glass-bg: rgba(5, 8, 14, 0.56);
+  --glass-line: rgba(200, 220, 255, 0.1);
+  --glass-radius: 18px;
+  /* the guide's panel, inset from the tube's edge; everything else on
+     the screen lines up to the right of it */
+  --inset: 24px;
+  --panel-w: 296px;
+  --side: calc(var(--panel-w) + 2 * var(--inset));
   /* the scanline pitch, set by the screen to match its own lines */
   --scan: 3px;
   /* the article's width: text keeps a reading measure, screens use the
@@ -47,6 +55,8 @@
     /* a lit room: dark text on a bright picture, no halo */
     --glow: none;
     --scanline: rgba(30, 40, 60, 0.07);
+    --glass-bg: rgba(250, 251, 253, 0.74);
+    --glass-line: rgba(18, 24, 33, 0.09);
     color-scheme: light;
   }
 }
@@ -109,51 +119,101 @@ button { font: inherit; color: inherit; }
   }
 }
 
-/* The on screen display: the guide down the left of the glass */
+/* The on screen display. The guide is a panel of darker glass on the
+   picture, composed like a TV's channel guide: a header strip with the
+   name and the time, a line about David, the channels in sections with
+   their numbers in one column, the open one on a selection bar, and the
+   links at the foot. */
 
 .osd {
   position: absolute;
   z-index: 2;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: var(--side);
-  display: flex;
-  flex-direction: column;
-  padding: 36px 28px 32px 40px;
+  top: var(--inset);
+  left: var(--inset);
+  bottom: var(--inset);
+  width: var(--panel-w);
+  pointer-events: none;
+}
+.osd-panel {
+  pointer-events: auto;
+  max-height: 100%;
   overflow-y: auto;
   scrollbar-width: none;
+  padding: 16px 8px 8px;
+  border-radius: var(--glass-radius);
+  background: var(--glass-bg);
+  box-shadow: inset 0 0 0 1px var(--glass-line);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   text-shadow: var(--glow);
 }
-.osd::-webkit-scrollbar { display: none; }
+.osd-panel::-webkit-scrollbar { display: none; }
 
+.osd-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px 12px;
+  border-bottom: 1px solid var(--glass-line);
+}
 .name { font-size: 15px; line-height: 24px; font-weight: 700; }
-.bio { margin-top: 16px; }
+.osd-clock { color: var(--soft); font-size: 12px; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.bio { padding: 12px 12px 0; color: var(--soft); font-size: 14px; line-height: 22px; }
 
-.lists { margin-top: 24px; display: grid; gap: 20px; }
-.label { font-size: inherit; font-weight: inherit; color: var(--muted); }
+.lists { margin-top: 16px; display: grid; gap: 14px; }
+.label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 12px 4px;
+  color: var(--soft);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.label::after { content: ''; flex: 1; height: 1px; background: var(--glass-line); }
+
+/* a channel: number, name, and the bar that marks it */
+.channel {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 10px 0 12px;
+  border-radius: 9px;
+  color: var(--ink);
+  transition: background-color 160ms var(--ease), color 160ms var(--ease);
+}
+.channel .ch {
+  color: var(--soft);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+@media (hover: hover) { .channel:hover { background: color-mix(in srgb, var(--link) 14%, transparent); } }
+.channel.active { background: color-mix(in srgb, var(--link) 26%, transparent); box-shadow: inset 2px 0 0 var(--link); }
+.channel.active .ch { color: var(--link); }
+.channel .x { color: var(--soft); }
+.channel:focus-visible { outline-offset: -1px; border-radius: 9px; }
 
 .link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
   color: var(--link);
   transition: color 700ms var(--ease), opacity 160ms var(--ease);
 }
 @media (hover: hover) { .link:hover { opacity: 0.72; } }
-.link .x { flex: none; opacity: 0.85; }
-/* channel numbers, quiet and even */
-.channel .ch {
-  min-width: 22px;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-  font-size: 12px;
-  letter-spacing: 0.02em;
-  transition: color 700ms var(--ease);
-}
-.channel.active .ch { color: var(--link); }
 
-.links { margin-top: auto; padding-top: 32px; }
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-top: 16px;
+  padding: 12px 12px 6px;
+  border-top: 1px solid var(--glass-line);
+  font-size: 14px;
+}
 
 /* The article, on the screen beside the guide. It lies under the field,
    which blanks to reveal it. */
@@ -176,11 +236,12 @@ button { font: inherit; color: inherit; }
 
 .article-inner {
   width: var(--col);
-  padding: 36px 40px 72px 8px;
+  padding: 40px 40px 72px 0;
 }
 
 .article-head { display: flex; align-items: center; justify-content: space-between; }
-.article-head .name { font-weight: 700; }
+.article-head .name { font-weight: 700; display: flex; align-items: baseline; gap: 10px; }
+.article-head .ch { color: var(--link); font-size: 12px; font-variant-numeric: tabular-nums; transition: color 700ms var(--ease); }
 .close { display: none; }
 
 .article p { margin-top: 16px; max-width: 620px; }
@@ -386,10 +447,10 @@ button { font: inherit; color: inherit; }
   gap: 8px;
   padding: 8px 8px 8px 18px;
   border-radius: 24px;
-  background: rgba(6, 9, 15, 0.62);
-  box-shadow: inset 0 0 0 1px rgba(200, 220, 255, 0.12), 0 10px 40px rgba(0, 0, 0, 0.35);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+  background: var(--glass-bg);
+  box-shadow: inset 0 0 0 1px var(--glass-line), 0 10px 40px rgba(0, 0, 0, 0.3);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   transition: box-shadow 200ms var(--ease);
 }
 .composer:focus-within { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 55%, transparent), 0 10px 40px rgba(0, 0, 0, 0.35); }
@@ -437,7 +498,7 @@ button { font: inherit; color: inherit; }
   padding: 10px 12px 12px;
   border-radius: 12px;
   background: color-mix(in srgb, var(--ink) 5%, transparent);
-  box-shadow: inset 0 0 0 1px var(--line);
+  box-shadow: inset 0 0 0 1px var(--glass-line);
   transition: box-shadow 160ms var(--ease);
 }
 a.card:hover, a.card:focus-visible { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 55%, transparent); }
@@ -472,18 +533,17 @@ a.card:hover, a.card:focus-visible { box-shadow: inset 0 0 0 1px color-mix(in sr
 .crt-slot[data-mode="dock"] .chat-note { display: none; }
 .crt-slot[data-mode="dock"][data-expanded] .chat {
   padding: 12px 10px 10px;
-  border-radius: 20px;
-  background: rgba(6, 9, 15, 0.5);
+  border-radius: var(--glass-radius);
+  background: var(--glass-bg);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
-  box-shadow: inset 0 0 0 1px rgba(200, 220, 255, 0.08);
+  box-shadow: inset 0 0 0 1px var(--glass-line);
 }
 
 @media (prefers-color-scheme: light) {
-  .composer { background: rgba(250, 251, 253, 0.78); box-shadow: inset 0 0 0 1px rgba(18, 24, 33, 0.1), 0 10px 30px rgba(30, 45, 80, 0.12); }
+  .composer { box-shadow: inset 0 0 0 1px var(--glass-line), 0 10px 30px rgba(30, 45, 80, 0.12); }
   .composer:focus-within { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 50%, transparent), 0 10px 30px rgba(30, 45, 80, 0.12); }
   .card { background: rgba(255, 255, 255, 0.55); }
-  .crt-slot[data-mode="dock"][data-expanded] .chat { background: rgba(244, 246, 250, 0.82); box-shadow: inset 0 0 0 1px rgba(18, 24, 33, 0.08); }
   .cursor { box-shadow: none; }
 }
 
@@ -518,8 +578,9 @@ dialog.viewer[open]::backdrop { animation: fade 300ms var(--ease) both; }
    bar along its bottom, and an article slides up over it. */
 
 @media (max-width: 999px) {
-  :root { --pad: 8px; --radius: 22px; --side: 0px; }
-  .osd { width: auto; right: 0; padding: 32px 24px 96px; }
+  :root { --pad: 8px; --radius: 22px; --inset: 12px; }
+  .osd { width: auto; right: var(--inset); bottom: 80px; }
+  .osd-panel { padding-top: 14px; }
   .crt-slot[data-mode] { left: 12px; right: 12px; top: auto; bottom: 12px; width: auto; height: 56px; transform: none; }
   /* opened, the conversation takes the whole screen */
   .crt-slot[data-mode="bar"][data-expanded] { inset: 0; height: auto; z-index: 3; }

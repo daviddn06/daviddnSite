@@ -29,6 +29,20 @@ const LINKS = [
 
 const slugOf = (path: string) => path.match(/^\/projects\/([^/]+)\/?$/)?.[1] ?? null;
 
+/* the time in the guide's header strip, like a set's on screen clock;
+   blank until the page runs so the server and the browser agree */
+function Clock() {
+  const [now, setNow] = useState('');
+  useEffect(() => {
+    const fmt = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
+    const tick = () => setNow(fmt.format(new Date()));
+    tick();
+    const id = window.setInterval(tick, 15000);
+    return () => clearInterval(id);
+  }, []);
+  return <span className="osd-clock" aria-hidden="true">{now}</span>;
+}
+
 export default function App({ work, projects, earlier, initial }: Props) {
   const all = useMemo(() => [...work, ...projects, ...earlier], [work, projects, earlier]);
   const sections = useMemo(() => [
@@ -167,6 +181,7 @@ export default function App({ work, projects, earlier, initial }: Props) {
       <div className="tube">
         <Panel
           p={all.find((x) => x.slug === shown) ?? null}
+          channel={shown ? channel(shown) : ''}
           open={!!open}
           onClose={() => show(null)}
           onZoom={(src, alt) => setZoom({ src, alt })}
@@ -175,50 +190,57 @@ export default function App({ work, projects, earlier, initial }: Props) {
           <Field palette={palette} mark={open} cut={cut} />
         </main>
 
-        {/* the on screen display: name, a line, the channels, links */}
-        <header className="osd" data-calm="0.8">
-          <h1 className="name">David Nguyen</h1>
-          <p className="bio">I design and build software products. Business at USC Marshall, minoring in Designing for Digital Experiences.</p>
+        {/* The on screen display: a panel on the glass like a TV's channel
+            guide. A header strip (name and the time), a line about David,
+            the channels in three sections with the open one on a
+            selection bar, and the links at the foot. */}
+        <header className="osd" data-calm="0.35">
+          <div className="osd-panel">
+            <div className="osd-top">
+              <h1 className="name">David Nguyen</h1>
+              <Clock />
+            </div>
+            <p className="bio">I design and build software products. Business at USC Marshall, minoring in Designing for Digital Experiences.</p>
 
-          <nav className="lists" onPointerLeave={leave} aria-label="Work and projects">
-            {sections.map((s) => (
-              <section key={s.id} aria-labelledby={`h-${s.id}`}>
-                <h2 id={`h-${s.id}`} className="label">{s.title}</h2>
-                <ul>
-                  {s.items.map((p) => (
-                    <li key={p.slug}>
-                      <a
-                        className={`link channel${open === p.slug ? ' active' : ''}`}
-                        href={`/projects/${p.slug}/`}
-                        aria-current={open === p.slug ? 'page' : undefined}
-                        onPointerEnter={(e) => enter(p.slug, e)}
-                        onClick={(e) => {
-                          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
-                          e.preventDefault();
-                          show(open === p.slug ? null : p.slug);
-                        }}
-                      >
-                        <span className="ch" aria-hidden="true">{channel(p.slug)}</span>
-                        {p.name}
-                        {open === p.slug && (
-                          <svg className="x" viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">
-                            <circle cx="8" cy="8" r="7" fill="currentColor" />
-                            <path d="M5.6 5.6l4.8 4.8M10.4 5.6l-4.8 4.8" stroke="var(--screen)" strokeWidth="1.6" strokeLinecap="round" />
-                          </svg>
-                        )}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ))}
-          </nav>
+            <nav className="lists" onPointerLeave={leave} aria-label="Work and projects">
+              {sections.map((s) => (
+                <section key={s.id} aria-labelledby={`h-${s.id}`}>
+                  <h2 id={`h-${s.id}`} className="label">{s.title}</h2>
+                  <ul>
+                    {s.items.map((p) => (
+                      <li key={p.slug}>
+                        <a
+                          className={`channel${open === p.slug ? ' active' : ''}`}
+                          href={`/projects/${p.slug}/`}
+                          aria-current={open === p.slug ? 'page' : undefined}
+                          onPointerEnter={(e) => enter(p.slug, e)}
+                          onClick={(e) => {
+                            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+                            e.preventDefault();
+                            show(open === p.slug ? null : p.slug);
+                          }}
+                        >
+                          <span className="ch" aria-hidden="true">{channel(p.slug)}</span>
+                          <span className="ch-name">{p.name}</span>
+                          {open === p.slug && (
+                            <svg className="x" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+                              <path d="M4.5 4.5l7 7M11.5 4.5l-7 7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                            </svg>
+                          )}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </nav>
 
-          <ul className="links">
-            {LINKS.map((l) => (
-              <li key={l.label}><a className="link" href={l.url} target={l.url.startsWith('http') ? '_blank' : undefined} rel="noopener">{l.label}</a></li>
-            ))}
-          </ul>
+            <ul className="links">
+              {LINKS.map((l) => (
+                <li key={l.label}><a className="link" href={l.url} target={l.url.startsWith('http') ? '_blank' : undefined} rel="noopener">{l.label}</a></li>
+              ))}
+            </ul>
+          </div>
         </header>
 
         {/* the chat, in the middle of the screen (#crt-chat-slot, see .crt-slot) */}

@@ -8,12 +8,14 @@ import { Compare, Frame, type Block, type Project, type Shot } from './Media';
 
 type Props = {
   p: Project | null;
+  /* its channel number in the guide */
+  channel: string;
   open: boolean;
   onClose: () => void;
   onZoom: (src: string, alt: string) => void;
 };
 
-export function Panel({ p, open, onClose, onZoom }: Props) {
+export function Panel({ p, channel, open, onClose, onZoom }: Props) {
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => { if (open) ref.current?.scrollTo({ top: 0 }); }, [open, p?.slug]);
@@ -71,7 +73,7 @@ export function Panel({ p, open, onClose, onZoom }: Props) {
       {p && (
         <div className="article-inner" key={p.slug}>
           <header className="article-head">
-            <h2 className="name">{p.name}</h2>
+            <h2 className="name"><span className="ch" aria-hidden="true">{channel}</span>{p.name}</h2>
             <button type="button" className="close" onClick={onClose} aria-label="Close">
               <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
             </button>

@@ -8,7 +8,7 @@ I'm David Nguyen, a business student at USC Marshall with a minor in Designing f
 
 ## What it does
 
-- **The whole page is the screen.** There is no sidebar beside a picture. My name, a line about me and every project sit on the glass as an on screen guide, with projects numbered like channels. Up and down change the channel.
+- **The whole page is the screen.** There is no sidebar beside a picture. My name, a line about me and every project sit on the glass in a guide panel composed like a TV's channel guide: a header strip with the time, projects numbered like channels in one column, the open one on a selection bar. Up and down change the channel.
 - **Projects open on the glass.** Picking one blanks the picture from the left, line by line, and the write up appears underneath. The project's logo glows in the strip that's left, in that brand's colours.
 - **A chat in the middle.** It opens the way ChatGPT does, one question picked at random above the box and "Ask anything about David." under it. Visitors can ask about my work. Answers stream in, and when it helps the assistant shows project cards, a timeline or my contact details, or opens a project on the page for them.
 - **It feels like a real tube.** It powers on with a dot, a line and a short wobble, moving things leave a little afterglow, and the picture bends slightly near the cursor like a magnet near the glass.
