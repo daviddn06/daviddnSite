@@ -15,10 +15,10 @@
 
 .crt-slot {
   /* the screen's motion tokens (site.css), with fallbacks */
-  --chat-quick: var(--t-micro, 140ms);
-  --chat-enter: var(--t-small, 220ms);
-  --chat-settle: var(--t-medium, 320ms);
-  --chat-out: var(--ease-in, cubic-bezier(0.4, 0, 1, 1));
+  --chat-quick: var(--t-micro);
+  --chat-enter: var(--t-small);
+  --chat-settle: var(--t-medium);
+  --chat-out: var(--ease-in);
   --chat-rule: var(--rule, rgba(200, 220, 255, 0.3));
   --chat-quiet: var(--soft, rgba(236, 242, 252, 0.9));
   /* links, a step lighter than the screen's accent so they hold up on
@@ -108,7 +108,7 @@
   font-weight: 700;
 }
 /* a new title fades in where the old one was */
-.chat-topic > span, .hist-name { display: inline; animation: chat-fade var(--t-small, 220ms) var(--ease) backwards; }
+.chat-topic > span, .hist-name { display: inline; animation: chat-fade var(--t-small) var(--ease) backwards; }
 .chat-ctl {
   display: inline-flex;
   align-items: center;
@@ -242,7 +242,7 @@
 /* the first of a reply's bubbles opens the group, the last one closes it */
 .msg-bot > .bubble:first-child { border-top-left-radius: 18px; }
 .msg-bot > .msg-from + .bubble { border-top-left-radius: 18px; }
-.msg-text a, .chat-note-act a { color: var(--chat-link); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--chat-link) 50%, transparent); text-underline-offset: 3px; transition: color var(--brand, 700ms) var(--ease); }
+.msg-text a, .chat-note-act a { color: var(--chat-link); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--chat-link) 50%, transparent); text-underline-offset: 3px; transition: color var(--brand) var(--ease); }
 .msg-text strong { font-weight: 700; }
 /* who is texting, once per conversation: David, and an honest AI tag */
 .msg-from {
@@ -440,7 +440,7 @@
   color: var(--screen);
   box-shadow: 0 0 12px color-mix(in srgb, var(--link) 40%, transparent);
   cursor: pointer;
-  transition: background-color var(--brand, 700ms) var(--ease), opacity var(--chat-quick) var(--ease), transform var(--chat-quick) var(--ease), box-shadow var(--chat-quick) var(--ease);
+  transition: background-color var(--brand) var(--ease), opacity var(--chat-quick) var(--ease), transform var(--chat-quick) var(--ease), box-shadow var(--chat-quick) var(--ease);
   animation: chat-fade var(--chat-quick) var(--ease);
 }
 .composer-btn:disabled { opacity: 0.35; box-shadow: none; cursor: default; }
@@ -750,21 +750,40 @@
   --chat-rule: var(--rule, rgba(200, 220, 255, 0.3));
   --chat-quiet: var(--soft, rgba(236, 242, 252, 0.9));
   --chat-link: color-mix(in srgb, var(--link) 62%, #fff);
+  /* the block folds open and shut: its height runs between nothing and
+     its content (a grid row from 0fr to 1fr), its margin with it, so the
+     links under the guide glide rather than jump */
+  flex: 0 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 0fr;
+  margin: 0 2px;
+  color: var(--ink);
+  opacity: 0;
+  visibility: hidden;
+  transition: grid-template-rows var(--t-medium) var(--ease-in), margin-top var(--t-medium) var(--ease-in), opacity var(--t-small) var(--ease-in) 100ms, visibility 0s linear var(--t-medium);
+}
+.crt-history[data-on] {
+  grid-template-rows: 1fr;
+  margin-top: 24px;
+  opacity: 1;
+  visibility: visible;
+  transition: grid-template-rows var(--t-medium) var(--ease-out), margin-top var(--t-medium) var(--ease-out), opacity var(--t-small) var(--ease-out), visibility 0s;
+}
+.hist-tray {
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  margin: 24px 2px 0;
   padding: 8px 4px 4px;
   border-radius: 12px;
   background: color-mix(in srgb, var(--ink) 3.5%, transparent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 9%, transparent);
-  color: var(--ink);
-  opacity: 0;
-  transform: translateY(4px);
-  transition: opacity var(--quick, 160ms) cubic-bezier(0.4, 0, 1, 1), transform var(--quick, 160ms) cubic-bezier(0.4, 0, 1, 1);
 }
-.crt-history:not([data-on]) { display: none; }
-.crt-history[data-on] { opacity: 1; transform: none; animation: chat-fade var(--calm, 320ms) var(--ease) backwards; }
-.crt-history[data-on] { flex: 0 1 auto; min-height: 0; }
+/* the slot in the guide eases its floor with the block */
+#crt-history-slot { transition: min-height var(--t-medium) var(--ease-in); }
+/* clearing everything: the rows fade first, one after another */
+.crt-history[data-fading] .hist-list li { opacity: 0; transition: opacity var(--t-micro) var(--ease-in) calc(var(--n, 0) * 25ms); }
 .hist-head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 4px 6px 8px; }
 .hist-label {
   color: var(--chat-quiet);
@@ -791,7 +810,7 @@
   line-height: 1;
   text-shadow: inherit;
   cursor: pointer;
-  transition: box-shadow var(--quick, 160ms) var(--ease), color var(--quick, 160ms) var(--ease);
+  transition: box-shadow var(--quick) var(--ease), color var(--quick) var(--ease);
 }
 @media (hover: hover) { .hist-new:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 75%, transparent); color: var(--chat-link); } }
 .hist-new:focus-visible { outline: 1.5px solid var(--link); outline-offset: 1px; }
@@ -830,7 +849,7 @@
   text-align: left;
   text-shadow: inherit;
   cursor: pointer;
-  transition: background-color var(--quick, 160ms) var(--ease), color var(--quick, 160ms) var(--ease);
+  transition: background-color var(--quick) var(--ease), color var(--quick) var(--ease);
 }
 .hist-glyph { color: var(--chat-quiet); opacity: 0.8; }
 .hist-title { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
@@ -845,7 +864,7 @@
 /* deleting: a small x over the time on hover or focus (always there on
    touch screens), the row folding away; Clear history at the foot with
    a one line confirm */
-.hist-list li { position: relative; display: grid; grid-template-rows: 1fr; transition: grid-template-rows var(--t-small, 220ms) var(--ease), opacity var(--t-micro, 140ms) var(--ease); }
+.hist-list li { position: relative; display: grid; grid-template-rows: 1fr; transition: grid-template-rows var(--t-small) var(--ease), opacity var(--t-micro) var(--ease); }
 .hist-list li > .hist-row { min-height: 0; overflow: hidden; }
 .hist-list li.is-going { grid-template-rows: 0fr; opacity: 0; pointer-events: none; }
 .hist-del {
@@ -864,7 +883,7 @@
   color: var(--chat-quiet);
   cursor: pointer;
   opacity: 0;
-  transition: opacity var(--t-micro, 140ms) var(--ease), color var(--t-micro, 140ms) var(--ease), background-color var(--t-micro, 140ms) var(--ease);
+  transition: opacity var(--t-micro) var(--ease), color var(--t-micro) var(--ease), background-color var(--t-micro) var(--ease);
 }
 .hist-list li:is(:hover, :focus-within) .hist-del { opacity: 1; }
 .hist-list li:is(:hover, :focus-within) .hist-when { opacity: 0; }
@@ -873,7 +892,7 @@
 @media (hover: none) { .hist-del { opacity: 0.8; } .hist-when { visibility: hidden; } }
 .hist-foot { flex: none; display: flex; align-items: center; gap: 4px; min-height: 28px; padding: 2px 4px 0 8px; font-size: 12px; }
 .hist-foot[data-asking] { flex-wrap: wrap; padding-top: 6px; }
-.hist-ask { flex: 1 0 100%; min-width: 0; line-height: 16px; padding-bottom: 4px; color: var(--chat-quiet); animation: chat-fade var(--t-micro, 140ms) var(--ease) backwards; }
+.hist-ask { flex: 1 0 100%; min-width: 0; line-height: 16px; padding-bottom: 4px; color: var(--chat-quiet); animation: chat-fade var(--t-micro) var(--ease) backwards; }
 .hist-act {
   height: 24px;
   padding: 0 8px;
@@ -885,7 +904,7 @@
   font-size: 12px;
   text-shadow: inherit;
   cursor: pointer;
-  transition: color var(--t-micro, 140ms) var(--ease), box-shadow var(--t-micro, 140ms) var(--ease);
+  transition: color var(--t-micro) var(--ease), box-shadow var(--t-micro) var(--ease);
 }
 .hist-foot .hist-act:first-of-type { margin-left: -8px; }
 @media (hover: hover) { .hist-act:hover { color: var(--ink); } }
@@ -1002,8 +1021,8 @@
      and the guide inside it, now hidden under the article anyway, is
      put away. Closing drops both back at once, before the article
      slides down. */
-  .stage.is-open .over { z-index: 4; transition: z-index 0s linear var(--sweep, 320ms); }
-  .stage.is-open .osd { visibility: hidden; transition: visibility 0s linear var(--sweep, 320ms); }
+  .stage.is-open .over { z-index: 4; transition: z-index 0s linear var(--sweep); }
+  .stage.is-open .osd { visibility: hidden; transition: visibility 0s linear var(--sweep); }
   .crt-slot[data-mode] { left: 0; right: 0; top: 0; bottom: 0; width: auto; height: auto; transform: none; z-index: 5; }
   .chat { padding: 10px 12px max(12px, env(safe-area-inset-bottom)); }
   /* the screen behind the full conversation, so nothing shows through */

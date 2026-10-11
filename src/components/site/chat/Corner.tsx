@@ -54,12 +54,24 @@ export function Corner({ chats, current, fresh, onNew, onPick, onRemove }: Props
   const [going, setGoing] = useState<Set<string>>(() => new Set());
   const [asking, setAsking] = useState(false);
   const quick = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const [fading, setFading] = useState(false);
   const remove = (ids: string[] | 'all') => {
-    const list = ids === 'all' ? chats.map((c) => c.id) : ids;
-    setGoing(new Set(list));
     setAsking(false);
+    /* everything at once: the rows fade one after another, then the
+       whole block folds away (CSS) */
+    if (ids === 'all' || ids.length >= chats.length) {
+      setFading(true);
+      const n = Math.min(chats.length, 8);
+      window.setTimeout(() => { onRemove(ids); setFading(false); }, quick() ? 0 : 140 + n * 25);
+      return;
+    }
+    setGoing(new Set(ids));
     window.setTimeout(() => { onRemove(ids); setGoing(new Set()); }, quick() ? 0 : GONE);
   };
+  /* while the block folds away it keeps showing what it held */
+  const last = useRef(chats);
+  if (chats.length) last.current = chats;
+  const shown = chats.length ? chats : last.current;
 
   const onKey = (e: React.KeyboardEvent) => {
     if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
@@ -73,7 +85,8 @@ export function Corner({ chats, current, fresh, onNew, onPick, onRemove }: Props
 
   if (!slot) return null;
   return createPortal(
-    <nav ref={nav} className="crt-history" data-on={on ? '' : undefined} aria-label="Chat history" aria-hidden={!on} inert={!on || undefined} onKeyDown={onKey}>
+    <nav ref={nav} className="crt-history" data-on={on ? '' : undefined} data-fading={fading || !on ? '' : undefined} aria-label="Chat history" aria-hidden={!on} inert={!on || undefined} onKeyDown={onKey}>
+      <div className="hist-tray">
       <div className="hist-head">
         <h2 className="hist-label">History</h2>
         <button type="button" className="hist-new" aria-current={fresh ? 'true' : undefined} onClick={onNew}>
@@ -82,8 +95,8 @@ export function Corner({ chats, current, fresh, onNew, onPick, onRemove }: Props
         </button>
       </div>
       <ul className="hist-list">
-        {chats.map((c) => (
-          <li key={c.id} className={`${seen.current && !seen.current.has(c.id) ? 'is-new' : ''}${going.has(c.id) ? ' is-going' : ''}` || undefined}>
+        {shown.map((c, i) => (
+          <li key={c.id} style={{ '--n': Math.min(i, 8) } as React.CSSProperties} className={`${seen.current && !seen.current.has(c.id) ? 'is-new' : ''}${going.has(c.id) ? ' is-going' : ''}` || undefined}>
             <button type="button" className="hist-row" aria-current={c.id === current && !fresh ? 'true' : undefined}
               aria-label={`${nameOf(c)}, ${when(c.updated)}`} onClick={() => onPick(c)}>
               <svg className="hist-glyph" viewBox="0 0 14 14" width="12" height="12" aria-hidden="true"><path d="M2.5 3.5a1.5 1.5 0 0 1 1.5-1.5h6a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5H6.5L4 11.5V9a1.5 1.5 0 0 1-1.5-1.5z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /></svg>
@@ -104,6 +117,7 @@ export function Corner({ chats, current, fresh, onNew, onPick, onRemove }: Props
         </> : (
           <button type="button" className="hist-act" onClick={() => setAsking(true)}>Clear history</button>
         )}
+      </div>
       </div>
     </nav>,
     slot,
