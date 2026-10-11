@@ -336,7 +336,7 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
             </button>
           </div>
           <div className="chat-stage">
-            <ThreadPrimitive.Viewport className="chat-body" turnAnchor={mode === 'center' ? 'top' : 'bottom'} inert={menu || undefined}>
+            <ThreadPrimitive.Viewport className="chat-body" turnAnchor={mode === 'center' ? 'top' : 'bottom'} autoScroll={mode !== 'center'} inert={menu || undefined}>
               <ThreadPrimitive.Messages>
                 {({ message }) => (message.role === 'user' ? <UserMessage /> : <AssistantMessage />)}
               </ThreadPrimitive.Messages>
