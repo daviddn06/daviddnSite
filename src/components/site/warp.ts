@@ -167,7 +167,15 @@ export function curve(tube: HTMLElement): () => void {
   const sliding = () => !!layer && layer.getAnimations({ subtree: true }).some((a) =>
     a.playState === 'running' && a.effect?.getComputedTiming().iterations !== Infinity);
   const onScroll = (e: Event) => moving(e.target);
-  const onAnim = (e: Event) => { if (layer?.contains(e.target as Node)) moving(e.target); };
+  /* only the article's motion counts, while it shows, and not endless
+     animations (a waiting screenshot's shimmer, which also starts in an
+     article built out of sight under a hovered project) */
+  const onAnim = (e: Event) => {
+    const t = e.target as Element;
+    if (!layer?.contains(t) || getComputedStyle(layer).visibility === 'hidden') return;
+    const name = (e as AnimationEvent).animationName;
+    if (t.getAnimations().some((a) => (a as CSSAnimation).animationName === name && a.effect?.getComputedTiming().iterations !== Infinity)) moving(t);
+  };
   tube.addEventListener('scroll', onScroll, { capture: true, passive: true });
   tube.addEventListener('animationstart', onAnim, true);
   /* an answer streaming into the chat */
