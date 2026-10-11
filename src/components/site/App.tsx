@@ -3,17 +3,19 @@
    the glass like a TV's on screen display, every project a channel. A
    chat sits in the middle of the screen.
 
-   Hovering a channel blends the field into that project's colours;
-   choosing one makes the picture blank from the left to reveal the
-   article on the screen, the project's logo glowing in the strip that
-   remains. Switching covers the article and reveals the next; choosing
-   it again (or Escape) lets the field cover it. Up and down step through
-   the channels. The address follows (/projects/<slug>/), so Back,
-   Forward, reload and shared links land on the same view. Under 1000px
-   the guide fills the screen and an article slides up over it. */
+   Hovering a channel blends the field into that project's colours.
+   Choosing one changes the channel like a set would: a burst of static
+   and a vertical roll, and under the static the picture becomes the
+   article, the project's logo glowing in the strip beside it. Switching,
+   and closing (choosing it again, or Escape), change the channel the same
+   way. Up and down step through the channels. The address follows
+   (/projects/<slug>/), so Back, Forward, reload and shared links land on
+   the same view. Under 1000px the guide fills the screen and an article
+   takes it over, by the same change. */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BRAND } from '../logos/brand';
-import { DEFAULT_PALETTE, DEFAULT_PALETTE_LIGHT, Field, REVEAL, brandAccent, brandPalette } from './Field';
+import { DEFAULT_PALETTE, DEFAULT_PALETTE_LIGHT, Field, SWAP, brandAccent, brandPalette } from './Field';
+import { Static } from './Static';
 import { Marks, type Project } from './Media';
 import { Panel } from './Panel';
 import { Chat } from './chat/Chat';
@@ -51,34 +53,32 @@ export default function App({ work, projects, earlier, initial }: Props) {
     { id: 'earlier', title: 'Earlier', items: earlier },
   ], [work, projects, earlier]);
 
+  /* `open` is the channel asked for (the guide, the address, the keys
+     follow it at once); `tuned` is what the screen shows, which changes
+     halfway through a channel change, under the static. `shown` is what
+     the article holds; it keeps its project after the screen moves on. */
   const [open, setOpen] = useState<string | null>(initial);
-  /* what the article holds; it keeps its project while the field covers it */
+  const [tuned, setTuned] = useState<string | null>(initial);
   const [shown, setShown] = useState<string | null>(initial);
-  /* switching: the field covers the article, the content swaps, then it reveals */
-  const [covering, setCovering] = useState(false);
+  useEffect(() => { if (tuned) setShown(tuned); }, [tuned]);
+  /* counts channel changes, for the static and the roll */
+  const [tune, setTune] = useState(0);
   const swap = useRef(0);
   const openRef = useRef(open);
   openRef.current = open;
-  const shownRef = useRef(shown);
-  shownRef.current = shown;
   const [ready, setReady] = useState(false);
   useEffect(() => { requestAnimationFrame(() => setReady(true)); }, []);
 
   const show = useCallback((s: string | null, push = true) => {
     const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const narrow = matchMedia('(max-width: 999px)').matches;
+    if (s === openRef.current) return;
     setOpen(s);
-    if (s && openRef.current && s !== shownRef.current && !still && !narrow) {
-      setCovering(true);
-      clearTimeout(swap.current);
-      swap.current = window.setTimeout(() => {
-        setShown(openRef.current ?? shownRef.current);
-        setCovering(false);
-      }, REVEAL + 80);
-    } else if (s) {
-      clearTimeout(swap.current);
-      setCovering(false);
-      setShown(s);
+    openRef.current = s;
+    clearTimeout(swap.current);
+    if (still) setTuned(s);
+    else {
+      setTune((n) => n + 1);
+      swap.current = window.setTimeout(() => setTuned(openRef.current), SWAP);
     }
     const p = all.find((x) => x.slug === s);
     document.title = p ? `${p.name}, David Nguyen` : 'David Nguyen';
@@ -97,8 +97,8 @@ export default function App({ work, projects, earlier, initial }: Props) {
   /* phones: the article owns scrolling while it is up */
   useEffect(() => {
     const narrow = matchMedia('(max-width: 999px)').matches;
-    document.documentElement.style.overflow = open && narrow ? 'hidden' : '';
-  }, [open]);
+    document.documentElement.style.overflow = tuned && narrow ? 'hidden' : '';
+  }, [tuned]);
 
   /* the full size viewer */
   const [zoom, setZoom] = useState<{ src: string; alt: string } | null>(null);
@@ -159,13 +159,13 @@ export default function App({ work, projects, earlier, initial }: Props) {
     narrow.addEventListener('change', sync);
     return () => { ro.disconnect(); narrow.removeEventListener('change', sync); };
   }, []);
-  const cut = open && !covering ? col : 0;
+  const cut = tuned ? col : 0;
 
   /* the open project's colour becomes the accent for every link and mark */
   const accent = open && BRAND[open] ? brandAccent(BRAND[open].color, light) : null;
 
   /* the open project owns the colours; hover previews only when nothing is open */
-  const focus = open ?? hot;
+  const focus = tuned ?? (open ? null : hot);
   const palette = useMemo(
     () => (focus && BRAND[focus] ? brandPalette(BRAND[focus].color, light) : light ? DEFAULT_PALETTE_LIGHT : DEFAULT_PALETTE),
     [focus, light],
@@ -175,20 +175,22 @@ export default function App({ work, projects, earlier, initial }: Props) {
   const channel = (slug: string) => String(all.findIndex((p) => p.slug === slug) + 1).padStart(2, '0');
 
   return (
-    <div className={`stage${open ? ' is-open' : ''}${ready ? ' ready' : ''}`}
+    <div className={`stage${tuned ? ' is-open' : ''}${ready ? ' ready' : ''}`}
       style={accent ? ({ '--link': accent } as React.CSSProperties) : undefined}>
       <Marks slugs={all.map((p) => p.slug)} />
       <div className="tube">
         <Panel
           p={all.find((x) => x.slug === shown) ?? null}
           channel={shown ? channel(shown) : ''}
-          open={!!open}
+          open={!!tuned}
           onClose={() => show(null)}
           onZoom={(src, alt) => setZoom({ src, alt })}
         />
         <main className="main">
-          <Field palette={palette} mark={open} cut={cut} />
+          <Field palette={palette} mark={tuned} cut={cut} tune={tune} />
         </main>
+        {/* the static of a channel change, over the picture and the article */}
+        <Static tune={tune} />
 
         {/* The on screen display: a panel on the glass like a TV's channel
             guide. A header strip (name and the time), a line about David,
@@ -244,7 +246,7 @@ export default function App({ work, projects, earlier, initial }: Props) {
         </header>
 
         {/* the chat, in the middle of the screen (#crt-chat-slot, see .crt-slot) */}
-        <Chat all={all} sections={sections} open={open} show={show} />
+        <Chat all={all} sections={sections} open={tuned} show={show} />
 
         {/* the glass over everything: scanlines, the tube's edge, a reflection */}
         <div className="glass" aria-hidden="true" />

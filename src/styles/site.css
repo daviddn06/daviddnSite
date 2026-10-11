@@ -350,6 +350,9 @@ button { font: inherit; color: inherit; }
    its right edge in the drawing (crt.ts). */
 
 .main { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+/* the static of a channel change (Static.tsx), over the picture and the
+   article, under the guide and the chat */
+.static { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; }
 .field { position: absolute; inset: 0; }
 .field canvas { position: absolute; top: 0; left: 0; }
 
@@ -575,7 +578,7 @@ dialog.viewer[open]::backdrop { animation: fade 300ms var(--ease) both; }
 @keyframes fade { from { opacity: 0; } }
 
 /* Phones and narrow windows. The guide fills the screen, the chat is a
-   bar along its bottom, and an article slides up over it. */
+   bar along its bottom, and an article takes it over by a channel change. */
 
 @media (max-width: 999px) {
   :root { --pad: 8px; --radius: 22px; --inset: 12px; }
@@ -588,15 +591,10 @@ dialog.viewer[open]::backdrop { animation: fade 300ms var(--ease) both; }
   .chat-head { display: flex; align-items: center; justify-content: space-between; font-weight: 700; padding: 4px 4px 2px; }
   .chat-x { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: var(--line); cursor: pointer; }
   .crt-slot[data-mode="bar"][data-expanded] .chat-body { flex: 1; }
-  .article {
-    inset: 0;
-    width: auto;
-    z-index: 4;
-    transform: translateY(100%);
-    visibility: hidden;
-    transition: transform 420ms var(--ease), visibility 0s linear 420ms;
-  }
-  .stage.is-open .article { transform: none; visibility: visible; transition: transform 420ms var(--ease); }
+  /* an article takes the screen over by a channel change */
+  .article { inset: 0; width: auto; z-index: 4; visibility: hidden; }
+  .stage.is-open .article { visibility: visible; }
+  .static { z-index: 4; }
   .article-inner { width: auto; max-width: 560px; margin: 0 auto; padding: 28px 24px 64px; }
   .close {
     display: grid;
