@@ -1,22 +1,25 @@
 ---
 /* daviddn.dev/cv/ opens the resume. It exists so a resume link sent with an
    application (daviddn.dev/cv/?r=<tag>) is counted like any other visit before
-   the PDF loads, which a direct link to the PDF never could be. */
+   the PDF loads, which a direct link to the PDF never could be. For the
+   moment it shows, it is a plain page on the set (layouts/Screen.astro). */
+import Screen from '../../layouts/Screen.astro';
 ---
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="robots" content="noindex" />
-    <title>David Nguyen, resume</title>
-    <script is:inline src="/a/t.js"></script>
-    <script is:inline>
-      setTimeout(function () { if (window.__ddFlush) window.__ddFlush(); location.replace('/resume.pdf'); }, 350);
-    </script>
-    <noscript><meta http-equiv="refresh" content="0; url=/resume.pdf" /></noscript>
-  </head>
-  <body style="font: 15px system-ui, sans-serif; padding: 24px">
-    <a href="/resume.pdf">Open the resume</a>
-  </body>
-</html>
+<Screen title="David Nguyen, resume" description="David Nguyen's resume." noindex>
+  <header class="doc-head">
+    <h1 class="name">Resume</h1>
+    <span class="doc-tag">David Nguyen</span>
+  </header>
+  <p>Opening the resume<span class="cursor" aria-hidden="true"></span></p>
+  <nav class="doc-foot" aria-label="Resume">
+    <a class="text-link" href="/resume.pdf">Open it now</a>
+  </nav>
+<script is:inline slot="head">
+  /* the visitor script (/a/t.js, deferred in the layout) has run by the
+     time the page has loaded; give it a moment to send, then open the PDF */
+  addEventListener('load', function () {
+    setTimeout(function () { if (window.__ddFlush) window.__ddFlush(); location.replace('/resume.pdf'); }, 350);
+  });
+</script>
+<noscript slot="head"><meta http-equiv="refresh" content="0; url=/resume.pdf" /></noscript>
+</Screen>

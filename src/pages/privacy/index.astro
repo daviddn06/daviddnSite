@@ -1,20 +1,18 @@
 ---
 /* daviddn.dev/privacy/. What the site keeps, in plain words, linked from
-   the line under the chat. Drawn on the same tube as the home page,
-   without the picture. */
-import Base from '../../layouts/Base.astro';
+   the guide and the line under the chat. A plain page on the set
+   (layouts/Screen.astro), the picture calm behind the text. */
+import Screen from '../../layouts/Screen.astro';
 ---
-<Base title="Privacy, David Nguyen" description="What daviddn.dev keeps about visits and chats.">
-  <div class="stage">
-    <div class="tube">
-      <main class="doc">
-        <h1 class="name">Privacy</h1>
-        <p>This site counts visits with a small script of my own that runs on this domain. It notes which pages you read, for how long, what you click and where you came from, and it keeps a random id in your browser so a second visit is not counted as a new person. It also looks up which network and roughly which city a visit comes from, then throws the address away, so I never store IP addresses. Nothing it collects is sold or shared, and there are no ads or cookies. If your browser sends Do Not Track or Global Privacy Control, the script does not run at all.</p>
-        <p>The chat on the home page saves conversations so I can read them and reply. Please do not put anything in it you would not send me in an email.</p>
-        <p>If you want something you sent deleted, email me at <a class="link" href="mailto:daviddn@usc.edu">daviddn@usc.edu</a> and I will remove it.</p>
-        <p class="doc-back"><a class="link" href="/">Back to the site</a></p>
-      </main>
-      <div class="glass" aria-hidden="true"></div>
-    </div>
-  </div>
-</Base>
+<Screen title="Privacy, David Nguyen" description="What daviddn.dev keeps about visits and chats.">
+  <header class="doc-head">
+    <h1 class="name">Privacy</h1>
+    <span class="doc-tag">daviddn.dev</span>
+  </header>
+  <p>This site counts visits with a small script of my own that runs on this domain. It notes which pages you read, for how long, what you click and where you came from, and it keeps a random id in your browser so a second visit is not counted as a new person. It also looks up which network and roughly which city a visit comes from, then throws the address away, so I never store IP addresses. Nothing it collects is sold or shared, and there are no ads or cookies. If your browser sends Do Not Track or Global Privacy Control, the script does not run at all.</p>
+  <p>The chat on the home page saves conversations so I can read them and reply. Please do not put anything in it you would not send me in an email.</p>
+  <p>If you want something you sent deleted, email me at <a class="text-link" href="mailto:daviddn@usc.edu">daviddn@usc.edu</a> and I will remove it.</p>
+  <nav class="doc-foot" aria-label="More">
+    <a class="text-link" href="/">Back to the site</a>
+  </nav>
+</Screen>

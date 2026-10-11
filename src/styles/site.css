@@ -90,7 +90,6 @@ h1, h2, p, figure { margin: 0; }
 ul { margin: 0; padding: 0; list-style: none; }
 a { color: inherit; text-decoration: none; }
 button { font: inherit; color: inherit; }
-:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; border-radius: 3px; }
 ::selection { background: var(--link); color: var(--screen); }
 
 /* The set. The cabinet is only a thin dark edge; the tube is the window. */
@@ -403,7 +402,7 @@ button { font: inherit; color: inherit; }
   -webkit-appearance: none;
   appearance: none;
 }
-.compare:has(input:focus-visible) { outline: 1.5px solid var(--link); outline-offset: 2px; }
+.compare:has(input:focus-visible) { outline: 2px solid var(--link); outline-offset: 3px; }
 
 /* The screen, over the article; the article shows where the screen
    has blanked. The canvas fills the box and the picture is anchored to
@@ -605,16 +604,7 @@ a.card:hover, a.card:focus-visible { box-shadow: inset 0 0 0 1px color-mix(in sr
   .cursor { box-shadow: none; }
 }
 
-/* A page of plain text on the tube (privacy) */
-.doc {
-  height: 100%;
-  overflow-y: auto;
-  padding: 56px 40px 72px;
-  text-shadow: var(--glow);
-}
-.doc > * { max-width: 560px; margin-left: auto; margin-right: auto; }
-.doc p { margin-top: 16px; }
-.doc .doc-back { margin-top: 32px; }
+/* The plain pages (privacy, the resume, no signal) are styled in details.css */
 
 /* Text on the glass comes on with the picture, as the tube warms up,
    rather than floating on a dark screen before it */

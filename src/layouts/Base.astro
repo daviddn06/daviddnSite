@@ -1,13 +1,16 @@
 ---
 import '../styles/site.css';
+import '../styles/details.css';
 
 interface Props {
   title: string;
   description: string;
   image?: string;
+  /* pages that should not be listed by search engines (the resume redirect) */
+  noindex?: boolean;
 }
 
-const { title, description, image } = Astro.props;
+const { title, description, image, noindex } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const ogImage = image ? new URL(image, Astro.site) : null;
 ---
@@ -19,10 +22,14 @@ const ogImage = image ? new URL(image, Astro.site) : null;
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23151514'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='20' fill='%23F6F5F1' text-anchor='middle'%3Ed%3C/text%3E%3C/svg%3E" />
+    {noindex && <meta name="robots" content="noindex" />}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#DFE5EE" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#10141C" media="(prefers-color-scheme: dark)" />
+    <!-- the cabinet's colour, so the browser's own bars meet the set's edge -->
+    <meta name="theme-color" content="#cfd5de" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#050608" media="(prefers-color-scheme: dark)" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -32,6 +39,7 @@ const ogImage = image ? new URL(image, Astro.site) : null;
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@500;700&display=swap" />
+    <slot name="head" />
     <script is:inline>document.documentElement.classList.add('js');</script>
     <!-- first party visitors, collected by the daviddn.cloud server through this host's /a/ route -->
     <script is:inline defer src="/a/t.js"></script>

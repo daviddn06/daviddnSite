@@ -1,0 +1,97 @@
+---
+/* A plain page on the set: privacy, the resume and no signal. The same
+   tube as the home page, with the picture calm behind the text (drawn by
+   screen2d.ts, light enough for any browser) or, with `snow`, the snow
+   of a channel with nothing on it. The text bends with the glass like
+   the guide does (warp.ts). Styles in details.css. */
+import Base from './Base.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  noindex?: boolean;
+  snow?: boolean;
+}
+const { title, description, noindex, snow } = Astro.props;
+---
+<Base title={title} description={description} noindex={noindex}>
+  <slot name="head" slot="head" />
+  <div class="stage page">
+    <div class="tube">
+      {snow
+        ? <canvas class="snow" aria-hidden="true"></canvas>
+        : <div class="main"><div class="field" aria-hidden="true"><canvas></canvas></div></div>}
+      <div class="over on-glass">
+        <main class:list={['doc', { nosignal: snow }]}>
+          <div class="doc-col" data-calm="0.9">
+            <slot />
+          </div>
+        </main>
+        <div class="lines" aria-hidden="true"></div>
+      </div>
+      <div class="glass" aria-hidden="true"></div>
+    </div>
+  </div>
+</Base>
+
+<script>
+  import { curve } from '../components/site/warp';
+  import { startScreen2d } from '../components/site/screen2d';
+  import { DEFAULT_PALETTE, DEFAULT_PALETTE_LIGHT } from '../components/site/palette';
+
+  const tube = document.querySelector<HTMLElement>('.page .tube');
+  if (tube) {
+    curve(tube);
+    tube.dataset.curved = '';
+    const light = matchMedia('(prefers-color-scheme: light)');
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* the calm picture, in the resting colours */
+    const canvas = tube.querySelector<HTMLCanvasElement>('.field canvas');
+    if (canvas) {
+      const palette = { current: light.matches ? DEFAULT_PALETTE_LIGHT : DEFAULT_PALETTE };
+      light.addEventListener('change', () => { palette.current = light.matches ? DEFAULT_PALETTE_LIGHT : DEFAULT_PALETTE; });
+      startScreen2d(canvas, { palette, mark: { current: null }, cut: { current: 0 } }, { quiet: true });
+    }
+
+    /* Snow: grey noise, one row per scanline and a texel every 2 CSS px,
+       scaled up soft so the grain smears a little along the lines like an
+       analog picture, about 25 frames a second, with a faint band rolling
+       down through it. One still frame for reduced motion. */
+    const snow = tube.querySelector<HTMLCanvasElement>('.snow');
+    const ctx = snow?.getContext('2d');
+    if (snow && ctx) {
+      let w = 0, h = 0, img: ImageData | null = null, px: Uint32Array | null = null;
+      const size = () => {
+        w = Math.max(1, Math.round(tube.clientWidth / 2));
+        h = Math.max(1, Math.round(tube.clientHeight / 3));
+        snow.width = w; snow.height = h;
+        img = ctx.createImageData(w, h);
+        px = new Uint32Array(img.data.buffer);
+      };
+      size();
+      new ResizeObserver(() => { size(); if (still) draw(0); }).observe(tube);
+      let last = 0;
+      const draw = (ms: number) => {
+        if (!img || !px) return;
+        const lit = light.matches;
+        const base = lit ? 168 : 12, span = lit ? 64 : 78;
+        const band = ((ms / 5200) % 1.4 - 0.2) * h;
+        for (let y = 0; y < h; y++) {
+          const d = (y - band) / (h * 0.08);
+          const lift = Math.exp(-d * d) * (lit ? 14 : 22);
+          for (let x = 0; x < w; x++) {
+            const v = Math.min(255, base + lift + Math.random() * span) | 0;
+            px[y * w + x] = (255 << 24) | (v << 16) | (v << 8) | v;
+          }
+        }
+        ctx.putImageData(img, 0, 0);
+      };
+      const loop = (ms: number) => {
+        if (ms - last > 40) { last = ms; draw(ms); }
+        requestAnimationFrame(loop);
+      };
+      if (still) draw(0); else requestAnimationFrame(loop);
+    }
+  }
+</script>

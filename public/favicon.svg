@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <radialGradient id="p" cx="38%" cy="34%" r="80%">
+      <stop offset="0" stop-color="#9fd0ee"/>
+      <stop offset=".4" stop-color="#3f8fd6"/>
+      <stop offset=".78" stop-color="#2a55b8"/>
+      <stop offset="1" stop-color="#1a2f72"/>
+    </radialGradient>
+    <radialGradient id="h" cx="34%" cy="26%" r="34%" gradientTransform="translate(0 .1) scale(1 .6)"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    <clipPath id="s"><path d="M8 5.2Q16 4.4 24 5.2Q27.8 5.6 28.1 9Q28.7 16 28.1 23Q27.8 26.4 24 26.8Q16 27.6 8 26.8Q4.2 26.4 3.9 23Q3.3 16 3.9 9Q4.2 5.6 8 5.2Z"/></clipPath>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="#07090d"/>
+  <g clip-path="url(#s)">
+    <rect width="32" height="32" fill="url(#p)"/>
+    <path d="M0 5.5H32M0 7.5H32M0 9.5H32M0 11.5H32M0 13.5H32M0 15.5H32M0 17.5H32M0 19.5H32M0 21.5H32M0 23.5H32M0 25.5H32M0 27.5H32" stroke="#000" stroke-opacity=".17" stroke-width=".7"/>
+    <rect width="32" height="32" fill="url(#h)"/>
+  </g>
+  <path d="M8 5.2Q16 4.4 24 5.2Q27.8 5.6 28.1 9Q28.7 16 28.1 23Q27.8 26.4 24 26.8Q16 27.6 8 26.8Q4.2 26.4 3.9 23Q3.3 16 3.9 9Q4.2 5.6 8 5.2Z" fill="none" stroke="#9fc4ff" stroke-opacity=".25" stroke-width=".6"/>
+</svg>

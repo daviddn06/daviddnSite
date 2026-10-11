@@ -1,0 +1,16 @@
+---
+/* No signal. Any address the site does not have lands here (the server
+   answers a miss with dist/404.html): snow, and a small panel that says
+   so and leads back to the guide. */
+import Screen from '../layouts/Screen.astro';
+---
+<Screen title="No signal, David Nguyen" description="There is nothing on this channel." snow noindex>
+  <header class="doc-head">
+    <h1 class="name">No signal</h1>
+    <span class="doc-tag">404</span>
+  </header>
+  <p>There is nothing on this channel. The page may have moved, or the address has a typo.</p>
+  <nav class="doc-foot" aria-label="Way back">
+    <a class="text-link" href="/">Back to the guide</a>
+  </nav>
+</Screen>
