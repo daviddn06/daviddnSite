@@ -70,18 +70,29 @@ export const Panel = memo(function Panel({ p, open, swapping, leaving, startAt, 
     return () => { play.disconnect(); document.removeEventListener('visibilitychange', onVis); };
   }, [p?.slug, open]);
 
+  return (
+    <section ref={ref} className={`article${swapping ? ' swap-in' : ''}${leaving ? ' is-leaving' : ''}`}
+      style={leaving ? ({ '--from': from ?? 1 } as CSSProperties) : undefined} aria-hidden={!open} inert={!open} aria-label={p?.name}>
+      {p && <Body key={p.slug} p={p} onClose={onClose} onZoom={onZoom} />}
+    </section>
+  );
+});
+
+/* The article's content, drawn once per project: opening, closing and
+   switching change only the column around it. */
+const Body = memo(function Body({ p, onClose, onZoom }: { p: Project; onClose: () => void; onZoom: (src: string, alt: string) => void }) {
   const shot = (m: Shot, k: number) => (
     <figure className={`shot${m.type === 'compare' ? ' wide' : ''}`} key={k}>
       {m.type === 'compare' ? (
-        <Compare c={m} alt={`${p!.name}, ${m.caption ?? ''}`} />
+        <Compare c={m} alt={`${p.name}, ${m.caption ?? ''}`} />
       ) : m.type === 'pair' ? (
         <div className="pair">
           {m.items.map((it, j) => (
-            <Frame key={j} m={it} alt={`${p!.name}, ${m.caption ?? ''}`} sizes="(min-width: 1000px) 400px, 46vw" onZoom={onZoom} />
+            <Frame key={j} m={it} alt={`${p.name}, ${m.caption ?? ''}`} sizes="(min-width: 1000px) 400px, 46vw" onZoom={onZoom} />
           ))}
         </div>
       ) : (
-        <Frame m={m} alt={`${p!.name}, ${m.caption ?? ''}`} sizes="(min-width: 1000px) 820px, 92vw" onZoom={onZoom} />
+        <Frame m={m} alt={`${p.name}, ${m.caption ?? ''}`} sizes="(min-width: 1000px) 820px, 92vw" onZoom={onZoom} />
       )}
       {m.caption && <figcaption>{m.caption}</figcaption>}
     </figure>
@@ -100,28 +111,23 @@ export const Panel = memo(function Panel({ p, open, swapping, leaving, startAt, 
   const label = host === 'web.archive.org' ? 'Archived site' : host;
 
   return (
-    <section ref={ref} className={`article${swapping ? ' swap-in' : ''}${leaving ? ' is-leaving' : ''}`}
-      style={leaving ? ({ '--from': from ?? 1 } as CSSProperties) : undefined} aria-hidden={!open} inert={!open} aria-label={p?.name}>
-      {p && (
-        <div className="article-inner" key={p.slug}>
-          <header className="article-head">
-            <h2 className="name"><Mini slug={p.slug} />{p.name}</h2>
-            <button type="button" className="close" onClick={onClose} aria-label="Close">
-              <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
-            </button>
-          </header>
-          <p>{p.line}</p>
-          <p className="meta-line">
-            {p.role}<br />{p.when}
-            {p.url && <><br /><a href={p.url} target="_blank" rel="noopener">{label}</a></>}
-          </p>
-          {p.body ? p.body.map(block) : <>
-            {p.notes?.map((t, k) => <p key={k}>{t}</p>)}
-            {p.shots.map(shot)}
-          </>}
-        </div>
-      )}
-    </section>
+    <div className="article-inner">
+      <header className="article-head">
+        <h2 className="name"><Mini slug={p.slug} />{p.name}</h2>
+        <button type="button" className="close" onClick={onClose} aria-label="Close">
+          <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+        </button>
+      </header>
+      <p>{p.line}</p>
+      <p className="meta-line">
+        {p.role}<br />{p.when}
+        {p.url && <><br /><a href={p.url} target="_blank" rel="noopener">{label}</a></>}
+      </p>
+      {p.body ? p.body.map(block) : <>
+        {p.notes?.map((t, k) => <p key={k}>{t}</p>)}
+        {p.shots.map(shot)}
+      </>}
+    </div>
   );
 });
 
