@@ -6,7 +6,7 @@
    conversation's id, the project open on screen and where the visitor is
    in it (the heading they are reading, how far down, desktop or phone),
    and the conversation as plain text, the last 16 turns, each of the
-   visitor's messages cut to 800 characters.
+   visitor's messages cut to 4,000 characters (long enough for dictation).
 
    Received: server sent events over the fetch stream, one JSON object
    per `data:` line. Text arrives in pieces, tool calls arrive whole and
@@ -18,7 +18,7 @@
 import type { ChatModelAdapter, ThreadMessage } from '@assistant-ui/react';
 
 
-export const MAX_CHARS = 800;
+export const MAX_CHARS = 4000;
 const MAX_TURNS = 16;
 
 /* what the chat can do to the page */
