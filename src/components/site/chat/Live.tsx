@@ -23,7 +23,7 @@ import { listChats, nameOf, newId, putChat, removeChats, setCurrent, titleOf, wh
 import { NARROW, noteFor, placeholderFor, still, type Mode } from './shared';
 import { Corner } from './Corner';
 import { ModelPicker } from './Model';
-import { NEAR, readQuota, writeQuota, type Quota } from './quota';
+import { readQuota, writeQuota, type Quota } from './quota';
 import { CONTACT } from './cards';
 import { Chip, CiteContext, MARK, Sources, citesOf, holdPartial, useGo, type Cite } from './cite';
 import type { Project } from '../Media';
@@ -472,23 +472,12 @@ function useQuota() {
 }
 
 /* close to the limit: how many are left, and a bar that drains */
-function Meter({ left, limit, team, wait }: { left: number | null; limit: number; team: boolean; wait: number }) {
-  const near = left !== null && left <= NEAR;
-  /* David's own browsers always see it, the whole day on one bar */
-  const show = left !== null && (near || team);
-  if (!show && !wait) return null;
-  const lit = team && !near ? Math.round((left! / limit) * NEAR) : left!;
+/* a short wait, counting down; the count itself lives in the model menu */
+function Wait({ wait }: { wait: number }) {
+  if (!wait) return null;
   return (
-    <div className="quota" role="status" data-team={team ? '' : undefined}>
-      {wait > 0 && <span className="quota-wait">try again in {wait}s</span>}
-      {show && <>
-        <span className="quota-bar" aria-hidden="true">
-          {Array.from({ length: NEAR }, (_, i) => <i key={i} data-on={i < lit ? '' : undefined} />)}
-        </span>
-        <span className="quota-left">
-          {team ? `${left} of ${limit} left today · no limit for you` : `${left === 1 ? '1 message' : `${left} messages`} left today`}
-        </span>
-      </>}
+    <div className="quota" role="status">
+      <span className="quota-wait">try again in {wait}s</span>
     </div>
   );
 }
@@ -508,7 +497,7 @@ function Composer({ input, placeholder, onEscape, onHistory }: { input: React.Re
   }
   const held = quota.wait > 0;
   return (<>
-    <Meter left={quota.left} limit={quota.limit} team={quota.team} wait={quota.wait} />
+    <Wait wait={quota.wait} />
     <ComposerPrimitive.Root className="composer" data-history={onHistory ? '' : undefined} data-held={held ? '' : undefined}>
       {/* on phones, past chats are a tap away from the bar */}
       {onHistory && (
@@ -530,7 +519,7 @@ function Composer({ input, placeholder, onEscape, onHistory }: { input: React.Re
         onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); onEscape(); } }}
       />
       <span className="composer-count" data-on={length > MAX_CHARS - 160 ? '' : undefined} aria-live="polite">{length > MAX_CHARS - 160 ? `${length} / ${MAX_CHARS}` : ''}</span>
-      <ModelPicker />
+      <ModelPicker usage={{ left: quota.left, limit: quota.limit, team: quota.team }} />
       {/* one button that turns into stop while answering */}
       {running ? (
         <ComposerPrimitive.Cancel className="composer-btn is-stop" aria-label="Stop">
