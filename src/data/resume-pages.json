@@ -1,0 +1,662 @@
+{
+ "pdf": "/resume.pdf",
+ "pages": [
+  {
+   "w": 612.0,
+   "h": 792.0,
+   "src": "/resume/page-1.svg",
+   "links": [
+    {
+     "href": "https://sandboxsc.org/",
+     "x": 0.12343627331303615,
+     "y": 0.16193181818181818,
+     "w": 0.06693464790294373,
+     "h": 0.01300503509213226
+    },
+    {
+     "href": "https://www.usc.edu/",
+     "x": 0.0588120915531333,
+     "y": 0.12291663584083018,
+     "w": 0.8824575274598365,
+     "h": 0.013005112156723484
+    },
+    {
+     "href": "https://wedgestudio.dev/",
+     "x": 0.0588120915531333,
+     "y": 0.6045454391325363,
+     "w": 0.08825817606807534,
+     "h": 0.013005073624427873
+    },
+    {
+     "href": "https://reve.com/",
+     "x": 0.0588120915531333,
+     "y": 0.4130050582115096,
+     "w": 0.04863399306153939,
+     "h": 0.01300503509213226
+    },
+    {
+     "href": "https://shosoft.ai/",
+     "x": 0.0588120915531333,
+     "y": 0.2474747474747475,
+     "w": 0.06538235907461129,
+     "h": 0.01300503509213226
+    },
+    {
+     "href": "https://www.linkedin.com/in/daviddn",
+     "x": 0.6170637342664931,
+     "y": 0.06186868686868687,
+     "w": 0.15133003783381843,
+     "h": 0.016414141414141416
+    },
+    {
+     "href": "mailto:daviddn@usc.edu",
+     "x": 0.43585459391276044,
+     "y": 0.06186868686868687,
+     "w": 0.10933660370072508,
+     "h": 0.016414141414141416
+    }
+   ],
+   "lines": [
+    {
+     "t": "David (Vinh) Nguyen",
+     "x": 0.41871,
+     "y": 0.04539,
+     "w": 0.16288,
+     "s": 0.017519
+    },
+    {
+     "t": "  Email: daviddn@usc.edu | LinkedIn: linkedin.com/in/daviddn",
+     "x": 0.3862,
+     "y": 0.0642,
+     "w": 0.38215,
+     "s": 0.014334
+    },
+    {
+     "t": "EDUCATION & ACADEMIC AWARDS",
+     "x": 0.05899,
+     "y": 0.09848,
+     "w": 0.24841,
+     "s": 0.015926,
+     "head": true
+    },
+    {
+     "t": "University of Southern California, Marshall School of Business + Iovine and Young Academy",
+     "x": 0.05899,
+     "y": 0.12247,
+     "w": 0.58172,
+     "s": 0.014334
+    },
+    {
+     "t": "Los Angeles, CA",
+     "x": 0.84248,
+     "y": 0.12247,
+     "w": 0.09879,
+     "s": 0.014334
+    },
+    {
+     "t": "Degree: Bachelor of Science in Business Administration, Minor in Design for Digital Experiences",
+     "x": 0.05899,
+     "y": 0.13548,
+     "w": 0.55368,
+     "s": 0.014334
+    },
+    {
+     "t": "Expected May 2028",
+     "x": 0.82696,
+     "y": 0.13548,
+     "w": 0.11288,
+     "s": 0.014334
+    },
+    {
+     "t": "Honors/Awards: Presidential Scholar with Half-Tuition Merit Scholarship (~$150,000), Global Leadership Program",
+     "x": 0.05899,
+     "y": 0.14848,
+     "w": 0.67679,
+     "s": 0.014334
+    },
+    {
+     "t": "Activities: Sandbox SC (Founder), Spark SC (Board Member), Global Investment Society (Academy Member), Trojan Investing Society (Member)",
+     "x": 0.05899,
+     "y": 0.16149,
+     "w": 0.83063,
+     "s": 0.014334
+    },
+    {
+     "t": "British International School, Ho Chi Minh City",
+     "x": 0.05899,
+     "y": 0.17449,
+     "w": 0.29023,
+     "s": 0.014334
+    },
+    {
+     "t": "Ho Chi Minh City, Vietnam",
+     "x": 0.77508,
+     "y": 0.17449,
+     "w": 0.16608,
+     "s": 0.014334
+    },
+    {
+     "t": "IB Diploma Programme: Top 5% of Class  |  SAT: 1530/1600 (740 Verbal; 790 Math)  |  IELTS Academic: 8/9",
+     "x": 0.05899,
+     "y": 0.1875,
+     "w": 0.63675,
+     "s": 0.014334
+    },
+    {
+     "t": "               2008 - 2024",
+     "x": 0.82369,
+     "y": 0.1875,
+     "w": 0.11555,
+     "s": 0.014334
+    },
+    {
+     "t": "Honors/Awards: 4x Academic Distinctions (2018-2021) in IB/IGCSE Computer Science, Junior UK Mathematics Trust (Top 6%)",
+     "x": 0.05907,
+     "y": 0.20051,
+     "w": 0.73928,
+     "s": 0.014334
+    },
+    {
+     "t": "PROFESSIONAL EXPERIENCE",
+     "x": 0.05899,
+     "y": 0.22115,
+     "w": 0.2029,
+     "s": 0.015926,
+     "head": true
+    },
+    {
+     "t": "ShoSoft AI",
+     "x": 0.05899,
+     "y": 0.24703,
+     "w": 0.06835,
+     "s": 0.014334
+    },
+    {
+     "t": "Los Angeles, CA",
+     "x": 0.84248,
+     "y": 0.24703,
+     "w": 0.09879,
+     "s": 0.014334
+    },
+    {
+     "t": "Founding AI Product Engineer",
+     "x": 0.05899,
+     "y": 0.26004,
+     "w": 0.17551,
+     "s": 0.014334
+    },
+    {
+     "t": "May 2026 - Present",
+     "x": 0.8281,
+     "y": 0.26004,
+     "w": 0.11171,
+     "s": 0.014334
+    },
+    {
+     "t": "\uf0b7",
+     "x": 0.06667,
+     "y": 0.27517,
+     "w": 0.00604,
+     "s": 0.014706
+    },
+    {
+     "t": "Own AI product and engineering for ShoSoft 2.0, a venue management platform (10 microservices, Auth0, Stripe, Postgres); promoted from",
+     "x": 0.09608,
+     "y": 0.27304,
+     "w": 0.83022,
+     "s": 0.014334
+    },
+    {
+     "t": "intern in month one after authoring the AI roadmap and shipping four LLM-driven onboarding and event-creation demos in Next.js.",
+     "x": 0.09608,
+     "y": 0.28605,
+     "w": 0.78028,
+     "s": 0.014334
+    },
+    {
+     "t": "\uf0b7",
+     "x": 0.06667,
+     "y": 0.30118,
+     "w": 0.00604,
+     "s": 0.014706
+    },
+    {
+     "t": "Replicated the 2.0 stack on a self-managed VPS (10 Node services, 45 seeded events), then shipped a UI overhaul, Cmd+K search, and a 129-",
+     "x": 0.09608,
+     "y": 0.29905,
+     "w": 0.82941,
+     "s": 0.014334
+    },
+    {
+     "t": "finding accessibility audit in Claude Code with Playwright agents verifying every route, cutting the entry bundle from 5.35 MB to 2.48 MB.",
+     "x": 0.09608,
+     "y": 0.31206,
+     "w": 0.81639,
+     "s": 0.014334
+    },
+    {
+     "t": "\uf0b7",
+     "x": 0.06667,
+     "y": 0.32719,
+     "w": 0.00604,
+     "s": 0.014706
+    },
+    {
+     "t": "Rebuilt the marketing site as a launch page with real product UI running live in scaled iframes (layout shift cut from 0.37 to 0.017, deployed",
+     "x": 0.09608,
+     "y": 0.32506,
+     "w": 0.83094,
+     "s": 0.014334
+    },
+    {
+     "t": "on Vercel and a Caddy-served VPS) and produced the 2.0 launch film and brand motion system in Remotion.",
+     "x": 0.09608,
+     "y": 0.33807,
+     "w": 0.64107,
+     "s": 0.014334
+    },
+    {
+     "t": "\uf0b7",
+     "x": 0.06667,
+     "y": 0.3532,
+     "w": 0.00604,
+     "s": 0.014706
+    },
+    {
+     "t": "Run go-to-market (GTM) engineering for the COO on agentic research runs: an answer engine optimization (AEO) program (FAQ library,",
+     "x": 0.09608,
+     "y": 0.35107,
+     "w": 0.8121,
+     "s": 0.014334
+    },
+    {
+     "t": "JSON-LD, llms.txt, comparison pages vs Momentus, Tripleseat, Cvent), Claude-run HubSpot enrichment and QC, and paid-channel ranking.",
+     "x": 0.09608,
+     "y": 0.36408,
+     "w": 0.81569,
+     "s": 0.014334
+    },
+    {
+     "t": "\uf0b7",
+     "x": 0.06667,
+     "y": 0.37921,
+     "w": 0.00604,
+     "s": 0.014706
+    },
+    {
+     "t": "Built an agentic QA workstream against the 2.0 services: agents seeded the staging venue end to end through the API (events, quotes, invoices,",
+     "x": 0.09608,
+     "y": 0.37708,
+     "w": 0.84793,
+     "s": 0.014334
+    },
+    {
+     "t": "tasks) and produced a 15-bug report ranked by impact with reproduction steps for the offshore engineering team.",
+     "x": 0.09608,
+     "y": 0.39009,
+     "w": 0.67715,
+     "s": 0.014334
+    },
+    {
+     "t": "Reve AI",
+     "x": 0.05899,
+     "y": 0.41256,
+     "w": 0.0516,
+     "s": 0.014334
+    },
+    {
+     "t": "Palo Alto, CA",
+     "x": 0.86013,
+     "y": 0.41256,
+     "w": 0.08116,
+     "s": 0.014334
+    },
+    {
+     "t": "Growth Engineer Intern (First Intern Hire)",
+     "x": 0.05899,
+     "y": 0.42557,
+     "w": 0.24605,
+     "s": 0.014334
+    },
+    {
+     "t": "Jun 2026 - Jul 2026",
+     "x": 0.82974,
+     "y": 0.42557,
+     "w": 0.11009,
+     "s": 0.014334
+    },
+    {
+     "t": "\uf0b7",
+     "x": 0.06667,
+     "y": 0.4407,
+     "w": 0.00604,
+     "s": 0.014706
+    },
+    {
+     "t": "First intern at Reve, an OpenAI-backed image model lab (~$1.6B raised); ran growth engineering end to end and shipped every deliverable",
+     "x": 0.09608,
+     "y": 0.43857,
+     "w": 0.82769,
+     "s": 0.014334
+    },
+    {
+     "t": "through agentic workflows (Claude Code, Model Context Protocol (MCP), Codex).",
+     "x": 0.09608,
+     "y": 0.45158,
+     "w": 0.47975,
+     "s": 0.014334
+    },
+    {
+     "t": "\uf0b7",
+     "x": 0.06667,
+     "y": 0.46671,
+     "w": 0.00604,
+     "s": 0.014706
+    },
+    {
+     "t": "Built Reve Internal, the growth team's operations dashboard and system of record (14 views, 12,000-line vanilla JS frontend, Python backend,",
+     "x": 0.09608,
+     "y": 0.46458,
+     "w": 0.84403,
+     "s": 0.014334
+    },
+    {
+     "t": "SQLite, Vercel mirror) unifying Attio CRM outreach for 964 contacts, Luma events, a brand-infringement scanner, and a Claude copilot with",
+     "x": 0.09608,
+     "y": 0.47759,
+     "w": 0.82786,
+     "s": 0.014334
+    },
+    {
+     "t": "budgeted model routing, so overdue follow-ups, failed syncs, and brand threats surface in one Needs-attention view.",
+     "x": 0.09608,
+     "y": 0.49059,
+     "w": 0.68976,
+     "s": 0.014334
+    },
+    {
+     "t": "\uf0b7",
+     "x": 0.06667,
+     "y": 0.50572,
+     "w": 0.00604,
+     "s": 0.014706
+    },
+    {
+     "t": "Engineered a 13-source social listening engine (7,300 lines) with a Playwright-driven X collector that reads the client's own JSON instead of",
+     "x": 0.09608,
+     "y": 0.5036,
+     "w": 0.83034,
+     "s": 0.014334
+    },
+    {
+     "t": "the paid API, Claude-tagged sentiment, and 12-month backfill, so the team sees how every launch lands across the open web at zero API cost.",
+     "x": 0.09608,
+     "y": 0.5166,
+     "w": 0.83427,
+     "s": 0.014334
+    },
+    {
+     "t": "\uf0b7",
+     "x": 0.06667,
+     "y": 0.53173,
+     "w": 0.00604,
+     "s": 0.014706
+    },
+    {
+     "t": "Launched the Campus Leader Program, Reve's first ambassador program (~25 schools, 21-page playbook, 12-doc onboarding library), vibe-",
+     "x": 0.09608,
+     "y": 0.52961,
+     "w": 0.8323,
+     "s": 0.014334
+    },
+    {
+     "t": "coding its HQ platform in under 10 days; built an agentic Attio outreach pipeline with a human review gate across 401 CRM contacts and ran",
+     "x": 0.09608,
+     "y": 0.54261,
+     "w": 0.83592,
+     "s": 0.014334
+    },
+    {
+     "t": "three CRM audits (434 companies, 959 people).",
+     "x": 0.09608,
+     "y": 0.55562,
+     "w": 0.28232,
+     "s": 0.014334
+    },
+    {
+     "t": "\uf0b7",
+     "x": 0.06667,
+     "y": 0.57075,
+     "w": 0.00604,
+     "s": 0.014706
+    },
+    {
+     "t": "Supported the Reve 2.0 launch (#2 on Arena.ai, up 125 Elo over v1.5) with the inspiration gallery and outreach to 25 researched student",
+     "x": 0.09608,
+     "y": 0.56862,
+     "w": 0.8124,
+     "s": 0.014334
+    },
+    {
+     "t": "partners, built the Show Your Layers campaign site for the Reve 2.1 launch, and wrote an org-wide markdown context pack for AI agents.",
+     "x": 0.09608,
+     "y": 0.58163,
+     "w": 0.81284,
+     "s": 0.014334
+    },
+    {
+     "t": "Wedge Studio",
+     "x": 0.05899,
+     "y": 0.6041,
+     "w": 0.09123,
+     "s": 0.014334
+    },
+    {
+     "t": "Los Angeles, CA",
+     "x": 0.84248,
+     "y": 0.6041,
+     "w": 0.09879,
+     "s": 0.014334
+    },
+    {
+     "t": "Founder",
+     "x": 0.05899,
+     "y": 0.61711,
+     "w": 0.0487,
+     "s": 0.014334
+    },
+    {
+     "t": "Jan 2026 - Present",
+     "x": 0.83399,
+     "y": 0.61711,
+     "w": 0.10586,
+     "s": 0.014334
+    },
+    {
+     "t": "\uf0b7",
+     "x": 0.06667,
+     "y": 0.63224,
+     "w": 0.00604,
+     "s": 0.014706
+    },
+    {
+     "t": "Founded a design, web development, SEO/AEO, and AI consulting studio (wedgestudio.dev) that ships all client work through agentic tooling.",
+     "x": 0.09608,
+     "y": 0.63011,
+     "w": 0.83906,
+     "s": 0.014334
+    },
+    {
+     "t": "\uf0b7",
+     "x": 0.06667,
+     "y": 0.64524,
+     "w": 0.00604,
+     "s": 0.014706
+    },
+    {
+     "t": "Built Wedge App, an AI-native client portal and agency OS (Hono, SQLite, React 19, OpenAI tool loop), and Docket, a client project dashboard.",
+     "x": 0.09608,
+     "y": 0.64312,
+     "w": 0.83466,
+     "s": 0.014334
+    },
+    {
+     "t": "\uf0b7",
+     "x": 0.06667,
+     "y": 0.65825,
+     "w": 0.00604,
+     "s": 0.014706
+    },
+    {
+     "t": "Delivered the flagship engagement for Magic Box LA, a 200,000 sq ft DTLA venue: full redesign, self-hosted headless CMS (Payload 3, Next.js",
+     "x": 0.09608,
+     "y": 0.65612,
+     "w": 0.83237,
+     "s": 0.014334
+    },
+    {
+     "t": "16), first-party attribution with GA4 and Google Ads conversion tracking, CRM lead forwarding, and 15 audit defects fixed, so every paid lead",
+     "x": 0.09608,
+     "y": 0.66913,
+     "w": 0.83777,
+     "s": 0.014334
+    },
+    {
+     "t": "is attributed correctly and the venue's ads agency can measure spend.",
+     "x": 0.09608,
+     "y": 0.68213,
+     "w": 0.41486,
+     "s": 0.014334
+    },
+    {
+     "t": "SELECTED PROJECT",
+     "x": 0.05899,
+     "y": 0.70278,
+     "w": 0.14011,
+     "s": 0.015926,
+     "head": true
+    },
+    {
+     "t": "Vecka | vecka.ai",
+     "x": 0.05899,
+     "y": 0.72677,
+     "w": 0.10126,
+     "s": 0.014334
+    },
+    {
+     "t": "Los Angeles, CA",
+     "x": 0.84248,
+     "y": 0.72677,
+     "w": 0.09879,
+     "s": 0.014334
+    },
+    {
+     "t": "Founder & Product Engineer",
+     "x": 0.05899,
+     "y": 0.73977,
+     "w": 0.16562,
+     "s": 0.014334
+    },
+    {
+     "t": "Jul 2026 - Present",
+     "x": 0.83758,
+     "y": 0.73977,
+     "w": 0.10224,
+     "s": 0.014334
+    },
+    {
+     "t": "\uf0b7",
+     "x": 0.06667,
+     "y": 0.7549,
+     "w": 0.00604,
+     "s": 0.014706
+    },
+    {
+     "t": "Built a personal workspace in React, TypeScript and Node.js, bringing tasks, notes, Google Calendar and Gmail into a split-pane interface with",
+     "x": 0.09608,
+     "y": 0.75278,
+     "w": 0.84025,
+     "s": 0.014334
+    },
+    {
+     "t": "an AI assistant; deployed the app and a seeded public demo on a self-managed VPS.",
+     "x": 0.09608,
+     "y": 0.76578,
+     "w": 0.49333,
+     "s": 0.014334
+    },
+    {
+     "t": "\uf0b7",
+     "x": 0.06667,
+     "y": 0.78091,
+     "w": 0.00604,
+     "s": 0.014706
+    },
+    {
+     "t": "Routed assistant edits through the same client-side actions as manual changes, preserving undo history; implemented streaming responses,",
+     "x": 0.09608,
+     "y": 0.77879,
+     "w": 0.8328,
+     "s": 0.014334
+    },
+    {
+     "t": "approval controls and per-call AI usage tracking.",
+     "x": 0.09608,
+     "y": 0.79179,
+     "w": 0.28793,
+     "s": 0.014334
+    },
+    {
+     "t": "SKILLS & INTERESTS",
+     "x": 0.05899,
+     "y": 0.81244,
+     "w": 0.14714,
+     "s": 0.015926,
+     "head": true
+    },
+    {
+     "t": "Languages: English (Fluent); Vietnamese (Fluent)",
+     "x": 0.05899,
+     "y": 0.83643,
+     "w": 0.29926,
+     "s": 0.014334
+    },
+    {
+     "t": "AI & Agentic: AI product management, agentic workflow design, prompt engineering, retrieval-augmented generation (RAG); Claude Code, Codex,",
+     "x": 0.05899,
+     "y": 0.84943,
+     "w": 0.87167,
+     "s": 0.014334
+    },
+    {
+     "t": "MCP servers (Attio, HubSpot, Supabase, Slack, Notion), OpenAI and Anthropic APIs, structured context packs (CLAUDE.md, llms.txt).",
+     "x": 0.05899,
+     "y": 0.86244,
+     "w": 0.78308,
+     "s": 0.014334
+    },
+    {
+     "t": "Engineering & Growth: TypeScript, JavaScript, Python, React, Next.js, Node.js (Hono), Tailwind CSS, SQL (SQLite, Postgres), Supabase, Docker,",
+     "x": 0.05899,
+     "y": 0.87544,
+     "w": 0.85046,
+     "s": 0.014334
+    },
+    {
+     "t": "Vercel, Linux, Git, Playwright, Remotion, Firebase; SEO, AEO, JSON-LD, Google Analytics 4, Google Ads, Figma, Framer, Webflow, Payload CMS.",
+     "x": 0.05899,
+     "y": 0.88845,
+     "w": 0.83808,
+     "s": 0.014334
+    },
+    {
+     "t": "Interests: Diving, Computational Linguistics, UI/UX Design, Personal Finance, Credit Cards, Entrepreneurship, Ph\u1edf",
+     "x": 0.05899,
+     "y": 0.90145,
+     "w": 0.6819,
+     "s": 0.014334
+    }
+   ]
+  }
+ ]
+}

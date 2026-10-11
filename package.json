@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "resume": "python3 scripts/render-resume.py"
   },
   "dependencies": {
     "@assistant-ui/react": "0.15.22",

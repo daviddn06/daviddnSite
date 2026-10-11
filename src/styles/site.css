@@ -358,13 +358,102 @@ button { font: inherit; color: inherit; }
 
 .article-inner {
   width: var(--col);
-  padding: 40px 40px 72px 0;
+  padding: 0 40px 72px 0;
 }
 
-.article-head { display: flex; align-items: center; justify-content: space-between; }
-.article-head .name { font-weight: 700; display: flex; align-items: center; gap: 10px; }
+/* The article's head stays at the top while it scrolls: the mark and
+   title, and Close with its key on the right, the same control as the
+   chat's New chat and Close. The article fades out under it. Hovering
+   Close dims the article a touch, a hint of the exit. */
+.article-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: -8px;
+  padding: 30px 0 14px;
+  background: var(--screen);
+}
+/* the article fades out under the head instead of meeting it at a line */
+.article-head::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 28px;
+  background: linear-gradient(to bottom, var(--screen), transparent);
+  pointer-events: none;
+}
+.article-head .name { flex: 1; min-width: 0; font-weight: 700; display: flex; align-items: center; gap: 10px; }
 .article-head .mini { color: var(--link); transition: color var(--brand) var(--ease); }
-.close { display: none; }
+.art-close, .art-ctl {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 10px 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--rule);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-shadow: inherit;
+  cursor: pointer;
+  transition: box-shadow var(--t-micro) var(--ease-out), color var(--t-micro) var(--ease-out);
+}
+.art-close kbd { font: inherit; font-size: 11px; font-weight: 500; color: var(--soft); letter-spacing: 0.04em; }
+@media (hover: hover) { :is(.art-close, .art-ctl):hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 75%, transparent), 0 0 12px color-mix(in srgb, var(--link) 20%, transparent); } }
+:is(.art-close, .art-ctl):focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
+.art-back { display: none; }
+.article-inner > :not(.article-head) { transition: opacity var(--t-micro) var(--ease-out); }
+@media (hover: hover) { .article-inner:has(.art-close:hover) > :not(.article-head) { opacity: 0.96; } }
+
+/* The resume, the PDF itself as a sheet of paper on the screen, scaled to
+   the column (Panel.tsx's Sheet). Paper is a touch dimmer on a dark
+   screen so it does not glare. */
+/* a page needs more width than a column of text to be read, so the
+   resume takes more of the split (the chat keeps at least 400px) */
+.stage.is-doc { --col: clamp(340px, calc(var(--room) - 420px), 820px); }
+.sheet-bar { margin: 0 0 14px; }
+.sheet {
+  position: relative;
+  container-type: inline-size;
+  width: 100%;
+  margin-bottom: 20px;
+  border-radius: 3px;
+  background: #eceef1;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 30px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  text-shadow: none;
+}
+.sheet img { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* the invisible lines over the art, for selection and find in page */
+.sheet-text { position: absolute; inset: 0; }
+.sheet-text > * {
+  position: absolute;
+  margin: 0;
+  color: transparent;
+  font: inherit;
+  font-family: Georgia, serif;
+  font-weight: 400;
+  line-height: 1.15;
+  white-space: pre;
+  transform-origin: 0 0;
+  cursor: text;
+}
+.sheet-text ::selection, .sheet-text::selection { background: color-mix(in srgb, var(--link) 35%, transparent); color: transparent; }
+@media (prefers-color-scheme: light) { .sheet { background: #fff; box-shadow: 0 1px 2px rgba(20, 30, 50, 0.18), 0 10px 30px rgba(20, 30, 50, 0.14); } }
+.sheet-link { position: absolute; border-radius: 2px; }
+.sheet-link:hover { background: color-mix(in srgb, #2a5dcc 12%, transparent); }
+.sheet-link:focus-visible { outline: 1.5px solid #2a5dcc; outline-offset: 1px; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 
 .article p { margin-top: 16px; max-width: 620px; }
 .article .sub { margin-top: 40px; font-size: inherit; font-weight: 700; }
@@ -546,19 +635,23 @@ dialog.viewer.closing::backdrop { animation: fade-out var(--t-small) var(--ease-
   .stage.is-open .article { opacity: 1; transform: none; visibility: visible; transition: opacity var(--t-medium) var(--ease-out), transform var(--t-medium) var(--ease-out); }
   .stage.is-open .article, .stage:not(.is-open) .article { animation: none; }
   .under { z-index: 3; }
-  .article-inner { width: auto; max-width: 560px; margin: 0 auto; padding: 28px 24px 64px; }
-  .close {
+  .article-inner { width: auto; max-width: 560px; margin: 0 auto; padding: 0 24px 64px; }
+  /* on phones the head is a back chevron and the title */
+  .art-close { display: none; }
+  .art-back {
     display: grid;
     place-items: center;
     width: 32px;
     height: 32px;
-    margin: -4px -8px -4px 0;
+    margin-left: -8px;
     padding: 0;
     border: 0;
     border-radius: 50%;
-    background: var(--line);
+    background: none;
+    color: var(--ink);
     cursor: pointer;
   }
+  .article-head { padding: 16px 0 14px; margin-right: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

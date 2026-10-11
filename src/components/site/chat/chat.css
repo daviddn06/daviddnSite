@@ -1031,6 +1031,9 @@
   .chat > * { position: relative; }
   .chat-sheet { flex: 1 1 auto; }
   .chat-head { justify-content: flex-start; padding: 0 0 4px; }
+  /* folded into the bar, the head is out of sight and must not take
+     taps meant for the article under it */
+  .crt-slot[data-mode="bar"]:not([data-expanded]) .chat-head { visibility: hidden; pointer-events: none; }
   .chat-x {
     display: grid;
     place-items: center;

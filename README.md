@@ -93,6 +93,10 @@ The site counts visits with my own script, not a third party. It keeps a random 
 
 Earlier ventures (Digital Enterprise, HYRE, Swire, AVA Media) are on the site too.
 
+### The resume
+
+At `/cv/` (or from the chat) the resume opens beside the chat as the PDF itself, a sheet of paper scaled to the column, so it looks exactly like the file: each page is drawn from `public/resume.pdf` as an SVG with the text as outlines, its links are clickable boxes taken from the PDF's own link areas, and an invisible layer of its lines lies over the page so it can be selected and searched. The same resume as text (`src/data/resume.js`) is there for screen readers. The phone number is left off the screen. **Whenever the PDF changes, run `npm run resume`** (Python with PyMuPDF) to redraw `public/resume/` and `src/data/resume-pages.json`, and update `resume.js` to match.
+
 ## Project structure
 
 ```

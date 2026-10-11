@@ -282,7 +282,7 @@ export default function App({ work, projects, earlier, initial }: Props) {
   const tint = (slug: string) => (BRAND[slug] ? brandAccent(BRAND[slug].color, light) : undefined);
 
   return (
-    <div className={`stage${open ? ' is-open' : ''}${ready ? ' ready' : ''}`}
+    <div className={`stage${open ? ' is-open' : ''}${open === 'cv' ? ' is-doc' : ''}${ready ? ' ready' : ''}`}
       style={accent ? ({ '--link': accent } as React.CSSProperties) : undefined}>
       <Marks slugs={slugs} />
       <div className="tube" ref={tube}>

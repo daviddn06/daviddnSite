@@ -8,6 +8,7 @@
    of what it replaces (`leaving`) fade out over it (App.tsx). */
 import { memo, useEffect, useLayoutEffect, useRef, type CSSProperties } from 'react';
 import { Compare, Frame, Mini, type Block, type Project, type Shot } from './Media';
+import sheets from '../../data/resume-pages.json';
 
 type Props = {
   p: Project | null;
@@ -114,14 +115,40 @@ const Body = memo(function Body({ p, onClose, onZoom }: { p: Project; onClose: (
   const host = p?.url ? new URL(p.url).hostname.replace(/^www\./, '') : '';
   const label = host === 'web.archive.org' ? 'Archived site' : p.url.endsWith('.pdf') ? 'Download PDF' : host;
 
+  /* A slim head that stays at the top while the article scrolls under
+     it: the mark and title, and a labelled Close with its key (the same
+     control as the chat's own), or on phones a back chevron. */
+  const head = (
+    <header className="article-head">
+      <button type="button" className="art-back" onClick={onClose} aria-label="Back">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      </button>
+      <h2 className="name"><Mini slug={p.slug} />{p.name}</h2>
+      <button type="button" className="art-close" onClick={onClose} aria-keyshortcuts="Escape">
+        Close<kbd>esc</kbd>
+      </button>
+    </header>
+  );
+
+  /* the resume is the PDF itself, as a sheet of paper (Sheet below) */
+  if (p.slug === 'cv') {
+    return (
+      <div className="article-inner is-sheet">
+        {head}
+        <p className="sheet-bar"><a className="art-ctl" href={p.url} download>Download PDF</a></p>
+        {sheets.pages.map((pg, i) => <Sheet key={i} page={pg} n={i + 1} />)}
+        {/* the same resume as text, for screen readers (data/resume.js) */}
+        <div className="sr-only">
+          <p>{p.line}</p>
+          {p.body?.map(block)}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="article-inner">
-      <header className="article-head">
-        <h2 className="name"><Mini slug={p.slug} />{p.name}</h2>
-        <button type="button" className="close" onClick={onClose} aria-label="Close">
-          <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
-        </button>
-      </header>
+      {head}
       <p>{p.line}</p>
       <p className="meta-line">
         {p.role}<br />{p.when}
@@ -131,6 +158,56 @@ const Body = memo(function Body({ p, onClose, onZoom }: { p: Project; onClose: (
         {p.notes?.map((t, k) => <p key={k}>{t}</p>)}
         {p.shots.map(shot)}
       </>}
+    </div>
+  );
+});
+
+/* One page of the resume, drawn from the PDF (npm run resume renders
+   it): the page as vector art on paper, its links as clickable boxes
+   where the PDF has them, and an invisible layer of its lines placed
+   over the art, so the page can be selected and found with find in page.
+   Section headings in that layer are headings, so the chat knows which
+   part is being read. Every size is a share of the page's width, so the
+   layer scales with it; each line is stretched once to the width the
+   PDF gives it. */
+type Page = (typeof sheets.pages)[number];
+const Sheet = memo(function Sheet({ page, n }: { page: Page; n: number }) {
+  const layer = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = layer.current;
+    if (!el) return;
+    const fit = () => {
+      const W = el.clientWidth;
+      if (!W) return;
+      el.querySelectorAll<HTMLElement>('[data-w]').forEach((s) => {
+        s.style.transform = '';
+        const w = s.getBoundingClientRect().width;
+        if (w) s.style.transform = `scaleX(${(+s.dataset.w! * W) / w})`;
+      });
+    };
+    fit();
+    document.fonts?.ready.then(fit);
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <div className="sheet" style={{ aspectRatio: `${page.w} / ${page.h}` }}>
+      <img src={page.src} alt="" width={page.w} height={page.h} decoding="async" draggable={false} />
+      <div ref={layer} className="sheet-text" aria-hidden="true">
+        {page.lines.map((l, i) => {
+          const style = { left: `${l.x * 100}%`, top: `${l.y * 100}%`, fontSize: `${l.s * 100}cqw` } as CSSProperties;
+          return l.head
+            ? <h3 key={i} data-w={l.w} style={style}>{l.t}</h3>
+            : <span key={i} data-w={l.w} style={style}>{l.t}</span>;
+        })}
+      </div>
+      {page.links.map((a, i) => (
+        <a key={i} className="sheet-link" href={a.href} target={a.href.startsWith('http') ? '_blank' : undefined} rel="noopener"
+          aria-label={a.href.replace(/^mailto:/, '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}
+          style={{ left: `${a.x * 100}%`, top: `${a.y * 100}%`, width: `${a.w * 100}%`, height: `${a.h * 100}%` }} />
+      ))}
+      <span className="sr-only">Page {n}</span>
     </div>
   );
 });
