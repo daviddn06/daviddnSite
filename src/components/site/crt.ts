@@ -830,11 +830,25 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     gl.disable(gl.SCISSOR_TEST);
   };
 
-  /* runs while visible; reduced motion draws on demand only */
-  let visible = !document.hidden, onScreen = true;
+  /* Runs while visible; reduced motion draws on demand only. On a fast
+     display (120Hz and up) the picture is drawn about 60 times a second:
+     a refresh is skipped when the next one still lands within a 60th of
+     a second of the last frame drawn, so it never drops below 60 on any
+     display. Everything in it moves by time, so it looks the same, and
+     the page's own HTML and scrolling keep the display's full rate. */
+  let visible = !document.hidden, onScreen = true, drawnAt = -1e9, tickAt = -1e9, tick = 16.7;
   const frame = (ms: number) => {
     raf = 0;
     if (gl.isContextLost()) return;
+    /* the display's frame interval, eased */
+    const gap = ms - tickAt;
+    tickAt = ms;
+    if (gap > 2 && gap < 50) tick += (gap - tick) * 0.1;
+    if (!still && ms + tick - drawnAt <= 1000 / 60 + 1) {
+      if (visible && onScreen) raf = requestAnimationFrame(frame);
+      return;
+    }
+    drawnAt = ms;
     draw(ms);
     if (!still && visible && onScreen) raf = requestAnimationFrame(frame);
   };
