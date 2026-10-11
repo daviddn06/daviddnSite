@@ -23,7 +23,7 @@
    Behaviour is the field's, kept as it was. On load the tube powers on:
    a dot, a line, the picture opening out vertically overbright, then a
    short degauss wobble as it settles. Hovering or opening a project
-   blends the whole picture into that brand's colours over 900ms, on
+   blends the whole picture into that brand's colours over 560ms, on
    from wherever it is. The pointer acts like a weak magnet near the
    glass, bending the raster a little and tinting it. The article lies
    under the screen: opening it, the picture's edge sweeps across (WIPE)
@@ -63,7 +63,7 @@ export const WIPE = 560;
    pace it had at first (calmed to barely noticeable) */
 const FIELD_PACE = 0.3;
 /* how long one logo takes to flow into the next */
-const MORPH = 1100;
+const MORPH = 560;
 /* the power on, after which the edge animates normally */
 const LOAD = 1600;
 /* Anything on the glass can ask the picture to calm down behind it: give
@@ -685,8 +685,8 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
         if (!got || w.mark.current !== slug) return;
         /* what is on screen right now, mid morph or not */
         const from = morph ? between(morph, morphE) : shape;
-        /* a channel change shows the new logo at once, under the static;
-           otherwise (a resize, say) one outline flows into the next */
+        /* one outline flows into the next, on the same short timeline as
+           the article's crossfade and the colour blend */
         if (from && lit > 0 && !still && from.w === got.w && from.h === got.h && from !== got) {
           morph = { a: from, b: got, since: performance.now() };
         } else {
@@ -695,6 +695,18 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
         shape = got;
         shownMark = slug; M = f;
         wake();
+        /* the other marks at this size, worked out one at a time when the
+           page is idle (after any switch has settled), so a later switch
+           never waits on one */
+        const rest = [...document.querySelectorAll<HTMLElement>('.marks [data-mark]')].map((n) => n.dataset.mark!).filter((o) => o !== slug);
+        const idle: (fn: (d?: { timeRemaining(): number }) => void) => void =
+          (window as any).requestIdleCallback?.bind(window) ?? ((fn) => setTimeout(fn, 300));
+        const next = (d?: { timeRemaining(): number }) => {
+          if (!rest.length) return;
+          if (d && d.timeRemaining() < 12) { idle(next); return; }
+          markSdf(rest.shift()!, fitW, fitH).then(() => setTimeout(() => idle(next), MORPH));
+        };
+        setTimeout(() => idle(next), MORPH + 200);
       });
     }
     if (target && shape && !morph && (lit > 0 || cu >= 1)) lit = still ? 1 : Math.min(1, lit + dt / 900);
@@ -702,7 +714,7 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     if (morph) {
       const p = Math.min(1, (ms - morph.since) / MORPH);
       if (p >= 1) morph = null;
-      else morphE = ease(p);
+      else morphE = 1 - Math.pow(1 - p, 3);
     }
     if (morph) { upload(0, morph.a); upload(1, morph.b); }
     else if (shape) upload(1, shape);
@@ -712,8 +724,9 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
 
     /* the logo sits in the zone above the chat panel when there is one,
        otherwise in the middle of the strip, easing between the two */
-    const wantY = spot ? spot.top + spot.height / 2 - canvasTop : dockTop > 80 ? dockTop / 2 + 4 : H / 2;
-    logoY = logoY < 0 || still || spot ? wantY : logoY + (wantY - logoY) * Math.min(1, dt / 220);
+    /* (closing, it fades where it is rather than drifting while it goes) */
+    const wantY = !target && logoY >= 0 ? logoY : spot ? spot.top + spot.height / 2 - canvasTop : dockTop > 80 ? dockTop / 2 + 4 : H / 2;
+    logoY = logoY < 0 || still || (spot && target) ? wantY : logoY + (wantY - logoY) * Math.min(1, dt / 220);
 
     /* the power on: a dot, a line across, the picture opening out
        vertically overbright, then a short degauss wobble */

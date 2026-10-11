@@ -35,6 +35,8 @@
   --slow: 520ms;
   /* the picture's edge sweeping across, as crt.ts's WIPE */
   --sweep: 560ms;
+  /* a switch from one project to another, App.tsx's SWITCH */
+  --switch: 520ms;
   --ease-io: cubic-bezier(0.65, 0, 0.35, 1);
   /* a brand's colour arriving, alongside the picture's 900ms blend */
   --brand: 700ms;
@@ -318,33 +320,19 @@ button { font: inherit; color: inherit; }
 .article-head .name, .article .sub, .stats dt { text-shadow: var(--glow); }
 
 /* Opening, the article eases in behind the picture's sweeping edge;
-   closing, it eases back as the picture covers it. */
-.stage.is-open .article { animation: slide-in var(--sweep) var(--ease) backwards; }
-.stage:not(.is-open) .article { animation: slide-out var(--sweep) var(--ease-io) both; }
-@keyframes slide-in { from { transform: translateX(-36px); } }
-@keyframes slide-out { to { transform: translateX(-36px); } }
+   closing, it eases back as the picture covers it. Transitions, so a
+   change of mind midway turns around from wherever it is. */
+.article { transform: translateX(-36px); transition: transform var(--sweep) var(--ease-io); }
+.stage.is-open .article { transform: none; transition: transform var(--sweep) var(--ease); }
 
-/* Switching, the new article is wiped in over the old one by a line of
-   phosphor with a short afterglow, the old one held still beneath. */
-.stage .article.is-leaving { animation: none; pointer-events: none; }
-.stage.is-open .article.wipe-in { animation: wipe var(--sweep) var(--ease) both; }
-@keyframes wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
-.wipe-line {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: calc(var(--side) - 72px);
-  width: 74px;
-  pointer-events: none;
-  background: linear-gradient(to left, var(--link) 0 2px, color-mix(in srgb, var(--link) 28%, transparent) 2px, transparent);
-  filter: drop-shadow(0 0 6px var(--link));
-  animation: wipe-line var(--sweep) var(--ease) both;
-}
-@keyframes wipe-line {
-  from { transform: translateX(0); opacity: 1; }
-  85% { opacity: 1; }
-  to { transform: translateX(var(--col)); opacity: 0; }
-}
+/* Switching, one short move in place: the new content eases in a few
+   pixels from the right while what it replaces (a copy, held at its
+   scroll) fades and drifts left over it, from however visible it was. */
+.article.swap-in .article-inner { animation: art-in var(--switch) var(--ease) both; }
+.stage .article.is-leaving { pointer-events: none; transition: none; background: none; }
+.article.is-leaving .article-inner { animation: art-out calc(var(--switch) * 0.6) var(--ease-io) both; }
+@keyframes art-in { from { opacity: 0; transform: translateX(14px); } }
+@keyframes art-out { from { opacity: var(--from, 1); } to { opacity: 0; transform: translateX(-14px); } }
 .article img, .article video, .article .compare { text-shadow: none; }
 
 .article-inner {
@@ -476,12 +464,6 @@ button { font: inherit; color: inherit; }
 /* Text on the glass comes on with the picture, as the tube warms up,
    rather than floating on a dark screen before it */
 .osd, .chat { animation: warm 240ms steps(3, end) 680ms backwards; }
-/* the chat fades in wherever it moves to (the strip, or back to the
-   middle), each place its own animation so a move restarts it */
-.crt-slot[data-mode="center"] { animation: chat-here var(--calm) var(--ease) backwards; }
-.crt-slot[data-mode="dock"] { animation: chat-there var(--calm) var(--ease) backwards; }
-@keyframes chat-here { from { opacity: 0; } }
-@keyframes chat-there { from { opacity: 0; } }
 @keyframes warm { from { opacity: 0; } 60% { opacity: 0.55; } }
 
 /* Full size viewer */

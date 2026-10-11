@@ -2,30 +2,36 @@
    the field pulls back to reveal it (Field.tsx), so the article itself
    never animates. The title, one line, the role and dates, then the
    body: paragraphs, small headings and screens, including before and
-   after sliders. Projects without a body fall back to notes and shots. */
-import { memo, useEffect, useRef } from 'react';
+   after sliders. Projects without a body fall back to notes and shots.
+
+   Switching projects, the content eases in where it stands while copies
+   of what it replaces (`leaving`) fade out over it (App.tsx). */
+import { memo, useEffect, useLayoutEffect, useRef, type CSSProperties } from 'react';
 import { Compare, Frame, Mini, type Block, type Project, type Shot } from './Media';
 
 type Props = {
   p: Project | null;
   open: boolean;
-  /* wiped in over the article it replaces */
-  wipe?: boolean;
-  /* the article being replaced, held still underneath for the wipe */
+  /* its content is easing in over a switch */
+  swapping?: boolean;
+  /* a copy of an article being replaced, fading out over the new one */
   leaving?: boolean;
-  /* where that one was scrolled to */
+  /* where that one was scrolled to, and how visible it was */
   startAt?: number;
+  from?: number;
   onClose: () => void;
   onZoom: (src: string, alt: string) => void;
 };
 
 /* drawn again only when its own props change, not on every hover or step
    of the slide around it */
-export const Panel = memo(function Panel({ p, open, wipe, leaving, startAt, onClose, onZoom }: Props) {
+export const Panel = memo(function Panel({ p, open, swapping, leaving, startAt, from, onClose, onZoom }: Props) {
   const ref = useRef<HTMLElement>(null);
 
-  useEffect(() => { if (open) ref.current?.scrollTo({ top: 0 }); }, [open, p?.slug]);
-  useEffect(() => { if (leaving && startAt) ref.current?.scrollTo({ top: startAt }); }, [leaving, startAt]);
+  /* before the first frame, so a new article never shows the old one's
+     scroll, and a leaving copy never shows the top */
+  useLayoutEffect(() => { if (open && !leaving) ref.current?.scrollTo({ top: 0 }); }, [open, leaving, p?.slug]);
+  useLayoutEffect(() => { if (leaving && startAt) ref.current?.scrollTo({ top: startAt }); }, [leaving, startAt]);
 
   /* videos play only while on screen, and never in a hidden tab */
   useEffect(() => {
@@ -83,7 +89,8 @@ export const Panel = memo(function Panel({ p, open, wipe, leaving, startAt, onCl
   const label = host === 'web.archive.org' ? 'Archived site' : host;
 
   return (
-    <section ref={ref} className={`article${wipe ? ' wipe-in' : ''}${leaving ? ' is-leaving' : ''}`} aria-hidden={!open} inert={!open} aria-label={p?.name}>
+    <section ref={ref} className={`article${swapping ? ' swap-in' : ''}${leaving ? ' is-leaving' : ''}`}
+      style={leaving ? ({ '--from': from ?? 1 } as CSSProperties) : undefined} aria-hidden={!open} inert={!open} aria-label={p?.name}>
       {p && (
         <div className="article-inner" key={p.slug}>
           <header className="article-head">
@@ -106,3 +113,24 @@ export const Panel = memo(function Panel({ p, open, wipe, leaving, startAt, onCl
     </section>
   );
 });
+
+/* Warms the first screens of a project (on hover or focus in the guide),
+   so they are decoded before a switch shows them. Matches Frame's
+   srcset and sizes so the browser fetches the same file. */
+const warmed = new Set<string>();
+export function preload(p: Project | undefined) {
+  if (!p || warmed.has(p.slug)) return;
+  warmed.add(p.slug);
+  const shots: Shot[] = (p.body ?? p.shots).filter((b): b is Shot => typeof b === 'object' && 'type' in b).slice(0, 2);
+  for (const s of shots) {
+    const media = s.type === 'compare' ? [s.after, s.before] : s.type === 'pair' ? s.items : [s];
+    for (const m of media) {
+      const im = new Image();
+      im.decoding = 'async';
+      if (m.type === 'video') { if (m.poster) im.src = m.poster; continue; }
+      if (m.small) { im.sizes = '(min-width: 1000px) 820px, 92vw'; im.srcset = `${m.small} 800w, ${m.src} 1600w`; }
+      im.src = m.small ?? m.src;
+      im.decode?.().catch(() => {});
+    }
+  }
+}

@@ -9,14 +9,20 @@
    as a bright line of phosphor with a short afterglow, the article
    easing in behind it, the project's logo glowing in the strip that
    remains. Closing (choosing it again, or Escape) slides it back out;
-   switching wipes the new article in over the old with the same line.
+   switching crossfades the article in place while the picture retints
+   and the logo morphs, all on one short timeline.
    Up and down step through the channels. The address follows
    (/projects/<slug>/), so Back, Forward, reload and shared links land on
    the same view. Under 1000px the guide fills the screen and an article
    slides up over it. */
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BRAND } from '../logos/brand';
-import { DEFAULT_PALETTE, DEFAULT_PALETTE_LIGHT, Field, WIPE, brandAccent, brandPalette } from './Field';
+import { DEFAULT_PALETTE, DEFAULT_PALETTE_LIGHT, Field, brandAccent, brandPalette } from './Field';
+import { preload } from './Panel';
+
+/* how long a switch between two projects takes, the article's crossfade
+   (site.css --switch) */
+const SWITCH = 520;
 import { curve } from './warp';
 import { Marks, Mini, type Project } from './Media';
 import { Panel } from './Panel';
@@ -66,14 +72,17 @@ export default function App({ work, projects, earlier, initial }: Props) {
   const slugs = useMemo(() => all.map((p) => p.slug), [all]);
 
   /* `open` is the project on screen; `shown` is what the article holds
-     (it keeps its project while the screen covers it again). Switching
-     between projects wipes the new article in over the old one, so for
-     a moment `leaving` holds the old one underneath. */
+     (it keeps its project while the picture covers it again). Switching
+     between projects crossfades in place: the article's content changes
+     at once and eases in, while the ones it replaces (`outgoing`, a
+     copy each, held at their scroll) fade out over it from wherever
+     they were. Clicking on mid switch only adds to that list, so nothing
+     restarts or replays. */
   const [open, setOpen] = useState<string | null>(initial);
   const [shown, setShown] = useState<string | null>(initial);
-  const [leaving, setLeaving] = useState<string | null>(null);
+  const [outgoing, setOutgoing] = useState<{ slug: string; id: number; at: number; from: number }[]>([]);
   const swap = useRef(0);
-  const leavingAt = useRef(0);
+  const outId = useRef(0);
   const openRef = useRef(open);
   openRef.current = open;
   const shownRef = useRef(shown);
@@ -98,12 +107,16 @@ export default function App({ work, projects, earlier, initial }: Props) {
     setOpen(s);
     openRef.current = s;
     if (s) {
-      clearTimeout(swap.current);
       if (was && shownRef.current && !still && !narrow) {
-        leavingAt.current = document.querySelector('.article:not(.is-leaving)')?.scrollTop ?? 0;
-        setLeaving(shownRef.current);
-        swap.current = window.setTimeout(() => setLeaving(null), WIPE + 80);
-      } else setLeaving(null);
+        /* the content on screen now, as it looks this instant */
+        const art = document.querySelector<HTMLElement>('.article:not(.is-leaving)');
+        const inner = art?.querySelector<HTMLElement>('.article-inner');
+        const from = inner ? +getComputedStyle(inner).opacity : 1;
+        const gone = { slug: shownRef.current, id: ++outId.current, at: art?.scrollTop ?? 0, from };
+        setOutgoing((list) => [...list.filter((o) => o.slug !== s), gone].slice(-3));
+        clearTimeout(swap.current);
+        swap.current = window.setTimeout(() => setOutgoing([]), SWITCH + 60);
+      } else setOutgoing([]);
       setShown(s);
     }
     const p = all.find((x) => x.slug === s);
@@ -167,6 +180,7 @@ export default function App({ work, projects, earlier, initial }: Props) {
   const [hot, setHot] = useState<string | null>(null);
   const timer = useRef(0);
   const enter = (s: string, e: React.PointerEvent) => {
+    preload(all.find((x) => x.slug === s));
     if (e.pointerType !== 'mouse') return;
     clearTimeout(timer.current);
     setHot(s);
@@ -200,14 +214,9 @@ export default function App({ work, projects, earlier, initial }: Props) {
     return () => { ro.disconnect(); narrow.removeEventListener('change', sync); };
   }, []);
   const cut = open ? col : 0;
-  /* the chat moves to the strip as an article opens, and back to the
-     middle only once the picture has covered the article again */
-  const [chatOpen, setChatOpen] = useState(open);
-  useEffect(() => {
-    if (open) { setChatOpen(open); return; }
-    const t = window.setTimeout(() => setChatOpen(null), WIPE);
-    return () => clearTimeout(t);
-  }, [open]);
+  /* the chat glides between the middle and the panel beside an article
+     along with the picture's sweep (chat/Live.tsx) */
+  const chatOpen = open;
 
   /* the open project's colour becomes the accent for every link and mark */
   const accent = open && BRAND[open] ? brandAccent(BRAND[open].color, light) : null;
@@ -229,28 +238,18 @@ export default function App({ work, projects, earlier, initial }: Props) {
       <div className="tube" ref={tube}>
         {/* under the picture, shown where it gives way: the article */}
         <div className="under on-glass">
-        {/* switching: the old article stays put underneath while the new
-            one is wiped in over it */}
-        {leaving && (
-          <Panel
-            key={`was-${leaving}`}
-            p={all.find((x) => x.slug === leaving) ?? null}
-            open={false}
-            leaving
-            startAt={leavingAt.current}
-            onClose={NOOP}
-            onZoom={NOOP}
-          />
-        )}
         <Panel
           p={all.find((x) => x.slug === shown) ?? null}
           open={!!open}
-          wipe={!!leaving}
+          swapping={outgoing.length > 0}
           onClose={close}
           onZoom={onZoom}
         />
-        {/* the wipe's leading edge, a line of phosphor with a short trail */}
-        {leaving && <div className="wipe-line" key={`wipe-${shown}`} aria-hidden="true" />}
+        {/* switching: what was on screen fades out over the new article */}
+        {outgoing.map((o) => (
+          <Panel key={`was-${o.id}`} p={all.find((x) => x.slug === o.slug) ?? null} open={false}
+            leaving startAt={o.at} from={o.from} onClose={NOOP} onZoom={NOOP} />
+        ))}
         </div>
         <main className="main">
           <Field palette={palette} mark={open} cut={cut} />
@@ -285,6 +284,7 @@ export default function App({ work, projects, earlier, initial }: Props) {
                           href={`/projects/${p.slug}/`}
                           aria-current={open === p.slug ? 'page' : undefined}
                           onPointerEnter={(e) => enter(p.slug, e)}
+                          onFocus={() => preload(p)}
                           onClick={(e) => {
                             if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
                             e.preventDefault();

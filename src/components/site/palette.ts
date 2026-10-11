@@ -128,7 +128,7 @@ export const ramp = (palette: string[]) => {
 /* The palette on screen. A new palette blends in over BLEND ms from
    wherever the colours are, so asking again mid blend never snaps.
    `step` returns the current ramp as sRGB, 256 steps of three bytes. */
-export const BLEND = 900;
+export const BLEND = 560;
 export function blender(initial: string[]) {
   let key = initial.join();
   let from = ramp(initial), to = from;
@@ -144,7 +144,8 @@ export function blender(initial: string[]) {
       since = still ? -1e9 : ms;
     }
     const u = Math.min(1, (ms - since) / BLEND);
-    const e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+    /* eased out like the article's crossfade, so the colour answers at once */
+    const e = 1 - Math.pow(1 - u, 3);
     for (let i = 0; i < 768; i++) now[i] = from[i] + (to[i] - from[i]) * e;
     for (let j = 0; j < 256; j++) fromLab(now[j * 3], now[j * 3 + 1], now[j * 3 + 2], rgb, j * 3);
     return rgb;
