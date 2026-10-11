@@ -316,7 +316,12 @@ void main() {
   /* where the raster is: the tube's rounded rectangle, starting at the
      edge where the screen gives way to the article */
   float aa = 0.8 / uDpr;
-  float inside = 1.0 - smoothstep(-aa, aa, box(q, vec4(max(edge, 0.0), 0.0, uSize.x - max(edge, 0.0), uSize.y), uRadius));
+  /* beside an article the picture is a strip, held off the tube's edge
+     all round so its curved top and bottom never run into the glass's
+     edge (the middle of each side would otherwise sit flush, and the
+     strip's top left corner looked cut off) */
+  float m = edge > 0.5 ? 10.0 : 0.0;
+  float inside = 1.0 - smoothstep(-aa, aa, box(q, vec4(max(edge, 0.0), m, uSize.x - max(edge, 0.0) - m, uSize.y - 2.0 * m), uRadius));
   float cleared = edge > 0.5 ? 1.0 - smoothstep(edge - aa, edge + aa, q.x) : 0.0;
 
   vec3 raster = uLight > 0.5 ? scr + bloom : uGlass + scr + bloom;
