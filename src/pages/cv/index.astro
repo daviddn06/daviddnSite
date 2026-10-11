@@ -2,11 +2,23 @@
 /* daviddn.dev/cv/ is the resume, open beside the chat on the screen like
    a project (data/resume.js), with a link to the PDF at its top. A resume
    link sent with an application (daviddn.dev/cv/?r=<tag>) is counted by
-   the visitor script like any other visit. */
+   the visitor script like any other visit, then goes straight to the PDF:
+   a recruiter or an applicant tracking system wants the file, not the site. */
 import Base from '../../layouts/Base.astro';
 import App from '../../components/site/App';
 import { work, projects, earlier } from '../../data/work.js';
 ---
 <Base title="Resume, David Nguyen" description="David Nguyen's resume: founding AI product engineer at ShoSoft AI, business at USC Marshall." image="/og.jpg">
   <App client:load work={work} projects={projects} earlier={earlier} initial="cv" />
+<script is:inline slot="head">
+  /* an application link: count the visit, then open the PDF in this tab */
+  if (/[?&]r=/.test(location.search)) {
+    document.documentElement.style.background = '#000';
+    document.documentElement.style.visibility = 'hidden';
+    addEventListener('DOMContentLoaded', function () {
+      setTimeout(function () { if (window.__ddFlush) window.__ddFlush(); location.replace('/resume.pdf'); }, 350);
+    });
+  }
+</script>
+<noscript slot="head"><meta http-equiv="refresh" content="0; url=/resume.pdf" /></noscript>
 </Base>
