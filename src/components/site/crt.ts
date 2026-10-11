@@ -429,28 +429,37 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const lightMq = matchMedia('(prefers-color-scheme: light)');
 
-  /* programs, each with its uniforms looked up by name */
-  type Prog = { p: WebGLProgram; u: Record<string, WebGLUniformLocation> };
-  const compile = (src: string): Prog | null => {
+  /* Programs, each with its uniforms looked up by name. Where the GPU
+     can compile in the background (KHR_parallel_shader_compile) the
+     shaders are only started here and the page carries on; the first
+     frame waits until they are ready instead of the main thread. */
+  type Prog = { p: WebGLProgram; u: Record<string, WebGLUniformLocation>; sh: WebGLShader[] };
+  const parallel = gl.getExtension('KHR_parallel_shader_compile');
+  const compile = (src: string): Prog => {
     const sh = (type: number, s: string) => {
       const o = gl.createShader(type)!;
       gl.shaderSource(o, s);
       gl.compileShader(o);
-      if (!gl.getShaderParameter(o, gl.COMPILE_STATUS) && !gl.isContextLost()) console.warn('[crt]', gl.getShaderInfoLog(o));
       return o;
     };
     const p = gl.createProgram()!;
-    gl.attachShader(p, sh(gl.VERTEX_SHADER, VERT));
-    gl.attachShader(p, sh(gl.FRAGMENT_SHADER, src));
+    const shaders = [sh(gl.VERTEX_SHADER, VERT), sh(gl.FRAGMENT_SHADER, src)];
+    for (const o of shaders) gl.attachShader(p, o);
     gl.linkProgram(p);
-    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) return null;
-    const u: Record<string, WebGLUniformLocation> = {};
-    const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
-    for (let i = 0; i < n; i++) {
-      const name = gl.getActiveUniform(p, i)!.name;
-      u[name] = gl.getUniformLocation(p, name)!;
+    return { p, u: {}, sh: shaders };
+  };
+  /* once linked: false if it failed, otherwise its uniforms looked up */
+  const finish = (pr: Prog) => {
+    if (!gl.getProgramParameter(pr.p, gl.LINK_STATUS)) {
+      for (const o of pr.sh) if (!gl.getShaderParameter(o, gl.COMPILE_STATUS) && !gl.isContextLost()) console.warn('[crt]', gl.getShaderInfoLog(o));
+      return false;
     }
-    return { p, u };
+    const n = gl.getProgramParameter(pr.p, gl.ACTIVE_UNIFORMS);
+    for (let i = 0; i < n; i++) {
+      const name = gl.getActiveUniform(pr.p, i)!.name;
+      pr.u[name] = gl.getUniformLocation(pr.p, name)!;
+    }
+    return true;
   };
 
   let signal: Prog, bright: Prog, blur: Prog, tube: Prog;
@@ -516,19 +525,10 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     if ('fb' in x) gl.deleteFramebuffer(x.fb);
   };
 
-  const init = () => {
-    const progs = [compile(SIGNAL), compile(BRIGHT), compile(BLUR), compile(TUBE)];
-    if (progs.some((p) => !p)) return false;
-    [signal, bright, blur, tube] = progs as Prog[];
-    /* half float phosphor when the GPU can render to it, so it can run
-       past white; otherwise bytes holding half the range */
-    half = !!gl.getExtension('EXT_color_buffer_float');
-    if (half) {
-      const probe = target(4, 4);
-      half = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
-      drop(probe);
-    }
-    store = half ? 1 : 0.5;
+  /* whether the programs are linked and set up (ready), or failed */
+  let ready = false;
+  const setUp = () => {
+    if (![signal, bright, blur, tube].every(finish)) return false;
     /* each sampler reads a fixed texture unit, set once */
     const units = (pr: Prog, names: string[]) => {
       gl.useProgram(pr.p);
@@ -540,6 +540,24 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     units(tube, ['uSig', 'uBloom']);
     set.clear();
     calmSent.clear();
+    ready = true;
+    return true;
+  };
+  /* with background compiling: true once every program has finished */
+  const compiled = () => !parallel || [signal, bright, blur, tube].every((pr) => gl.getProgramParameter(pr.p, parallel.COMPLETION_STATUS_KHR));
+  const init = () => {
+    ready = false;
+    [signal, bright, blur, tube] = [compile(SIGNAL), compile(BRIGHT), compile(BLUR), compile(TUBE)];
+    if (!parallel && !setUp()) return false;
+    /* half float phosphor when the GPU can render to it, so it can run
+       past white; otherwise bytes holding half the range */
+    half = !!gl.getExtension('EXT_color_buffer_float');
+    if (half) {
+      const probe = target(4, 4);
+      half = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+      drop(probe);
+    }
+    store = half ? 1 : 0.5;
     rampOn = false;
     vao = gl.createVertexArray()!;
     ramp = texture(256, 1, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, gl.LINEAR);
@@ -984,6 +1002,11 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
   const frame = (ms: number) => {
     raf = 0;
     if (gl.isContextLost()) return;
+    if (!ready) {
+      /* still compiling: look again next frame, without drawing */
+      if (!compiled()) { raf = requestAnimationFrame(frame); last = ms; return; }
+      if (!setUp()) { fallBack(); return; }
+    }
     gov.tick(ms, transit);
     const gap = ms - tickAt;
     tickAt = ms;
@@ -1001,8 +1024,9 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     gov.drew();
     if (!still && visible && onScreen) raf = requestAnimationFrame(frame);
   };
+  let dead = false;
   const wake = () => {
-    if (!raf && visible && onScreen && !gl.isContextLost()) {
+    if (!dead && !raf && visible && onScreen && !gl.isContextLost()) {
       last = performance.now();
       raf = requestAnimationFrame(frame);
     }
@@ -1034,8 +1058,10 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
   canvas.addEventListener('webglcontextlost', onLost);
   canvas.addEventListener('webglcontextrestored', onRestored);
 
-  return () => {
+  const stop = () => {
+    dead = true;
     cancelAnimationFrame(raf);
+    raf = 0;
     clearInterval(poll);
     clearInterval(pollPalette);
     io.disconnect();
@@ -1049,4 +1075,12 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     delete glass.dataset.lite;
     gov.stop();
   };
+  /* if the programs turn out not to link after all, the 2D screen takes
+     over the same place */
+  let stop2d: (() => void) | null = null, stopped = false;
+  const fallBack = () => {
+    stop();
+    import('./screen2d').then((m) => { if (!stopped) stop2d = m.startScreen2d(canvas, w); });
+  };
+  return () => { stopped = true; stop(); stop2d?.(); };
 }
