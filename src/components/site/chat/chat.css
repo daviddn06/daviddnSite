@@ -120,6 +120,10 @@
   transition: opacity var(--chat-enter) var(--ease), transform var(--chat-enter) var(--ease);
 }
 .chat-body::-webkit-scrollbar { display: none; }
+/* an empty conversation has nothing to scroll, so nothing to contain;
+   leaving it off then spares the browser a scrolling layer of its own,
+   which would otherwise keep the glass's bend running every frame */
+.crt-slot[data-empty] .chat-body { overscroll-behavior: auto; }
 .crt-slot[data-swap] .chat-body { opacity: 0; transform: translateY(4px); transition-duration: 180ms; transition-timing-function: var(--chat-out); }
 .crt-slot[data-menu] .chat-body { opacity: 0; transition-duration: var(--chat-quick); }
 
