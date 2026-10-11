@@ -27,15 +27,17 @@ export const Panel = memo(function Panel({ p, open, wipe, leaving, startAt, onCl
   useEffect(() => { if (open) ref.current?.scrollTo({ top: 0 }); }, [open, p?.slug]);
   useEffect(() => { if (leaving && startAt) ref.current?.scrollTo({ top: startAt }); }, [leaving, startAt]);
 
-  /* videos play only while on screen */
+  /* videos play only while on screen, and never in a hidden tab */
   useEffect(() => {
     const root = ref.current;
     if (!root || !open) return;
     const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const seen = new Set<HTMLVideoElement>();
     const play = new IntersectionObserver((entries) => {
       for (const e of entries) {
         const v = e.target as HTMLVideoElement;
-        if (e.isIntersecting && !still) v.play().catch(() => {});
+        if (e.isIntersecting) seen.add(v); else seen.delete(v);
+        if (e.isIntersecting && !still && !document.hidden) v.play().catch(() => {});
         else v.pause();
       }
     }, { root, threshold: 0.3 });
@@ -43,7 +45,12 @@ export const Panel = memo(function Panel({ p, open, wipe, leaving, startAt, onCl
       if (still) v.controls = true;
       play.observe(v);
     });
-    return () => play.disconnect();
+    const onVis = () => {
+      if (still) return;
+      for (const v of seen) { if (document.hidden) v.pause(); else v.play().catch(() => {}); }
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { play.disconnect(); document.removeEventListener('visibilitychange', onVis); };
   }, [p?.slug, open]);
 
   const shot = (m: Shot, k: number) => (
