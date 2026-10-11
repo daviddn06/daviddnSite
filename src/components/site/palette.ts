@@ -1,7 +1,7 @@
 /* Colour for the screen. OKLab blending, the resting palettes, a
    brand's palette and its accent, and a palette as a 256 step ramp.
    Shared by the CRT (crt.ts) and the plain canvas it falls back to
-   (cells.ts). */
+   (screen2d.ts). */
 
 export type RGB = [number, number, number];
 export const hex = (h: string): RGB => {

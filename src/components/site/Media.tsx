@@ -84,7 +84,7 @@ export function Compare({ c, alt }: { c: Compare; alt: string }) {
   );
 }
 
-/* Every brand's mark, hidden. The field rasterises the open one into its cells. */
+/* Every brand's mark, hidden. The screen draws the open one from it as glowing phosphor. */
 export function Marks({ slugs }: { slugs: string[] }) {
   return (
     <div className="marks" hidden aria-hidden="true">

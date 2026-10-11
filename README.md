@@ -83,7 +83,7 @@ src/
   components/site/
     App.tsx         layout, the guide, routing, keyboard, the chat slot
     crt.ts          the WebGL CRT
-    cells.ts        the fallback without WebGL
+    screen2d.ts     the same picture on a 2D canvas, without WebGL
     marks.ts        logos as distance fields
     palette.ts      brand colours and blending
     Panel.tsx       the article
