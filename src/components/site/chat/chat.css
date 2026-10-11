@@ -839,6 +839,56 @@
 .hist-row[aria-current] .hist-glyph { color: var(--chat-link); opacity: 1; }
 .hist-list li.is-new { animation: chat-rise var(--chat-enter) var(--ease) backwards; }
 
+/* deleting: a small x over the time on hover or focus (always there on
+   touch screens), the row folding away; Clear history at the foot with
+   a one line confirm */
+.hist-list li { position: relative; display: grid; grid-template-rows: 1fr; transition: grid-template-rows var(--t-small, 220ms) var(--ease), opacity var(--t-micro, 140ms) var(--ease); }
+.hist-list li > .hist-row { min-height: 0; overflow: hidden; }
+.hist-list li.is-going { grid-template-rows: 0fr; opacity: 0; pointer-events: none; }
+.hist-del {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-top: -11px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--chat-quiet);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--t-micro, 140ms) var(--ease), color var(--t-micro, 140ms) var(--ease), background-color var(--t-micro, 140ms) var(--ease);
+}
+.hist-list li:is(:hover, :focus-within) .hist-del { opacity: 1; }
+.hist-list li:is(:hover, :focus-within) .hist-when { opacity: 0; }
+@media (hover: hover) { .hist-del:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 10%, transparent); } }
+.hist-del:focus-visible { opacity: 1; outline: 1.5px solid var(--link); outline-offset: -1px; }
+@media (hover: none) { .hist-del { opacity: 0.8; } .hist-when { visibility: hidden; } }
+.hist-foot { flex: none; display: flex; align-items: center; gap: 4px; min-height: 28px; padding: 2px 4px 0 8px; font-size: 12px; }
+.hist-foot[data-asking] { flex-wrap: wrap; padding-top: 6px; }
+.hist-ask { flex: 1 0 100%; min-width: 0; line-height: 16px; padding-bottom: 4px; color: var(--chat-quiet); animation: chat-fade var(--t-micro, 140ms) var(--ease) backwards; }
+.hist-act {
+  height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--chat-quiet);
+  font: inherit;
+  font-size: 12px;
+  text-shadow: inherit;
+  cursor: pointer;
+  transition: color var(--t-micro, 140ms) var(--ease), box-shadow var(--t-micro, 140ms) var(--ease);
+}
+.hist-foot .hist-act:first-of-type { margin-left: -8px; }
+@media (hover: hover) { .hist-act:hover { color: var(--ink); } }
+.hist-act.is-yes { color: var(--ink); font-weight: 700; box-shadow: inset 0 0 0 1px var(--chat-rule); }
+.hist-act:focus-visible { outline: 1.5px solid var(--link); outline-offset: 1px; }
+
 @media (prefers-color-scheme: light) {
   .crt-history { --chat-link: color-mix(in srgb, var(--link) 80%, #000); }
 }

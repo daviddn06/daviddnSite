@@ -23,9 +23,14 @@ type Props = {
   fresh: boolean;
   onNew: () => void;
   onPick: (c: Convo) => void;
+  /* chats taken out of this browser (the one on screen among them, then
+     a new one starts) */
+  onRemove: (ids: string[] | 'all') => void;
 };
 
-export function Corner({ chats, current, fresh, onNew, onPick }: Props) {
+const GONE = 220;
+
+export function Corner({ chats, current, fresh, onNew, onPick, onRemove }: Props) {
   const [slot, setSlot] = useState<HTMLElement | null>(null);
   useEffect(() => { setSlot(document.getElementById('crt-history-slot')); }, []);
   const nav = useRef<HTMLElement>(null);
@@ -44,6 +49,17 @@ export function Corner({ chats, current, fresh, onNew, onPick }: Props) {
     const id = window.setInterval(() => setNow(Date.now()), 60000);
     return () => clearInterval(id);
   }, [on, chats]);
+
+  /* rows fold away, then go */
+  const [going, setGoing] = useState<Set<string>>(() => new Set());
+  const [asking, setAsking] = useState(false);
+  const quick = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const remove = (ids: string[] | 'all') => {
+    const list = ids === 'all' ? chats.map((c) => c.id) : ids;
+    setGoing(new Set(list));
+    setAsking(false);
+    window.setTimeout(() => { onRemove(ids); setGoing(new Set()); }, quick() ? 0 : GONE);
+  };
 
   const onKey = (e: React.KeyboardEvent) => {
     if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
@@ -67,16 +83,28 @@ export function Corner({ chats, current, fresh, onNew, onPick }: Props) {
       </div>
       <ul className="hist-list">
         {chats.map((c) => (
-          <li key={c.id} className={seen.current && !seen.current.has(c.id) ? 'is-new' : undefined}>
+          <li key={c.id} className={`${seen.current && !seen.current.has(c.id) ? 'is-new' : ''}${going.has(c.id) ? ' is-going' : ''}` || undefined}>
             <button type="button" className="hist-row" aria-current={c.id === current && !fresh ? 'true' : undefined}
               aria-label={`${nameOf(c)}, ${when(c.updated)}`} onClick={() => onPick(c)}>
               <svg className="hist-glyph" viewBox="0 0 14 14" width="12" height="12" aria-hidden="true"><path d="M2.5 3.5a1.5 1.5 0 0 1 1.5-1.5h6a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5H6.5L4 11.5V9a1.5 1.5 0 0 1-1.5-1.5z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /></svg>
               <span className="hist-title"><span key={nameOf(c)} className="hist-name">{nameOf(c)}</span></span>
               <span className="hist-when" aria-hidden="true">{ago(c.updated, now)}</span>
             </button>
+            <button type="button" className="hist-del" aria-label={`Delete ${nameOf(c)}`} title="Delete from this browser" onClick={() => remove([c.id])}>
+              <svg viewBox="0 0 12 12" width="9" height="9" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+            </button>
           </li>
         ))}
       </ul>
+      <div className="hist-foot" data-asking={asking ? '' : undefined}>
+        {asking ? <>
+          <span className="hist-ask">Removes them from this browser.</span>
+          <button type="button" className="hist-act is-yes" autoFocus onClick={() => remove('all')}>Clear</button>
+          <button type="button" className="hist-act" onClick={() => setAsking(false)}>Cancel</button>
+        </> : (
+          <button type="button" className="hist-act" onClick={() => setAsking(true)}>Clear history</button>
+        )}
+      </div>
     </nav>,
     slot,
   );

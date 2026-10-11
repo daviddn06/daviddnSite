@@ -39,6 +39,14 @@ export const putChat = (c: Convo) => {
   dispatchEvent(new Event('dd-chats'));
 };
 
+/* forgetting chats only takes them out of this browser; the server keeps
+   its own record, as the privacy page says */
+export const removeChats = (ids: string[] | 'all') => {
+  const keep = ids === 'all' ? [] : listChats().filter((c) => !ids.includes(c.id));
+  try { localStorage.setItem(KEY, JSON.stringify(keep)); } catch { /* blocked */ }
+  dispatchEvent(new Event('dd-chats'));
+};
+
 export const setCurrent = (id: string) => {
   try { sessionStorage.setItem(CURRENT, id); } catch { /* blocked */ }
 };

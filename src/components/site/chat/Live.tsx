@@ -19,7 +19,7 @@ import {
 } from '@assistant-ui/react';
 import { chatAdapter, MAX_CHARS, type Context } from './adapter';
 import { SiteContext, ToolCard, type Site } from './cards';
-import { listChats, nameOf, newId, putChat, setCurrent, titleOf, when, type Convo, type Stored } from './store';
+import { listChats, nameOf, newId, putChat, removeChats, setCurrent, titleOf, when, type Convo, type Stored } from './store';
 import { NARROW, noteFor, placeholderFor, still, type Mode } from './shared';
 import { Corner } from './Corner';
 import { ModelPicker } from './Model';
@@ -383,7 +383,8 @@ function Screen({ open, all, headline, cid, named, swap, switchTo }: ScreenProps
       </ThreadPrimitive.Root>
       </AwayContext.Provider>
     </div>
-    <Corner chats={ordered} current={cid} fresh={empty} onNew={fresh} onPick={reopen} />
+    <Corner chats={ordered} current={cid} fresh={empty} onNew={fresh} onPick={reopen}
+      onRemove={(ids) => { removeChats(ids); if (!empty && (ids === 'all' || ids.includes(cid))) switchTo(null); }} />
   </>);
 }
 
