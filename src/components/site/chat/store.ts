@@ -13,7 +13,10 @@ const MAX_CHATS = 30;
 const MAX_MESSAGES = 40;
 
 export type Stored = { id: string; role: 'user' | 'assistant'; content: Exclude<ThreadMessageLike['content'], string>[number][] };
-export type Convo = { id: string; title: string; at: number; updated: number; messages: Stored[] };
+/* `topic` is the short title the server gives a conversation (1 to 4
+   words); older chats have only `title`, their first question */
+export type Convo = { id: string; title: string; topic?: string; at: number; updated: number; messages: Stored[] };
+export const nameOf = (c: Pick<Convo, 'title' | 'topic'>) => c.topic || c.title;
 
 export const newId = () => {
   try { return crypto.randomUUID(); } catch { return `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`; }

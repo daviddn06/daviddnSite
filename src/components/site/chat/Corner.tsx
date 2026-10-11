@@ -14,7 +14,7 @@
    Only opacity and transform move, and only when something changes. */
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ago, when, type Convo } from './store';
+import { ago, nameOf, when, type Convo } from './store';
 
 type Props = {
   chats: Convo[];
@@ -69,9 +69,9 @@ export function Corner({ chats, current, fresh, onNew, onPick }: Props) {
         {chats.map((c) => (
           <li key={c.id} className={seen.current && !seen.current.has(c.id) ? 'is-new' : undefined}>
             <button type="button" className="hist-row" aria-current={c.id === current && !fresh ? 'true' : undefined}
-              aria-label={`${c.title}, ${when(c.updated)}`} onClick={() => onPick(c)}>
+              aria-label={`${nameOf(c)}, ${when(c.updated)}`} onClick={() => onPick(c)}>
               <svg className="hist-glyph" viewBox="0 0 14 14" width="12" height="12" aria-hidden="true"><path d="M2.5 3.5a1.5 1.5 0 0 1 1.5-1.5h6a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5H6.5L4 11.5V9a1.5 1.5 0 0 1-1.5-1.5z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /></svg>
-              <span className="hist-title">{c.title}</span>
+              <span className="hist-title"><span key={nameOf(c)} className="hist-name">{nameOf(c)}</span></span>
               <span className="hist-when" aria-hidden="true">{ago(c.updated, now)}</span>
             </button>
           </li>

@@ -105,6 +105,8 @@
   font-size: 13px;
   font-weight: 700;
 }
+/* a new title fades in where the old one was */
+.chat-topic > span, .hist-name { display: inline; animation: chat-fade var(--t-small, 220ms) var(--ease) backwards; }
 .chat-ctl {
   display: inline-flex;
   align-items: center;

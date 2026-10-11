@@ -31,6 +31,8 @@ export type Actions = {
   /* how many messages are left today, and a limit when one is hit
      (quota.ts) */
   quota?: (left: number, limit: number) => void;
+  /* a short title for the conversation */
+  title?: (title: string) => void;
   limit?: (kind: 'minute' | 'day', retry: number, limit: number) => void;
 };
 
@@ -126,6 +128,8 @@ export const chatAdapter = (actions: Actions): ChatModelAdapter => ({
           parts.push({ type: 'tool-call', toolCallId: `ui${Date.now().toString(36)}${n++}`, toolName: ev.name, args: input, argsText: JSON.stringify(input), result: { shown: true } });
           actions.act(ev.name, input);
           changed = true;
+        } else if (ev.t === 'title' && ev.v) {
+          actions.title?.(ev.v.trim().slice(0, 48));
         } else if (ev.t === 'quota' && typeof ev.left === 'number') {
           actions.quota?.(ev.left, typeof ev.limit === 'number' ? ev.limit : 100);
         } else if (ev.t === 'limit' && (ev.kind === 'minute' || ev.kind === 'day')) {

@@ -19,7 +19,7 @@ import {
 } from '@assistant-ui/react';
 import { chatAdapter, MAX_CHARS, type Context } from './adapter';
 import { SiteContext, ToolCard, type Site } from './cards';
-import { listChats, newId, putChat, setCurrent, titleOf, when, type Convo, type Stored } from './store';
+import { listChats, nameOf, newId, putChat, setCurrent, titleOf, when, type Convo, type Stored } from './store';
 import { NARROW, noteFor, placeholderFor, still, type Mode } from './shared';
 import { Corner } from './Corner';
 import { ModelPicker } from './Model';
@@ -93,7 +93,9 @@ const fromStored = (list: Stored[]): ThreadMessageLike[] =>
 export function Live({ first, ...site }: Site & { first: Convo | null }) {
   const siteRef = useRef(site);
   siteRef.current = site;
-  const convo = useRef({ id: first?.id ?? newId(), at: first?.at ?? Date.now() });
+  const convo = useRef<{ id: string; at: number; topic?: string }>({ id: first?.id ?? newId(), at: first?.at ?? Date.now(), topic: first?.topic });
+  /* the conversation's short title, from the server; the later one wins */
+  const [topic, setTopic] = useState(first?.topic ?? '');
   const adapter = useMemo(() => chatAdapter({
     cid: () => convo.current.id,
     page: () => siteRef.current.open,
@@ -104,6 +106,7 @@ export function Live({ first, ...site }: Site & { first: Convo | null }) {
       if (name === 'close_project') s.show(null);
     },
     quota: (left, limit) => writeQuota({ left, limit }),
+    title: (t) => { convo.current.topic = t; setTopic(t); },
     limit: (kind, retry, limit) => writeQuota({ left: kind === 'day' ? 0 : readQuota()?.left ?? limit, limit, kind, until: Date.now() + retry * 1000 }),
   }), []);
   const runtime = useLocalRuntime(adapter, { initialMessages: first ? fromStored(first.messages) : [] });
@@ -121,7 +124,7 @@ export function Live({ first, ...site }: Site & { first: Convo | null }) {
     if (json === kept.current) return;
     kept.current = json;
     const text = ask.content.map((p) => (p.type === 'text' ? p.text : '')).join(' ');
-    putChat({ id: convo.current.id, title: titleOf(text), at: convo.current.at, updated: Date.now(), messages });
+    putChat({ id: convo.current.id, title: titleOf(text), topic: convo.current.topic, at: convo.current.at, updated: Date.now(), messages });
     setCurrent(convo.current.id);
   }), [runtime]);
 
@@ -134,7 +137,8 @@ export function Live({ first, ...site }: Site & { first: Convo | null }) {
   const switchTo = useCallback((c: Convo | null) => {
     const run = () => {
       if (runtime.thread.getState().isRunning) runtime.thread.cancelRun();
-      convo.current = c ? { id: c.id, at: c.at } : { id: newId(), at: Date.now() };
+      convo.current = c ? { id: c.id, at: c.at, topic: c.topic } : { id: newId(), at: Date.now() };
+      setTopic(c?.topic ?? '');
       kept.current = c ? JSON.stringify(c.messages) : '';
       born.current = performance.now();
       runtime.thread.reset(c ? fromStored(c.messages) : []);
@@ -153,7 +157,7 @@ export function Live({ first, ...site }: Site & { first: Convo | null }) {
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <Born.Provider value={born}>
-        <Screen open={site.open} all={site.all} headline={headline} cid={cid} swap={swap} switchTo={switchTo} />
+        <Screen open={site.open} all={site.all} headline={headline} cid={cid} named={topic} swap={swap} switchTo={switchTo} />
       </Born.Provider>
     </AssistantRuntimeProvider>
   );
@@ -210,11 +214,12 @@ type ScreenProps = {
   all: Project[];
   headline: string;
   cid: string;
+  named: string;
   swap: boolean;
   switchTo: (c: Convo | null) => void;
 };
 
-function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
+function Screen({ open, all, headline, cid, named, swap, switchTo }: ScreenProps) {
   const slot = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const empty = useAuiState((s) => s.thread.isEmpty);
@@ -282,7 +287,7 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
   const closeChat = () => { setMenu(false); setPinned(false); if (!empty) switchTo(null); input.current?.blur(); };
 
   /* the conversation's title, its first question */
-  const topic = useAuiState((s) => {
+  const asked = useAuiState((s) => {
     const m = s.thread.messages.find((x) => x.role === 'user');
     return m ? m.content.map((p) => (p.type === 'text' ? p.text : '')).join(' ').replace(/\s+/g, ' ').trim() : '';
   });
@@ -341,7 +346,7 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
         <div className="chat-sheet">
           {/* once talking: what this chat is about, New chat, and Close */}
           <div className="chat-head" data-on={!empty || mode === 'bar' ? '' : undefined}>
-            {mode === 'center' && <p className="chat-topic" title={topic}>{topic}</p>}
+            {mode === 'center' && <p className="chat-topic" title={named || asked}><span key={named || asked}>{named || asked}</span></p>}
             {mode === 'bar' && (
               <button type="button" className="chat-tool" data-kind="history" data-on={past || menu ? '' : undefined} tabIndex={past || menu ? 0 : -1}
                 aria-expanded={menu} onClick={() => (menu ? closeMenu() : openMenu())}>
@@ -426,7 +431,7 @@ function History({ chats, current, on, onPick, onClose }: { chats: Convo[]; curr
           <li key={c.id} style={{ "--n": i } as React.CSSProperties}>
             <button type="button" className="chat-row" aria-current={c.id === current ? 'true' : undefined} onClick={() => onPick(c)}>
               <span className="ch">{String(chats.length - i).padStart(2, '0')}</span>
-              <span className="chat-row-title">{c.title}</span>
+              <span className="chat-row-title">{nameOf(c)}</span>
               <span className="chat-row-when">{c.id === current ? 'Now' : when(c.updated)}</span>
             </button>
           </li>
