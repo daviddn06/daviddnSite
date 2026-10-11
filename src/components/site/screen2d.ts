@@ -39,10 +39,12 @@ const wave = (x: number, y: number, t: number) => {
 };
 const ease = (u: number) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
 const sm = (a: number, b: number, x: number) => { const u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
-/* signed distance to a rounded box */
-const boxDist = (px: number, py: number, x: number, y: number, w: number, h: number, r: number) => {
-  const qx = Math.abs(px - x - w / 2) - w / 2 + r, qy = Math.abs(py - y - h / 2) - h / 2 + r;
-  return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - r;
+/* how much the picture quiets at (px, py) for one calm zone: an oval
+   around the box with a very wide, soft falloff, the same as calmAt in
+   crt.ts, so it never reads as a shape */
+const calmOval = (px: number, py: number, x: number, y: number, w: number, h: number) => {
+  const dx = (px - x - w / 2) / (w / 2 + 160), dy = (py - y - h / 2) / (h / 2 + 160);
+  return 1 - sm(0.35, 1, Math.hypot(dx, dy));
 };
 
 export function startScreen2d(canvas0: HTMLCanvasElement, w: Wants, opts: { quiet?: boolean } = {}): () => void {
@@ -117,9 +119,10 @@ export function startScreen2d(canvas0: HTMLCanvasElement, w: Wants, opts: { quie
   addEventListener('pointermove', onMove, { passive: true });
   document.addEventListener('pointerleave', onLeave);
 
-  /* text on the glass asks for calm behind it */
+  /* text on the glass asks for calm behind it; each zone's strength and
+     box are eased, as in crt.ts, so the quiet never pops or jumps */
   const calm = new Float32Array(CALMS * 5);
-  const eased = new WeakMap<Element, number>();
+  const eased = new WeakMap<Element, { c: number; r: number[] }>();
   let calmN = 0;
   const readCalm = (dt: number) => {
     calmN = 0;
@@ -127,12 +130,15 @@ export function startScreen2d(canvas0: HTMLCanvasElement, w: Wants, opts: { quie
     for (const el of tube.querySelectorAll<HTMLElement>('[data-calm]')) {
       if (calmN >= CALMS) break;
       const goal = parseFloat(el.dataset.calm || '0') || 0;
-      let c = eased.get(el) ?? goal;
-      c += (goal - c) * (still ? 1 : Math.min(1, dt / 300));
-      eased.set(el, c);
       const a = el.getBoundingClientRect();
-      if (c < 0.002 || !a.width || !a.height) continue;
-      calm.set([a.left - b.left, a.top - b.top, a.width, a.height, c], calmN * 5);
+      const box = [a.left - b.left, a.top - b.top, a.width, a.height];
+      let z = eased.get(el);
+      if (!z) { z = { c: 0, r: box }; eased.set(el, z); }
+      const k = still ? 1 : 1 - Math.exp(-dt / 190);
+      z.c += (goal - z.c) * k;
+      if (a.width && a.height) for (let i = 0; i < 4; i++) z.r[i] += (box[i] - z.r[i]) * k;
+      if (z.c < 0.002 || !z.r[2] || !z.r[3]) continue;
+      calm.set([z.r[0], z.r[1], z.r[2], z.r[3], z.c], calmN * 5);
       calmN++;
     }
   };
@@ -221,17 +227,17 @@ export function startScreen2d(canvas0: HTMLCanvasElement, w: Wants, opts: { quie
         let c = 0;
         for (let k = 0; k < calmN; k++) {
           const o = k * 5;
-          const d = boxDist(x, y, calm[o], calm[o + 1], calm[o + 2], calm[o + 3], 32);
-          c = Math.max(c, calm[o + 4] * (1 - sm(-40, 120, d)));
+          c = Math.max(c, calm[o + 4] * calmOval(x, y, calm[o], calm[o + 1], calm[o + 2], calm[o + 3]));
         }
         v += (0.42 - v) * c * 0.5;
         shade += (0.9 - shade) * c * 0.6;
         const q = Math.max(0, Math.min(255, (v * 255) | 0)) * 3;
-        /* calm dims the picture on dark glass and greys it on light */
-        /* on dark a touch over, standing in for the main screen's halation */
-        const dim = light ? 1 : 1.12 * (1 - c * 0.85 * 0.6);
+        /* calm dims the picture on dark glass and greys it toward the
+           glass on light, as the tube pass in crt.ts does; on dark a
+           touch over, standing in for the main screen's halation */
+        const dim = light ? 1 : 1.12 * (1 - c * 0.88 * 0.52);
         let r = rgb[q] * shade * dim, g = rgb[q + 1] * shade * dim, b = rgb[q + 2] * shade * dim;
-        if (light && c > 0) { const k = c * 0.85 * 0.6; r += (238 - r) * k; g += (241 - g) * k; b += (246 - b) * k; }
+        if (light && c > 0) { const k = c * 0.88 * 0.62; r += (238 - r) * k; g += (241 - g) * k; b += (246 - b) * k; }
         const o = (j * cols + i) * 4;
         data[o] = r; data[o + 1] = g; data[o + 2] = b; data[o + 3] = 255;
       }
