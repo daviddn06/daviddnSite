@@ -1,6 +1,8 @@
-# Every push to main deploys daviddn.dev through the shared system in daviddn06/deploy.
-# Run by hand (Actions, Deploy, Run workflow) to deploy again, roll back or see the status.
-# Off switch: set the Actions variable AUTODEPLOY to "off".
+# Every push to main builds daviddn.dev and ships it to my server.
+# The server side backs up, publishes the new release, checks the live home page and rolls back on
+# its own if the check fails. The deploy key in this repo's secrets can only hand the server a build
+# of this one site, nothing else. Run by hand (Actions, Deploy, Run workflow) to deploy again, roll
+# back or see the status. Off switch: set the Actions variable AUTODEPLOY to "off".
 name: Deploy
 on:
   push:
@@ -14,14 +16,49 @@ on:
 concurrency:
   group: deploy
   cancel-in-progress: false
+permissions:
+  contents: read
 jobs:
   deploy:
-    uses: daviddn06/deploy/.github/workflows/deploy.yml@main
-    with:
-      project: daviddn-dev
-      targets: site
-      action: ${{ inputs.action || 'deploy' }}
-      install: npm ci --no-audit --no-fund
-      build: npm run build
-      ship: dist
-    secrets: inherit
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ACTION: ${{ inputs.action || 'deploy' }}
+    steps:
+      - uses: actions/checkout@v5
+        if: env.ACTION == 'deploy'
+      - uses: actions/setup-node@v5
+        if: env.ACTION == 'deploy'
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install
+        if: env.ACTION == 'deploy'
+        run: npm ci --no-audit --no-fund
+      - name: Build
+        if: env.ACTION == 'deploy'
+        run: npm run build
+      - name: Pack
+        if: env.ACTION == 'deploy'
+        run: |
+          tar -C dist --exclude=.DS_Store -czf "$RUNNER_TEMP/release.tgz" .
+          echo "Upload $(du -h "$RUNNER_TEMP/release.tgz" | cut -f1)"
+      - name: Ship
+        if: vars.AUTODEPLOY != 'off' || github.event_name == 'workflow_dispatch'
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -uo pipefail
+          [ -n "$DEPLOY_SSH_KEY" ] || { echo "::error::No DEPLOY_SSH_KEY secret."; exit 1; }
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          # the server's host key, pinned
+          echo '162.35.17.35 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJi2ElCFdyEh4clT/b2KvTIMVYSk7f84ynJ58egYsuV3' > ~/.ssh/known_hosts
+          printf 'Host hub\n  HostName 162.35.17.35\n  User root\n  IdentityFile ~/.ssh/deploy\n  IdentitiesOnly yes\n  BatchMode yes\n  ConnectTimeout 30\n  ServerAliveInterval 30\n' > ~/.ssh/config
+          for n in 1 2 3; do
+            if [ "$ACTION" = deploy ]; then ssh hub "deploy site $GITHUB_SHA" < "$RUNNER_TEMP/release.tgz"; else ssh hub "$ACTION site"; fi
+            rc=$?
+            [ $rc -ne 255 ] && exit $rc
+            echo "::warning::The connection dropped (try $n), retrying."; sleep $((n * 15))
+          done
+          exit 255
