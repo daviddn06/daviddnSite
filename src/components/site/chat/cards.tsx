@@ -2,9 +2,9 @@
    happened. Everything comes from the same project data as the guide
    (src/data/work.js, passed down from App), so the cards never drift
    from the site. Choosing a project in a card opens it exactly like
-   choosing its channel. The cards are plain class based markup (`card`,
-   and the screen's shared `crt-card`), drawn as phosphor outlines on the
-   glass by chat.css. */
+   choosing its channel. They are drawn as attachments under David's
+   text (`att` in chat.css): one light container in the bubbles' own
+   language, hairline rows, nothing that truncates mid word. */
 import { createContext, useContext } from 'react';
 import { Mini, type Project } from '../Media';
 
@@ -39,61 +39,91 @@ function Open({ p, className, style, children }: { p: Project; className: string
   );
 }
 
+/* "Jul 2026 to now" reads as "Jul 2026 to now"; a long "Since high
+   school, expanded in 2026" keeps only its first part */
+const years = (when: string) => when.split(',')[0];
+/* the timeline's column wants it shorter still: "2026 to now",
+   "2021 to 2025", "until 2022" */
+const span = (when: string) => {
+  const w = years(when);
+  const ys = w.match(/\d{4}/g) ?? [];
+  if (!ys.length) return w;
+  if (/^until/i.test(w)) return `until ${ys[0]}`;
+  if (/now/i.test(w)) return `${ys[0]} to now`;
+  return ys.length > 1 && ys[0] !== ys[1] ? `${ys[0]} to ${ys[1]}` : ys[0];
+};
+
+/* projects: one attachment, a row per project, the whole row opens it */
 function Projects({ slugs }: { slugs?: unknown }) {
   const { all } = useSite();
   const list = (Array.isArray(slugs) ? slugs : []).map((s) => all.find((p) => p.slug === s)).filter(Boolean) as Project[];
   if (!list.length) return null;
   return (
-    <div className="cards">
+    <ul className="att att-projects">
       {list.map((p, i) => (
-        <Open key={p.slug} p={p} className="card crt-card card-project" style={{ '--i': i } as React.CSSProperties}>
-          <span className="card-top"><Mini slug={p.slug} /><span className="card-name">{p.name}</span></span>
-          <span className="card-meta">{p.role}, {p.when}</span>
-          <span className="card-line">{p.line}</span>
-        </Open>
+        <li key={p.slug} style={{ '--i': i } as React.CSSProperties}>
+          <Open p={p} className="att-row">
+            <Mini slug={p.slug} />
+            <span className="att-main">
+              <span className="att-head"><span className="att-name">{p.name}</span><span className="att-meta">{p.role} · {years(p.when)}</span></span>
+              <span className="att-line">{p.line}</span>
+            </span>
+          </Open>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
+/* everything in order: a thin rail, the dates in their own column */
 function Timeline() {
   const { sections } = useSite();
+  let i = 0;
   return (
-    <div className="card crt-card card-list">
+    <div className="att att-timeline">
       {sections.map((s) => (
-        <div key={s.id} className="tl-group">
-          <span className="tl-label">{s.title}</span>
-          <ul>
+        <section key={s.id} className="tl-group">
+          <h4 className="tl-label">{s.title}</h4>
+          <ol className="tl-rail">
             {s.items.map((p) => (
-              <li key={p.slug}>
+              <li key={p.slug} style={{ '--i': i++ } as React.CSSProperties}>
+                <span className="tl-when" title={p.when}>{span(p.when)}</span>
                 <Open p={p} className="tl-name"><Mini slug={p.slug} />{p.name}</Open>
-                <span className="tl-when">{p.when}</span>
               </li>
             ))}
-          </ul>
-        </div>
+          </ol>
+        </section>
       ))}
     </div>
   );
 }
 
+const Icon = ({ d }: { d: string }) => (
+  <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d={d} fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+);
+const MAIL = 'M2.5 4.5h11v7h-11zM2.8 4.8L8 8.8l5.2-4';
+const LINK = 'M6.5 9.5l3-3M7 4.8l1-1a2.5 2.5 0 013.5 3.5l-1 1M9 11.2l-1 1A2.5 2.5 0 014.5 8.7l1-1';
+const DOC = 'M4.5 2.5h5l2 2v9h-7zM6.5 7.5h3M6.5 10h3';
+
+/* how to reach me: a row of actions */
 function Contact() {
   return (
-    <div className="card crt-card card-list">
-      <ul className="rows">
-        <li><span className="row-label">Email</span><a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a></li>
-        <li><span className="row-label">LinkedIn</span><a href={CONTACT.linkedin} target="_blank" rel="noopener">linkedin.com/in/daviddn</a></li>
-        <li><span className="row-label">Resume</span><a href={CONTACT.resume}>daviddn.dev/cv</a></li>
-      </ul>
+    <div className="att att-actions">
+      <a className="att-act" href={`mailto:${CONTACT.email}`} style={{ '--i': 0 } as React.CSSProperties}><Icon d={MAIL} />Email<span className="att-act-sub">{CONTACT.email}</span></a>
+      <a className="att-act" href={CONTACT.linkedin} target="_blank" rel="noopener" style={{ '--i': 1 } as React.CSSProperties}><Icon d={LINK} />LinkedIn</a>
+      <a className="att-act" href={CONTACT.resume} style={{ '--i': 2 } as React.CSSProperties}><Icon d={DOC} />Resume</a>
     </div>
   );
 }
 
 function Resume() {
   return (
-    <a className="card crt-card card-resume" href={CONTACT.resume}>
-      <span className="card-name">Resume</span>
-      <span className="card-meta">One page, opens as a PDF</span>
+    <a className="att att-file" href={CONTACT.resume}>
+      <span className="att-file-icon"><Icon d={DOC} /></span>
+      <span className="att-main">
+        <span className="att-name">Resume</span>
+        <span className="att-meta">One page, PDF</span>
+      </span>
     </a>
   );
 }

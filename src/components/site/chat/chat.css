@@ -165,7 +165,8 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 12px 6px 16px;
+  padding: 12px 6px 28px;
+  scroll-padding-bottom: 28px;
   mask-image: linear-gradient(to bottom, transparent, #000 20px, #000 calc(100% - 12px), transparent);
   transition: opacity var(--chat-enter) var(--ease), transform var(--chat-enter) var(--ease);
 }
@@ -259,8 +260,6 @@
 }
 .chat-from { justify-content: center; margin: 0 0 6px; }
 /* attachments, under the bubble they belong to */
-.msg-part { width: min(100%, 560px); }
-.msg-part .card { background: var(--bubble-them); }
 .msg-error { padding: 0 6px; color: var(--chat-quiet); animation: chat-fade var(--chat-enter) var(--ease) backwards; }
 .msg-retry {
   margin-left: 10px;
@@ -381,7 +380,6 @@
 .msg-user.is-new { animation: chat-rise 360ms var(--ease) backwards; }
 .msg-bot.is-new { animation: chat-rise 360ms var(--ease) backwards; }
 .msg-part.is-new { animation: chat-fade 200ms var(--ease) backwards; }
-.msg-part.is-new .card { animation: chat-rise 440ms var(--ease) backwards; animation-delay: calc(var(--i, 0) * 60ms); }
 @keyframes chat-rise { from { opacity: 0; transform: translateY(8px); } }
 @keyframes chat-fade { from { opacity: 0; } }
 @keyframes chat-gone { from { opacity: 1; } to { opacity: 0; } }
@@ -520,30 +518,109 @@
   text-align: center;
 }
 
-/* cards inside answers: phosphor outlines on the glass */
-.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
-.card {
+/* Attachments under David's text (cards.tsx): one light container in
+   the bubbles' language, as wide as a bubble at most, rows split by
+   hairlines; names in plain ink, the details quieter */
+.msg-part { width: 100%; }
+.att {
+  display: block;
+  width: fit-content;
+  min-width: min(100%, 280px);
+  max-width: min(80%, 520px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-radius: 14px;
+  background: var(--bubble-them);
+  box-shadow: inset 0 0 0 1px var(--bubble-them-edge);
+  overflow: hidden;
+}
+.att-projects li + li .att-row, .att-timeline .tl-group + .tl-group { box-shadow: inset 0 1px 0 var(--bubble-them-edge); }
+.att-row {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 10px 12px 12px;
-  border-radius: 10px;
-  box-shadow: inset 0 0 0 1px var(--chat-rule), var(--chat-box-halo);
-  transition: box-shadow var(--chat-quick) var(--ease), transform 220ms var(--ease);
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 14px 10px 12px;
+  color: var(--ink);
+  transition: background-color var(--chat-quick) var(--ease);
 }
-@media (hover: hover) {
-  a.card:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 75%, transparent), 0 0 16px color-mix(in srgb, var(--link) 22%, transparent); transform: translateY(-1px); }
+.att-row .mini { flex: none; margin-top: 3px; }
+@media (hover: hover) { .att-row:hover, .att-act:hover, a.att-file:hover { background: color-mix(in srgb, var(--link) 12%, transparent); } }
+.att-row:focus-visible, .att-act:focus-visible, .att-file:focus-visible, .tl-name:focus-visible { outline: 1.5px solid var(--link); outline-offset: -2px; border-radius: 10px; }
+.att-main { display: grid; gap: 1px; min-width: 0; }
+.att-head { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
+.att-name { font-size: 13.5px; line-height: 20px; font-weight: 700; color: var(--ink); }
+.att-meta { font-size: 12px; line-height: 18px; color: var(--chat-quiet); }
+.att-line { font-size: 13px; line-height: 19px; color: var(--chat-quiet); overflow-wrap: normal; }
+
+/* the timeline: dates in their own column, a thin rail beside them */
+.att-timeline { padding: 4px 0; }
+.tl-group { padding: 8px 14px 8px 12px; }
+.tl-label {
+  margin: 0 0 4px 98px;
+  text-align: left;
+  color: var(--chat-quiet);
+  font-size: 10.5px;
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
-a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
-.card-top { display: flex; align-items: center; gap: 8px; }
-.card .mini, .tl-name .mini { color: var(--chat-quiet); }
+.tl-rail { margin: 0; padding: 0; list-style: none; }
+.tl-rail li { position: relative; display: grid; grid-template-columns: 82px 1fr; column-gap: 16px; align-items: center; min-height: 28px; }
+.tl-rail li::before {
+  content: '';
+  position: absolute;
+  left: 89px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--bubble-them-edge);
+}
+.tl-rail li::after {
+  content: '';
+  position: absolute;
+  left: 87px;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  margin-top: -2.5px;
+  border-radius: 50%;
+  background: var(--chat-quiet);
+}
+.tl-rail li:first-child::before { top: 50%; }
+.tl-rail li:last-child::before { bottom: 50%; }
+.tl-when { font-size: 12px; line-height: 16px; color: var(--chat-quiet); text-align: right; font-variant-numeric: tabular-nums; }
+.tl-name { display: inline-flex; align-items: center; gap: 8px; width: fit-content; padding: 3px 6px; margin-left: -6px; border-radius: 8px; color: var(--ink); font-size: 13.5px; line-height: 20px; transition: background-color var(--chat-quick) var(--ease); }
+@media (hover: hover) { .tl-name:hover { background: color-mix(in srgb, var(--link) 12%, transparent); } }
+
+/* contact: a row of actions */
+.att-actions { display: flex; flex-wrap: wrap; }
+.att-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 0 14px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  transition: background-color var(--chat-quick) var(--ease);
+}
+.att-act + .att-act { box-shadow: inset 1px 0 0 var(--bubble-them-edge); }
+.att-act svg { color: var(--chat-quiet); }
+.att-act-sub { font-weight: 500; color: var(--chat-quiet); }
+
+/* the resume: a file */
+.att-file { display: flex; align-items: center; gap: 10px; padding: 9px 16px 9px 10px; color: var(--ink); transition: background-color var(--chat-quick) var(--ease); }
+.att-file-icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; box-shadow: inset 0 0 0 1px var(--bubble-them-edge); color: var(--chat-quiet); }
+
+/* arriving: the attachment fades up, its rows one after another */
+.msg-part.is-new .att { animation: chat-rise 320ms var(--ease) backwards; }
+.msg-part.is-new :is(.att-projects li, .tl-rail li, .att-act) { animation: chat-rise 300ms var(--ease) backwards; animation-delay: calc(80ms + min(var(--i, 0), 10) * 40ms); }
+
 .chat-row .ch { color: var(--chat-quiet); font-size: 12px; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
-.card-name { color: var(--chat-link); font-weight: 700; transition: color var(--brand, 700ms) var(--ease); }
-.card-meta { color: var(--chat-quiet); font-size: 13px; line-height: 20px; }
-.card-line { margin-top: 4px; font-size: 14px; line-height: 21px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.card-list { gap: 14px; padding: 12px 14px 14px; }
-.tl-group { display: grid; gap: 2px; }
-.tl-label, .row-label, .chat-menu-label {
+.chat-menu-label {
   color: var(--ink);
   font-size: 11px;
   line-height: 16px;
@@ -551,15 +628,7 @@ a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
-.tl-label { margin-bottom: 2px; }
-.row-label { min-width: 72px; padding-top: 4px; }
-.tl-group li, .rows li { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
-.tl-name { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); transition: color var(--brand, 700ms) var(--ease); }
-.tl-name .mini { margin-right: 2px; }
-.tl-when { color: var(--chat-quiet); font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
-.rows { display: grid; gap: 6px; }
-.rows a { color: var(--chat-link); }
-.chat-note-act { padding: 0 4px; color: var(--chat-quiet); font-size: 13px; }
+.chat-note-act { padding: 0 6px; color: var(--chat-quiet); font-size: 12.5px; }
 
 /* History: a small on screen menu over the conversation, the way a set
    lays its menu over the picture */
@@ -724,7 +793,6 @@ a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
   height: auto;
   transform: none;
 }
-.crt-slot[data-mode="dock"] .cards { grid-template-columns: 1fr; }
 .crt-slot[data-mode="dock"] .chat-hello { display: none; }
 /* the row of controls shares the logo's line at the top of the strip,
    New chat to its left and Close to its right */
@@ -853,7 +921,7 @@ a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
   .crt-slot[data-mode="bar"][data-empty] .chat-stage { justify-content: center; }
   .crt-slot[data-mode="bar"][data-empty] .chat-body { flex: 0 0 auto; }
   .crt-slot[data-mode="bar"] .chat-title { font-size: 22px; line-height: 30px; }
-  .crt-slot[data-mode="bar"] .cards { grid-template-columns: 1fr; }
   .chat-note { padding-top: 8px; font-size: 12px; }
+  .att { max-width: 100%; }
   .composer { padding-left: 16px; }
 }
