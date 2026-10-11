@@ -428,6 +428,7 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
   const glass = main.parentElement!;
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const lightMq = matchMedia('(prefers-color-scheme: light)');
+  const coarseMq = matchMedia('(pointer: coarse)');
 
   /* Programs, each with its uniforms looked up by name. Where the GPU
      can compile in the background (KHR_parallel_shader_compile) the
@@ -592,7 +593,9 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     H = Math.max(1, main.clientHeight);
     /* past the budget, drop to a whole fraction of the device ratio so the
        browser scales the canvas up evenly and the scanlines stay clean */
-    const d = Math.min(3, devicePixelRatio || 1), most = Math.sqrt(4.6e6 / (W * H));
+    /* phones draw at 2x at most: at their size 3x is indistinguishable
+       through the scanlines and the glow, and costs 2.25 times as much */
+    const d = Math.min(coarseMq.matches ? 2 : 3, devicePixelRatio || 1), most = Math.sqrt(4.6e6 / (W * H));
     dpr = d <= most ? d : d / Math.ceil(d / most);
     const pd = Math.max(3, Math.round(3 * dpr));
     pitch = pd / dpr;

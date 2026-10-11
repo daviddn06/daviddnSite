@@ -135,7 +135,10 @@ const Body = memo(function Body({ p, onClose, onZoom }: { p: Project; onClose: (
     return (
       <div className="article-inner is-sheet">
         {head}
-        <p className="sheet-bar"><a className="art-ctl" href={p.url} download>Download PDF</a></p>
+        <p className="sheet-bar">
+          <a className="art-ctl" href={p.url} download>Download PDF</a>
+          <a className="art-ctl sheet-open" href={p.url} target="_blank" rel="noopener">Open PDF</a>
+        </p>
         {sheets.pages.map((pg, i) => <Sheet key={i} page={pg} n={i + 1} />)}
         {/* the same resume as text, for screen readers (data/resume.js) */}
         <div className="sr-only">

@@ -418,6 +418,11 @@ button { font: inherit; color: inherit; }
 @media (hover: hover) { :is(.art-close, .art-ctl):hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 75%, transparent), 0 0 12px color-mix(in srgb, var(--link) 20%, transparent); } }
 :is(.art-close, .art-ctl):focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
 .art-back { display: none; }
+/* touch: no tap flash, no double tap delay, and the screen's chrome is
+   not selectable by a stray long press (the article and chat are) */
+.tube { -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
+.tube :is(.article, .crt-slot .msg, textarea, .sheet-text) { -webkit-user-select: text; user-select: text; }
+.tube :is(a, button, textarea, input) { touch-action: manipulation; }
 .article-inner > :not(.article-head) { transition: opacity var(--t-micro) var(--ease-out); }
 @media (hover: hover) { .article-inner:has(.art-close:hover) > :not(.article-head) { opacity: 0.96; } }
 
@@ -427,7 +432,16 @@ button { font: inherit; color: inherit; }
 /* a page needs more width than a column of text to be read, so the
    resume takes more of the split (the chat keeps at least 400px) */
 .stage.is-doc { --col: clamp(340px, calc(var(--room) - 420px), 820px); }
+/* Narrow desktops and an iPad held sideways: a slimmer guide, and the
+   column gives way to the chat first, so the chat panel keeps a usable
+   width (about 300px or more) */
+@media (min-width: 1000px) and (max-width: 1199px) {
+  :root { --panel-w: 240px; --inset: 18px; --col: clamp(320px, min(calc(var(--room) * 0.5), calc(var(--room) - 330px)), 680px); }
+  .stage.is-doc { --col: clamp(320px, calc(var(--room) - 330px), 820px); }
+}
 .sheet-bar { margin: 0 0 14px; }
+.sheet-open { display: none; }
+@media (max-width: 999px) { .sheet-open { display: inline-flex; } }
 .sheet {
   position: relative;
   container-type: inline-size;
@@ -630,8 +644,26 @@ dialog.viewer.closing::backdrop { animation: fade-out var(--t-small) var(--ease-
 
 @media (max-width: 999px) {
   :root { --pad: 8px; --radius: 22px; --inset: 12px; }
-  .osd { width: auto; right: var(--inset); bottom: 80px; }
-  .osd-panel { padding-top: 14px; }
+  /* the tube clears the notch, the Dynamic Island and the home indicator */
+  .stage {
+    padding: max(var(--pad), env(safe-area-inset-top)) max(var(--pad), env(safe-area-inset-right)) max(var(--pad), env(safe-area-inset-bottom)) max(var(--pad), env(safe-area-inset-left));
+  }
+  /* The guide fills the screen and scrolls on its own, under the chat bar
+     at the bottom: its foot clears the bar, and it fades out before it.
+     Type is at least 15px and every row a 44px target. */
+  .osd { width: auto; right: var(--inset); bottom: 0; }
+  .osd-panel {
+    padding: 14px 8px calc(96px + env(safe-area-inset-bottom));
+    -webkit-overflow-scrolling: touch;
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 96px), transparent calc(100% - 64px));
+  }
+  .name, .bio { font-size: 15px; line-height: 23px; }
+  /* the guide scrolls as a whole here, so History keeps its full height */
+  .osd-panel > #crt-history-slot { flex: none; }
+  .channel { min-height: 44px; font-size: 16px; }
+  .lists { gap: 18px; }
+  .links { gap: 0 4px; font-size: 15px; }
+  .links .link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px; margin-left: -8px; }
   /* an article comes up over the guide: a fade and a short rise */
   .article {
     inset: 0;
@@ -651,9 +683,9 @@ dialog.viewer.closing::backdrop { animation: fade-out var(--t-small) var(--ease-
   .art-back {
     display: grid;
     place-items: center;
-    width: 32px;
-    height: 32px;
-    margin-left: -8px;
+    width: 44px;
+    height: 44px;
+    margin-left: -12px;
     padding: 0;
     border: 0;
     border-radius: 50%;
@@ -661,7 +693,10 @@ dialog.viewer.closing::backdrop { animation: fade-out var(--t-small) var(--ease-
     color: var(--ink);
     cursor: pointer;
   }
-  .article-head { padding: 16px 0 14px; margin-right: 0; }
+  .article-head { padding: 12px 0 10px; margin-right: 0; }
+  .article-inner p, .article-inner li { font-size: 16px; line-height: 26px; }
+  /* the resume's page fills the width; it can be pinched, or opened as a PDF */
+  .sheet-bar { display: flex; gap: 8px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
