@@ -100,7 +100,7 @@ export function Live({ first, ...site }: Site & { first: Convo | null }) {
     cid: () => convo.current.id,
     /* the resume is not a project the server knows; where the visitor is
        in it still goes in the context */
-    page: () => (siteRef.current.open === 'cv' ? null : siteRef.current.open),
+    page: () => siteRef.current.open,
     context: () => readContext(siteRef.current.open),
     act: (name, input) => {
       const s = siteRef.current;
