@@ -22,7 +22,7 @@ import { preload } from './Panel';
 
 /* how long a switch between two projects takes, the article's crossfade
    (site.css --switch) */
-const SWITCH = 520;
+const SWITCH = 420;
 import { curve } from './warp';
 import { Marks, Mini, type Project } from './Media';
 import { Panel } from './Panel';

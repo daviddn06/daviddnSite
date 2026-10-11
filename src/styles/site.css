@@ -35,8 +35,9 @@
   --slow: 520ms;
   /* the picture's edge sweeping across, as crt.ts's WIPE */
   --sweep: 560ms;
-  /* a switch from one project to another, App.tsx's SWITCH */
-  --switch: 520ms;
+  /* a switch from one project to another, App.tsx's SWITCH (the
+     article's part; the picture's tint and logo take 560ms) */
+  --switch: 420ms;
   --ease-io: cubic-bezier(0.65, 0, 0.35, 1);
   /* a brand's colour arriving, alongside the picture's 900ms blend */
   --brand: 700ms;
@@ -325,14 +326,15 @@ button { font: inherit; color: inherit; }
 .article { transform: translateX(-36px); transition: transform var(--sweep) var(--ease-io); }
 .stage.is-open .article { transform: none; transition: transform var(--sweep) var(--ease); }
 
-/* Switching, one short move in place: the new content eases in a few
-   pixels from the right while what it replaces (a copy, held at its
-   scroll) fades and drifts left over it, from however visible it was. */
-.article.swap-in .article-inner { animation: art-in var(--switch) var(--ease) both; }
+/* Switching, one short move in place, staggered so two articles' text is
+   never readable at once: what is replaced (a copy, held at its scroll)
+   fades out fast with a slight lift, from however visible it was, and
+   the new content then fades and rises in. */
+.article.swap-in .article-inner { animation: art-in 320ms var(--ease) 100ms both; }
 .stage .article.is-leaving { pointer-events: none; transition: none; background: none; }
-.article.is-leaving .article-inner { animation: art-out calc(var(--switch) * 0.6) var(--ease-io) both; }
-@keyframes art-in { from { opacity: 0; transform: translateX(14px); } }
-@keyframes art-out { from { opacity: var(--from, 1); } to { opacity: 0; transform: translateX(-14px); } }
+.article.is-leaving .article-inner { animation: art-out 140ms cubic-bezier(0.4, 0, 1, 1) both; }
+@keyframes art-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes art-out { from { opacity: var(--from, 1); } to { opacity: 0; transform: translateY(-4px); } }
 .article img, .article video, .article .compare { text-shadow: none; }
 
 .article-inner {
