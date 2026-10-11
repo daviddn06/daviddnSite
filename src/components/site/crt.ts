@@ -17,7 +17,8 @@
       through a fine aperture grille, and adds halation, a faint
       reflection on the glass, a slow refresh band, grain and the
       slightest flicker. The corners are rounded and fall off like a
-      real tube, and outside the raster is dark glass.
+      real tube, and outside the raster is dark glass. The HTML on the
+      screen (guide, chat, article) bends with the same curve (warp.ts).
 
    Behaviour is the field's, kept as it was. On load the tube powers on:
    a dot, a line, the picture opening out vertically overbright, then a
@@ -25,11 +26,12 @@
    blends the whole picture into that brand's colours over 900ms, on
    from wherever it is. The pointer acts like a weak magnet near the
    glass, bending the raster a little and tinting it. The article lies
-   under the screen: opening it, the picture blanks from the left with
-   the edge travelling as a soft staircase of scanline bands that slip
-   sideways like a horizontal hold catching, then land straight; the
-   phosphor it leaves behind glows out over the article for a moment.
-   Closing covers it the same way. The screen is sized to its box and
+   under the screen: opening it, the picture's edge sweeps across (WIPE)
+   as a bright line of phosphor, filling the span it crosses each frame
+   so its afterglow trails over the article as one soft smear. Closing
+   sweeps it back; a new goal mid sweep carries on from where the edge
+   is. Text on the glass asks for calm (`data-calm`): the picture dims
+   and flattens behind it in a wide soft oval. The screen is sized to its box and
    the picture is anchored right, so opening never moves it. With a
    project open the strip that remains shows its logo as white phosphor
    (in both themes), glowing, scanlined, lit from its centre; switching
@@ -42,7 +44,7 @@
    Hidden tabs and a screen scrolled out of view stop drawing. With
    reduced motion the screen holds still, draws only when something
    changes, and every change is instant. Returns null when WebGL 2 is
-   missing, and the site falls back to cells.ts. */
+   missing, and the site falls back to a 2D canvas picture (screen2d.ts). */
 import type { RefObject } from 'react';
 import { blender } from './palette';
 import { markSdf, type Sdf } from './marks';
@@ -52,16 +54,11 @@ export type Wants = {
   palette: RefObject<string[]>;
   mark: RefObject<string | null>;
   cut: RefObject<number>;
-  /* channel changes, no longer used by the main screen (kept for the 2D
-     screen until it moves to the slide) */
-  tune?: RefObject<number>;
 };
 
 /* How long the picture's edge takes to sweep across to reveal the article
    (or back over it). App's wipe between two articles takes as long. */
 export const WIPE = 560;
-/* the old channel change's length, still read by screen2d.ts */
-export const TUNE = 540;
 /* how long one logo takes to flow into the next */
 const MORPH = 1100;
 /* the power on, after which the edge animates normally */
@@ -164,7 +161,8 @@ void main() {
     float calm = calmAt(vec2(x, y));
 
     /* the field drifts slowly sideways and rolls through the palette
-       over about a minute, in 12px units so it keeps the grid's scale */
+       over about a minute; positions are in 12px units, which sets the
+       size of its blobs */
     vec2 c = vec2(p.x + uShift, p.y) / 12.0;
     float v = 0.5 + (wave(vec2(c.x * 0.12 + uT * 0.18, c.y * 0.12 - uT * 0.07), uT) - 0.5) * 1.5 + 0.14 * sin(uT * 0.11);
     float shade = 0.8 + 0.22 * wave(vec2(c.y * 0.084 + 40.0, c.x * 0.084 - 20.0), uT * 0.7);
