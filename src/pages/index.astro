@@ -5,6 +5,6 @@ import { work, projects, earlier } from '../data/work.js';
 
 const description = 'David Nguyen designs and builds software products. Business student at USC in Los Angeles.';
 ---
-<Base title="David Nguyen" description={description} image={work[0].tile.src}>
+<Base title="David Nguyen" description={description}>
   <App client:load work={work} projects={projects} earlier={earlier} initial={null} />
 </Base>
