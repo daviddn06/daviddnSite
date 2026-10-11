@@ -262,21 +262,24 @@ export default function App({ work, projects, earlier, initial }: Props) {
       <div className="tube" ref={tube}>
         {/* under the picture, shown where it gives way: the article */}
         <div className="under on-glass">
-        <Panel
-          key={`a${slot}`}
-          p={all.find((x) => x.slug === shown) ?? null}
-          open={!!open}
-          swapping={outgoing.length > 0}
-          onClose={close}
-          onZoom={onZoom}
-        />
         {/* switching: what was on screen fades out over the new article,
             the very same article (kept by its key, as it was, where it was
-            scrolled) rather than a copy built again in the click */}
-        {outgoing.map((o) => (
-          <Panel key={`a${o.id}`} p={all.find((x) => x.slug === o.slug) ?? null} open={false}
-            leaving startAt={o.at} from={o.from} onClose={close} onZoom={onZoom} />
-        ))}
+            scrolled) rather than a copy built again in the click; one list,
+            so the key carries it from the front to the fading copies */}
+        {[
+          <Panel
+            key={`a${slot}`}
+            p={all.find((x) => x.slug === shown) ?? null}
+            open={!!open}
+            swapping={outgoing.length > 0}
+            onClose={close}
+            onZoom={onZoom}
+          />,
+          ...outgoing.map((o) => (
+            <Panel key={`a${o.id}`} p={all.find((x) => x.slug === o.slug) ?? null} open={false}
+              leaving startAt={o.at} from={o.from} onClose={close} onZoom={onZoom} />
+          )),
+        ]}
         </div>
         <main className="main">
           <Field palette={palette} mark={open} cut={cut} />
