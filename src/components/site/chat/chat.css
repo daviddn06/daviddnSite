@@ -15,10 +15,10 @@
 
 .crt-slot {
   /* the screen's motion tokens (site.css), with fallbacks */
-  --chat-quick: var(--quick, 160ms);
-  --chat-enter: var(--calm, 320ms);
-  --chat-settle: var(--slow, 520ms);
-  --chat-out: cubic-bezier(0.4, 0, 1, 1);
+  --chat-quick: var(--t-micro, 140ms);
+  --chat-enter: var(--t-small, 220ms);
+  --chat-settle: var(--t-medium, 320ms);
+  --chat-out: var(--ease-in, cubic-bezier(0.4, 0, 1, 1));
   --chat-rule: var(--rule, rgba(200, 220, 255, 0.3));
   --chat-quiet: var(--soft, rgba(236, 242, 252, 0.9));
   /* links, a step lighter than the screen's accent so they hold up on
@@ -68,8 +68,8 @@
 /* a change of place (a project opening or closing): out quick, in soft
    (on the slot, so the chat's own warm up as the tube powers on never
    replays) */
-.crt-slot[data-fade="out"] { opacity: 0; transition: opacity var(--chat-quick) var(--chat-out); }
-.crt-slot[data-fade="in"] { animation: chat-place-in 380ms var(--ease) backwards; }
+.crt-slot[data-fade="out"] { opacity: 0; transition: opacity 120ms var(--chat-out); }
+.crt-slot[data-fade="in"] { animation: chat-place-in var(--chat-enter) var(--ease) backwards; }
 .crt-slot[data-fade] .chat-rest { transition: none; }
 @keyframes chat-place-in { from { opacity: 0; translate: 0 6px; } }
 
@@ -91,7 +91,7 @@
   opacity: 1;
   visibility: visible;
   transform: none;
-  transition: opacity var(--chat-enter) var(--ease) 120ms, transform var(--chat-enter) var(--ease) 120ms, visibility 0s;
+  transition: opacity var(--chat-enter) var(--ease) 60ms, transform var(--chat-enter) var(--ease) 60ms, visibility 0s;
 }
 .chat-topic {
   flex: 1;
@@ -177,7 +177,7 @@
    leaving it off then spares the browser a scrolling layer of its own,
    which would otherwise keep the glass's bend running every frame */
 .crt-slot[data-empty] .chat-body { overscroll-behavior: auto; }
-.crt-slot[data-swap] .chat-body { opacity: 0; transform: translateY(4px); transition-duration: 180ms; transition-timing-function: var(--chat-out); }
+.crt-slot[data-swap] .chat-body { opacity: 0; transform: translateY(4px); transition-duration: var(--chat-quick); transition-timing-function: var(--chat-out); }
 .crt-slot[data-menu] .chat-body { opacity: 0; transition-duration: var(--chat-quick); }
 
 .chat-hello {
@@ -194,7 +194,7 @@
   line-height: 32px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  animation: chat-rise 520ms var(--ease) 80ms backwards;
+  animation: chat-rise var(--chat-enter) var(--ease) 40ms backwards;
 }
 .crt-slot:not([data-empty]) .chat-hello { grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows var(--chat-settle) var(--ease), opacity var(--chat-quick) var(--chat-out); }
 .crt-slot[data-menu] .chat-hello { opacity: 0; transition: opacity var(--chat-quick) var(--chat-out); }
@@ -307,7 +307,7 @@
 @media (hover: hover) { .cite:hover { background: color-mix(in srgb, var(--tint, var(--chat-link)) 45%, transparent); } }
 .cite:focus-visible { outline: 1.5px solid var(--link); outline-offset: 1px; }
 /* it scans in, top to bottom, a touch overbright */
-.cite.is-new { animation: cite-scan 280ms steps(6, end) backwards; }
+.cite.is-new { animation: cite-scan var(--chat-enter) steps(6, end) backwards; }
 @keyframes cite-scan {
   from { clip-path: inset(0 0 100% 0); filter: brightness(2.2); }
   to { clip-path: inset(0 0 0 0); filter: brightness(1); }
@@ -354,11 +354,11 @@
 .source-where { color: var(--chat-quiet); }
 @media (hover: hover) { .source:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tint, var(--link)) 75%, transparent); } }
 .source:focus-visible { outline: 1.5px solid var(--link); outline-offset: 1px; }
-.sources.is-new .source { animation: chat-rise 300ms var(--ease) backwards; animation-delay: calc(var(--i, 0) * 70ms); }
+.sources.is-new .source { animation: chat-rise var(--chat-enter) var(--ease) backwards; animation-delay: calc(min(var(--i, 0), 6) * 30ms); }
 
 /* the project's channel in the guide flickers as a source arrives, the
    set tuning in */
-.channel.cite-tune { animation: cite-tune 380ms steps(8, end); }
+.channel.cite-tune { animation: cite-tune var(--chat-enter) steps(8, end); }
 @keyframes cite-tune {
   0% { filter: brightness(1.9); opacity: 1; }
   25% { opacity: 0.55; }
@@ -384,10 +384,10 @@
 
 /* entering: a text slides up into place, attachments follow one after
    another */
-.msg-user.is-new { animation: chat-rise 360ms var(--ease) backwards; }
-.msg-bot.is-new { animation: chat-rise 360ms var(--ease) backwards; }
-.msg-part.is-new { animation: chat-fade 200ms var(--ease) backwards; }
-@keyframes chat-rise { from { opacity: 0; transform: translateY(8px); } }
+.msg-user.is-new { animation: chat-rise var(--chat-enter) var(--ease) backwards; }
+.msg-bot.is-new { animation: chat-rise var(--chat-enter) var(--ease) backwards; }
+.msg-part.is-new { animation: chat-fade var(--chat-enter) var(--ease) backwards; }
+@keyframes chat-rise { from { opacity: 0; transform: translateY(6px); } }
 @keyframes chat-fade { from { opacity: 0; } }
 @keyframes chat-gone { from { opacity: 1; } to { opacity: 0; } }
 
@@ -401,7 +401,7 @@
   padding: 7px 7px 7px 18px;
   border-radius: 16px;
   box-shadow: inset 0 0 0 1px var(--chat-rule), var(--chat-box-halo);
-  transition: box-shadow 240ms var(--ease);
+  transition: box-shadow var(--chat-enter) var(--ease);
 }
 .composer:focus-within {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 85%, transparent), 0 0 0 3px color-mix(in srgb, var(--link) 16%, transparent), 0 0 22px color-mix(in srgb, var(--link) 24%, transparent);
@@ -490,7 +490,7 @@
   transition: opacity var(--chat-quick) var(--chat-out), transform var(--chat-quick) var(--chat-out), visibility 0s linear var(--chat-quick);
 }
 .model-menu[data-up] { top: auto; bottom: calc(100% + 10px); transform: translateY(4px); transform-origin: bottom right; }
-.model-menu[data-on] { opacity: 1; visibility: visible; transform: none; transition: opacity 220ms var(--ease), transform 220ms var(--ease), visibility 0s; }
+.model-menu[data-on] { opacity: 1; visibility: visible; transform: none; transition: opacity var(--chat-enter) var(--ease), transform var(--chat-enter) var(--ease), visibility 0s; }
 .model-opt {
   display: flex;
   align-items: center;
@@ -510,7 +510,7 @@
 .model-opt[aria-disabled] .model-opt-name { opacity: 0.5; }
 .model-lock { display: inline-flex; align-items: center; gap: 5px; color: var(--chat-quiet); font-size: 11px; font-weight: 500; opacity: 0.8; }
 .model-check { display: inline-flex; color: var(--chat-link); }
-.model-opt.is-shaking { animation: model-no 300ms var(--ease); }
+.model-opt.is-shaking { animation: model-no var(--chat-enter) var(--ease); }
 @keyframes model-no { 20% { transform: translateX(-4px); } 45% { transform: translateX(4px); } 70% { transform: translateX(-2px); } 100% { transform: none; } }
 @media (max-width: 999px) {
   .model-name, .model-caret { display: none; }
@@ -540,7 +540,7 @@
   height: 3px;
   border-radius: 1px;
   background: var(--chat-rule);
-  transition: background-color 400ms var(--ease), box-shadow 400ms var(--ease);
+  transition: background-color var(--chat-settle) var(--ease), box-shadow var(--chat-settle) var(--ease);
 }
 .quota-bar i[data-on] { background: var(--chat-link); box-shadow: 0 0 4px color-mix(in srgb, var(--chat-link) 60%, transparent); }
 .quota-wait {
@@ -669,8 +669,8 @@
 .att-file-icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; box-shadow: inset 0 0 0 1px var(--bubble-them-edge); color: var(--chat-quiet); }
 
 /* arriving: the attachment fades up, its rows one after another */
-.msg-part.is-new .att { animation: chat-rise 320ms var(--ease) backwards; }
-.msg-part.is-new :is(.att-projects li, .tl-rail li, .att-act) { animation: chat-rise 300ms var(--ease) backwards; animation-delay: calc(80ms + min(var(--i, 0), 10) * 40ms); }
+.msg-part.is-new .att { animation: chat-rise var(--chat-enter) var(--ease) backwards; }
+.msg-part.is-new :is(.att-projects li, .tl-rail li, .att-act) { animation: chat-rise var(--chat-enter) var(--ease) backwards; animation-delay: calc(40ms + min(var(--i, 0), 8) * 24ms); }
 
 .chat-row .ch { color: var(--chat-quiet); font-size: 12px; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
 .chat-menu-label {
@@ -696,7 +696,7 @@
   transform: translateY(6px);
   transition: opacity var(--chat-quick) var(--chat-out), transform var(--chat-quick) var(--chat-out);
 }
-.chat-menu[data-on] { opacity: 1; transform: none; transition: opacity 260ms var(--ease), transform var(--chat-enter) var(--ease); }
+.chat-menu[data-on] { opacity: 1; transform: none; transition: opacity var(--chat-enter) var(--ease), transform var(--chat-enter) var(--ease); }
 .chat-menu-label {
   display: flex;
   align-items: center;
@@ -731,7 +731,7 @@
 .chat-row { position: relative; }
 .chat-row[aria-current]::before { content: ''; position: absolute; left: 0; top: 9px; bottom: 9px; width: 2px; border-radius: 1px; background: var(--chat-link); box-shadow: 0 0 8px color-mix(in srgb, var(--chat-link) 60%, transparent); }
 .chat-row[aria-current] .ch, .chat-row[aria-current] .chat-row-when { color: var(--chat-link); }
-.chat-menu[data-on] li { animation: chat-rise 360ms var(--ease) backwards; animation-delay: calc(min(var(--n, 0), 8) * 24ms); }
+.chat-menu[data-on] li { animation: chat-rise var(--chat-enter) var(--ease) backwards; animation-delay: calc(min(var(--n, 0), 8) * 20ms); }
 
 /* History, in the guide under the channels (Corner.tsx). Its rows line
    up with the guide's channels and it scrolls with the guide. */
@@ -837,7 +837,7 @@
 /* the one on screen: a soft tint, full ink, the glyph lit */
 .hist-row[aria-current] { background: color-mix(in srgb, var(--chat-link) 14%, transparent); color: var(--ink); }
 .hist-row[aria-current] .hist-glyph { color: var(--chat-link); opacity: 1; }
-.hist-list li.is-new { animation: chat-rise 360ms var(--ease) backwards; }
+.hist-list li.is-new { animation: chat-rise var(--chat-enter) var(--ease) backwards; }
 
 @media (prefers-color-scheme: light) {
   .crt-history { --chat-link: color-mix(in srgb, var(--link) 80%, #000); }
@@ -899,7 +899,7 @@
   margin: 0 auto;
   pointer-events: none;
   transform: none;
-  transition: transform 480ms var(--ease-io, cubic-bezier(0.65, 0, 0.35, 1));
+  transition: transform var(--chat-settle) var(--ease);
 }
 .chat > .crt-logo-spot { pointer-events: none; }
 .crt-slot[data-mode="dock"][data-empty] .crt-logo-spot { transform: translateY(var(--spot-drop, 0px)); }
@@ -916,7 +916,7 @@
 }
 .chat > .dock-hello { pointer-events: none; }
 .dock-hello .chat-title { padding: 0 12px; font-size: 20px; line-height: 28px; animation: none; }
-.crt-slot[data-mode="dock"][data-empty] .dock-hello { opacity: 1; transform: none; transition: opacity var(--chat-enter) var(--ease) 220ms, transform var(--chat-enter) var(--ease) 220ms; }
+.crt-slot[data-mode="dock"][data-empty] .dock-hello { opacity: 1; transform: none; transition: opacity var(--chat-enter) var(--ease) 80ms, transform var(--chat-enter) var(--ease) 80ms; }
 .crt-slot[data-mode="dock"][data-empty]:not([data-menu]) .chat-sheet { justify-content: flex-end; }
 .crt-slot[data-mode="dock"][data-empty]:not([data-menu]) .chat-stage { flex: none; }
 
@@ -925,19 +925,19 @@
 .crt-slot:is([data-mode="dock"], [data-mode="bar"]) :is(.chat-sheet, .chat-note) {
   opacity: 0;
   visibility: hidden;
-  clip-path: inset(100% 0 0 0);
-  transition: opacity 180ms var(--chat-out), clip-path 240ms var(--chat-out), visibility 0s linear 240ms;
+  transform: translateY(8px);
+  transition: opacity var(--chat-quick) var(--chat-out), visibility 0s linear var(--chat-quick);
 }
 .crt-slot:is([data-mode="dock"], [data-mode="bar"])[data-expanded] :is(.chat-sheet, .chat-note) {
   opacity: 1;
   visibility: visible;
-  clip-path: inset(-20px -20px 0 -20px);
-  transition: opacity 280ms var(--ease), clip-path 460ms var(--ease), visibility 0s;
+  transform: none;
+  transition: opacity var(--chat-enter) var(--ease), transform var(--chat-enter) var(--ease), visibility 0s;
 }
 
 /* in the dock nothing above the panel is clipped: its row sits beside
    the logo */
-.crt-slot[data-mode="dock"][data-expanded] .chat-sheet { clip-path: none; }
+.crt-slot[data-mode="dock"][data-expanded] .chat-sheet { transform: none; }
 
 /* Phones and narrow windows. A bar along the bottom of the screen that
    opens into a full screen conversation, over the guide and any open
@@ -949,8 +949,8 @@
      and the guide inside it, now hidden under the article anyway, is
      put away. Closing drops both back at once, before the article
      slides down. */
-  .stage.is-open .over { z-index: 4; transition: z-index 0s linear var(--sweep, 560ms); }
-  .stage.is-open .osd { visibility: hidden; transition: visibility 0s linear var(--sweep, 560ms); }
+  .stage.is-open .over { z-index: 4; transition: z-index 0s linear var(--sweep, 320ms); }
+  .stage.is-open .osd { visibility: hidden; transition: visibility 0s linear var(--sweep, 320ms); }
   .crt-slot[data-mode] { left: 0; right: 0; top: 0; bottom: 0; width: auto; height: auto; transform: none; z-index: 5; }
   .chat { padding: 10px 12px max(12px, env(safe-area-inset-bottom)); }
   /* the screen behind the full conversation, so nothing shows through */
@@ -960,10 +960,10 @@
     inset: 0;
     background: var(--screen);
     opacity: 0;
-    transition: opacity 220ms var(--chat-out);
+    transition: opacity var(--chat-enter) var(--chat-out);
     pointer-events: none;
   }
-  .crt-slot[data-expanded] .chat::before { opacity: 1; transition: opacity 300ms var(--ease); }
+  .crt-slot[data-expanded] .chat::before { opacity: 1; transition: opacity var(--chat-enter) var(--ease); }
   .chat > * { position: relative; }
   .chat-sheet { flex: 1 1 auto; }
   .chat-head { justify-content: flex-start; padding: 0 0 4px; }
@@ -991,7 +991,7 @@
     height: 104px;
     background: linear-gradient(to bottom, transparent, var(--screen) 34px);
     opacity: 0;
-    transition: opacity 300ms var(--ease);
+    transition: opacity var(--chat-enter) var(--ease);
     pointer-events: none;
     z-index: -1;
   }
