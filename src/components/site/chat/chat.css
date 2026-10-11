@@ -280,8 +280,9 @@
   a.card:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 75%, transparent), 0 0 16px color-mix(in srgb, var(--link) 22%, transparent); transform: translateY(-1px); }
 }
 a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
-.card-top { display: flex; align-items: baseline; gap: 8px; }
-.card .ch, .tl-name .ch, .chat-row .ch { color: var(--chat-quiet); font-size: 12px; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.card-top { display: flex; align-items: center; gap: 8px; }
+.card .mini, .tl-name .mini { color: var(--chat-quiet); }
+.chat-row .ch { color: var(--chat-quiet); font-size: 12px; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
 .card-name { color: var(--chat-link); font-weight: 700; transition: color var(--brand, 700ms) var(--ease); }
 .card-meta { color: var(--chat-quiet); font-size: 13px; line-height: 20px; }
 .card-line { margin-top: 4px; font-size: 14px; line-height: 21px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
@@ -298,8 +299,8 @@ a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
 .tl-label { margin-bottom: 2px; }
 .row-label { min-width: 72px; padding-top: 4px; }
 .tl-group li, .rows li { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
-.tl-name { display: inline-flex; gap: 10px; color: var(--ink); transition: color var(--brand, 700ms) var(--ease); }
-.tl-name .ch { min-width: 18px; }
+.tl-name { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); transition: color var(--brand, 700ms) var(--ease); }
+.tl-name .mini { margin-right: 2px; }
 .tl-when { color: var(--chat-quiet); font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
 .rows { display: grid; gap: 6px; }
 .rows a { color: var(--chat-link); }

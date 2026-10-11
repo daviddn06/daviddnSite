@@ -6,7 +6,7 @@
    and the screen's shared `crt-card`), drawn as phosphor outlines on the
    glass by chat.css. */
 import { createContext, useContext } from 'react';
-import type { Project } from '../Media';
+import { Mini, type Project } from '../Media';
 
 export type Site = {
   all: Project[];
@@ -23,7 +23,6 @@ export const CONTACT = {
   resume: '/cv/',
 };
 
-const channel = (all: Project[], slug: string) => String(all.findIndex((p) => p.slug === slug) + 1).padStart(2, '0');
 
 /* opens a project from inside a card, the way the guide does */
 function Open({ p, className, style, children }: { p: Project; className: string; style?: React.CSSProperties; children: React.ReactNode }) {
@@ -48,7 +47,7 @@ function Projects({ slugs }: { slugs?: unknown }) {
     <div className="cards">
       {list.map((p, i) => (
         <Open key={p.slug} p={p} className="card crt-card card-project" style={{ '--i': i } as React.CSSProperties}>
-          <span className="card-top"><span className="ch">{channel(all, p.slug)}</span><span className="card-name">{p.name}</span></span>
+          <span className="card-top"><Mini slug={p.slug} /><span className="card-name">{p.name}</span></span>
           <span className="card-meta">{p.role}, {p.when}</span>
           <span className="card-line">{p.line}</span>
         </Open>
@@ -58,7 +57,7 @@ function Projects({ slugs }: { slugs?: unknown }) {
 }
 
 function Timeline() {
-  const { all, sections } = useSite();
+  const { sections } = useSite();
   return (
     <div className="card crt-card card-list">
       {sections.map((s) => (
@@ -67,7 +66,7 @@ function Timeline() {
           <ul>
             {s.items.map((p) => (
               <li key={p.slug}>
-                <Open p={p} className="tl-name"><span className="ch">{channel(all, p.slug)}</span>{p.name}</Open>
+                <Open p={p} className="tl-name"><Mini slug={p.slug} />{p.name}</Open>
                 <span className="tl-when">{p.when}</span>
               </li>
             ))}

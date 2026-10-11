@@ -1,6 +1,7 @@
 /* daviddn.dev. The whole page is an old CRT. The screen shows a calm
    field of colour; David's name, a line about him and his work sit on
-   the glass like a TV's on screen display, every project a channel. A
+   the glass like a TV's on screen display, every project a channel
+   marked by its own logo. A
    chat sits in the middle of the screen.
 
    Hovering a channel blends the field into that project's colours.
@@ -17,7 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BRAND } from '../logos/brand';
 import { DEFAULT_PALETTE, DEFAULT_PALETTE_LIGHT, Field, WIPE, brandAccent, brandPalette } from './Field';
 import { curve } from './warp';
-import { Marks, type Project } from './Media';
+import { Marks, Mini, type Project } from './Media';
 import { Panel } from './Panel';
 import { Chat } from './chat/Chat';
 
@@ -205,8 +206,8 @@ export default function App({ work, projects, earlier, initial }: Props) {
     [focus, light],
   );
 
-  /* channel numbers follow the order of the guide */
-  const channel = (slug: string) => String(all.findIndex((p) => p.slug === slug) + 1).padStart(2, '0');
+  /* each project's colour, readable as text, for its mark on hover */
+  const tint = (slug: string) => (BRAND[slug] ? brandAccent(BRAND[slug].color, light) : undefined);
 
   return (
     <div className={`stage${open ? ' is-open' : ''}${ready ? ' ready' : ''}`}
@@ -221,7 +222,6 @@ export default function App({ work, projects, earlier, initial }: Props) {
           <Panel
             key={`was-${leaving}`}
             p={all.find((x) => x.slug === leaving) ?? null}
-            channel={channel(leaving)}
             open={false}
             leaving
             startAt={leavingAt.current}
@@ -231,7 +231,6 @@ export default function App({ work, projects, earlier, initial }: Props) {
         )}
         <Panel
           p={all.find((x) => x.slug === shown) ?? null}
-          channel={shown ? channel(shown) : ''}
           open={!!open}
           wipe={!!leaving}
           onClose={() => show(null)}
@@ -250,7 +249,7 @@ export default function App({ work, projects, earlier, initial }: Props) {
 
         {/* The on screen display: a panel on the glass like a TV's channel
             guide. A header strip (name and the time), a line about David,
-            the channels in three sections with the open one on a
+            the channels (each with its logo) in three sections, the open one on a
             selection bar, and the links at the foot. */}
         <header className="osd">
           <div className="osd-panel" data-calm="0.9">
@@ -269,6 +268,7 @@ export default function App({ work, projects, earlier, initial }: Props) {
                       <li key={p.slug}>
                         <a
                           className={`channel${open === p.slug ? ' active' : ''}`}
+                          style={{ '--tint': tint(p.slug) } as React.CSSProperties}
                           href={`/projects/${p.slug}/`}
                           aria-current={open === p.slug ? 'page' : undefined}
                           onPointerEnter={(e) => enter(p.slug, e)}
@@ -278,7 +278,7 @@ export default function App({ work, projects, earlier, initial }: Props) {
                             show(open === p.slug ? null : p.slug);
                           }}
                         >
-                          <span className="ch" aria-hidden="true">{channel(p.slug)}</span>
+                          <Mini slug={p.slug} />
                           <span className="ch-name">{p.name}</span>
                           {open === p.slug && (
                             <svg className="x" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">

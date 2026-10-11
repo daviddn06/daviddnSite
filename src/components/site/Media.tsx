@@ -84,6 +84,14 @@ export function Compare({ c, alt }: { c: Compare; alt: string }) {
   );
 }
 
+/* A project's mark at the size of a line of text, for the guide, the
+   article's title and the chat's cards. It draws in the text's colour;
+   the brand colour is set by the place it sits in. Decorative, the name
+   beside it says what it is. */
+export function Mini({ slug }: { slug: string }) {
+  return <span className="mini" aria-hidden="true"><ProjectLogo slug={slug} size={17} /></span>;
+}
+
 /* Every brand's mark, hidden. The screen draws the open one from it as glowing phosphor. */
 export function Marks({ slugs }: { slugs: string[] }) {
   return (
