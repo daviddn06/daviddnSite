@@ -22,7 +22,7 @@ import { preload } from './Panel';
 
 /* how long a switch between two projects takes, the article's crossfade
    (site.css --switch) */
-const SWITCH = 420;
+const SWITCH = 320;
 import { curve } from './warp';
 import { Marks, Mini, type Project } from './Media';
 import { Panel } from './Panel';
@@ -156,7 +156,7 @@ export default function App({ work, projects, earlier, initial }: Props) {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) { done(); return; }
     d.classList.add('closing');
     clearTimeout(closing.current);
-    closing.current = window.setTimeout(done, 260);
+    closing.current = window.setTimeout(done, 240);
   };
 
   /* Escape closes, arrows step through everything in order */

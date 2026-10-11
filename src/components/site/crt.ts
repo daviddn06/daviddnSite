@@ -23,7 +23,7 @@
    Behaviour is the field's, kept as it was. On load the tube powers on:
    a dot, a line, the picture opening out vertically overbright, then a
    short degauss wobble as it settles. Hovering or opening a project
-   blends the whole picture into that brand's colours over 560ms, on
+   blends the whole picture into that brand's colours over 500ms, on
    from wherever it is. The pointer acts like a weak magnet near the
    glass, bending the raster a little and tinting it. The article lies
    under the screen: opening it, the picture's edge sweeps across (WIPE)
@@ -58,12 +58,12 @@ export type Wants = {
 
 /* How long the picture's edge takes to sweep across to reveal the article
    (or back over it). App's wipe between two articles takes as long. */
-export const WIPE = 560;
+export const WIPE = 320;
 /* how fast the field drifts and rolls through its colours, against the
    pace it had at first (calmed to barely noticeable) */
 const FIELD_PACE = 0.3;
 /* how long one logo takes to flow into the next */
-const MORPH = 560;
+const MORPH = 320;
 /* the power on, after which the edge animates normally */
 const LOAD = 1600;
 /* Anything on the glass can ask the picture to calm down behind it: give
@@ -656,7 +656,9 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
       const box = [a.left - b.left, a.top - b.top, a.width, a.height];
       let z = eased.get(el);
       if (!z) { z = { c: 0, r: box }; eased.set(el, z); }
-      const k = still ? 1 : 1 - Math.exp(-dt / 190);
+      /* the calm settles in fast, so a panel never shows the raw colour
+         behind it as it fades in, and lets go slowly */
+      const k = still ? 1 : 1 - Math.exp(-dt / (goal > z.c ? 70 : 190));
       z.c += (goal - z.c) * k;
       if (a.width && a.height) for (let i = 0; i < 4; i++) z.r[i] += (box[i] - z.r[i]) * k;
       if (z.c < 0.002 || !z.r[2] || !z.r[3]) continue;

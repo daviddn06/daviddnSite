@@ -128,7 +128,7 @@ export const ramp = (palette: string[]) => {
 /* The palette on screen. A new palette blends in over BLEND ms from
    wherever the colours are, so asking again mid blend never snaps.
    `step` returns the current ramp as sRGB, 256 steps of three bytes. */
-export const BLEND = 560;
+export const BLEND = 500;
 export function blender(initial: string[]) {
   let key = initial.join();
   let from = ramp(initial), to = from;
