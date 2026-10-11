@@ -222,22 +222,23 @@ export default function App({ work, projects, earlier, initial }: Props) {
     return () => mq.removeEventListener('change', sync);
   }, []);
 
-  /* how much of the screen the article needs: the guide beside it and
-     its own column, measured to the column's right edge */
+  /* How much of the screen the article needs: the guide beside it and
+     its own column, to the column's right edge. One source of truth for
+     the split: the CSS (--side and --col, wider for the resume), read
+     from a probe that is always there and sized by exactly those (.split
+     in site.css). The article, the chat's panel (.crt-slot in the dock),
+     its calm zone and the picture's edge (`cut`) all follow it, so they
+     can never disagree, whatever the window or the open article. */
   const [col, setCol] = useState(0);
+  const split = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const box = tube.current;
-    if (!box) return;
+    const el = split.current;
+    if (!el) return;
     const narrow = matchMedia('(max-width: 999px)');
-    /* the article in front (they come and go as projects switch, so it is
-       looked up each time; they all share one size) */
-    const sync = () => {
-      const el = box.querySelector<HTMLElement>('.article:not(.is-leaving):not(.is-pre)');
-      if (el) setCol(narrow.matches ? 0 : el.offsetLeft + el.offsetWidth);
-    };
+    const sync = () => setCol(narrow.matches ? 0 : el.offsetLeft + el.offsetWidth);
     sync();
     const ro = new ResizeObserver(sync);
-    ro.observe(box);
+    ro.observe(el);
     narrow.addEventListener('change', sync);
     return () => { ro.disconnect(); narrow.removeEventListener('change', sync); };
   }, []);
@@ -286,6 +287,7 @@ export default function App({ work, projects, earlier, initial }: Props) {
       style={accent ? ({ '--link': accent } as React.CSSProperties) : undefined}>
       <Marks slugs={slugs} />
       <div className="tube" ref={tube}>
+        <div className="split" ref={split} aria-hidden="true" />
         {/* under the picture, shown where it gives way: the article */}
         <div className="under on-glass">
         {/* switching: what was on screen fades out over the new article,
