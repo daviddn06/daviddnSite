@@ -6,6 +6,8 @@
    any scale, glow around it, and blend one logo into the next by
    mixing two fields. */
 
+import { field } from './sdf';
+
 export type MarkImage = { img: HTMLCanvasElement; x: number; y: number; w: number; h: number };
 
 const images = new Map<string, Promise<MarkImage | null>>();
@@ -51,75 +53,51 @@ export function markImage(slug: string): Promise<MarkImage | null> {
 
 /* room around the fitted mark for its glow, in CSS px */
 export const PAD = 40;
-const INF = 1e20;
 
-/* Felzenszwalb and Huttenlocher's squared distance transform along one
-   row or column, as in Mapbox's TinySDF */
-function edt1d(grid: Float64Array, offset: number, stride: number, length: number, f: Float64Array, v: Uint16Array, z: Float64Array) {
-  v[0] = 0; z[0] = -INF; z[1] = INF;
-  f[0] = grid[offset];
-  for (let q = 1, k = 0, s = 0; q < length; q++) {
-    f[q] = grid[offset + q * stride];
-    const q2 = q * q;
-    do {
-      const r = v[k];
-      s = (f[q] - f[r] + q2 - r * r) / (q - r) / 2;
-    } while (s <= z[k] && --k > -1);
-    k++; v[k] = q; z[k] = s; z[k + 1] = INF;
+/* the distance transform runs in a worker so a logo never holds up a
+   frame; on the page itself if a worker cannot start */
+let worker: Worker | null | undefined;
+const waiting = new Map<number, (r: { data: Float32Array; on: number }) => void>();
+let ids = 0;
+const fieldOff = (a: Uint8ClampedArray, w: number, h: number): Promise<{ data: Float32Array; on: number }> => {
+  if (worker === undefined) {
+    try {
+      worker = new Worker(new URL('./sdfWorker.ts', import.meta.url), { type: 'module' });
+      worker.onmessage = (e) => { const r = waiting.get(e.data.id); waiting.delete(e.data.id); r?.(e.data); };
+      worker.onerror = () => { worker?.terminate(); worker = null; const rest = [...waiting.values()]; waiting.clear(); rest.forEach((r) => r(null as never)); };
+    } catch { worker = null; }
   }
-  for (let q = 0, k = 0; q < length; q++) {
-    while (z[k + 1] < q) k++;
-    const r = v[k], qr = q - r;
-    grid[offset + q * stride] = f[r] + qr * qr;
-  }
-}
-function edt(grid: Float64Array, w: number, h: number) {
-  const n = Math.max(w, h);
-  const f = new Float64Array(n), v = new Uint16Array(n), z = new Float64Array(n + 1);
-  for (let x = 0; x < w; x++) edt1d(grid, x, w, h, f, v, z);
-  for (let y = 0; y < h; y++) edt1d(grid, y * w, 1, w, f, v, z);
-}
+  if (!worker) return Promise.resolve(field(a, w, h));
+  const id = ++ids;
+  return new Promise<{ data: Float32Array; on: number } | null>((resolve) => {
+    waiting.set(id, resolve);
+    worker!.postMessage({ id, a, w, h }, [a.buffer]);
+  }).then((r) => r ?? field(a, w, h));
+};
 
 export type Sdf = { w: number; h: number; data: Float32Array; weight: number };
-const sdfs = new Map<string, Sdf>();
+const sdfs = new Map<string, Promise<Sdf | null>>();
 
 /* The mark fitted inside FW by FH CSS px, centred in a frame padded by
    PAD each side. Open, thin marks get a little `weight` (px added to the
    distance) so their strokes hold across scanlines. */
-export async function markSdf(slug: string, FW: number, FH: number): Promise<Sdf | null> {
+export function markSdf(slug: string, FW: number, FH: number): Promise<Sdf | null> {
   const key = `${slug}|${FW}x${FH}`;
   const hit = sdfs.get(key);
   if (hit) return hit;
-  const m = await markImage(slug);
-  if (!m) return null;
-  const w = FW + PAD * 2, h = FH + PAD * 2;
-  const sc = Math.min(FW / m.w, FH / m.h);
-  const dw = m.w * sc, dh = m.h * sc;
-  const c = document.createElement('canvas');
-  c.width = w; c.height = h;
-  const x = c.getContext('2d', { willReadFrequently: true })!;
-  x.drawImage(m.img, m.x, m.y, m.w, m.h, (w - dw) / 2, (h - dh) / 2, dw, dh);
-  const a = x.getImageData(0, 0, w, h).data;
-  const n = w * h;
-  const outer = new Float64Array(n), inner = new Float64Array(n);
-  let on = 0;
-  for (let i = 0; i < n; i++) {
-    const v = a[i * 4 + 3] / 255;
-    on += v;
-    if (v >= 1) { outer[i] = 0; inner[i] = INF; }
-    else if (v <= 0) { outer[i] = INF; inner[i] = 0; }
-    else {
-      const d = 0.5 - v;
-      outer[i] = d > 0 ? d * d : 0;
-      inner[i] = d < 0 ? d * d : 0;
-    }
-  }
-  edt(outer, w, h);
-  edt(inner, w, h);
-  const data = new Float32Array(n);
-  for (let i = 0; i < n; i++) data[i] = Math.sqrt(inner[i]) - Math.sqrt(outer[i]);
-  const fill = on / (dw * dh);
-  const out = { w, h, data, weight: fill > 0.5 ? 0 : 0.6 };
-  sdfs.set(key, out);
-  return out;
+  const job = markImage(slug).then(async (m) => {
+    if (!m) return null;
+    const w = FW + PAD * 2, h = FH + PAD * 2;
+    const sc = Math.min(FW / m.w, FH / m.h);
+    const dw = m.w * sc, dh = m.h * sc;
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const x = c.getContext('2d', { willReadFrequently: true })!;
+    x.drawImage(m.img, m.x, m.y, m.w, m.h, (w - dw) / 2, (h - dh) / 2, dw, dh);
+    const { data, on } = await fieldOff(x.getImageData(0, 0, w, h).data, w, h);
+    const fill = on / (dw * dh);
+    return { w, h, data, weight: fill > 0.5 ? 0 : 0.6 };
+  });
+  sdfs.set(key, job);
+  return job;
 }
