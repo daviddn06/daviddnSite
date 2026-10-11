@@ -382,6 +382,12 @@ button { font: inherit; color: inherit; }
   cursor: zoom-in;
 }
 .frame img, .frame video { width: 100%; height: 100%; object-fit: cover; }
+/* a video's first frame as a picture under it, so the slot is never
+   black; the video fades in over it once it is actually playing (with
+   reduced motion it shows at once, with its controls) */
+.frame-poster { position: absolute; inset: 0; }
+.frame video { position: relative; transition: opacity var(--quick) var(--ease); }
+.frame video:not(.is-live):not([controls]) { opacity: 0; }
 .frame::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--line); pointer-events: none; }
 .frame.tall { border-radius: 14px; }
 .shot > .frame.tall { max-width: 200px; }

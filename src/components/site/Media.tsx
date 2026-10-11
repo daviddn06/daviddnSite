@@ -51,14 +51,24 @@ const watchShimmer = (el: HTMLElement | null) => {
   return done;
 };
 
-/* One image or video. Images open full size, videos loop while on screen. */
+/* Videos that open on a dark intro (measured by sampling their frames):
+   they start, and loop back to, the moment the picture is up, so the
+   slot never shows a black frame. */
+const START: Record<string, number> = { '/work/wedge/site-intro-manifesto.mp4': 2.3 };
+
+/* One image or video. Images open full size, videos loop while on screen,
+   over a still of their picture until they are actually playing. */
 export function Frame({ m, alt, sizes, onZoom }: { m: Media; alt: string; sizes: string; onZoom: (src: string, alt: string) => void }) {
   const tall = m.h > m.w;
   const style = { aspectRatio: `${m.w} / ${m.h}` };
   if (m.type === 'video') {
     return (
       <div className={`frame${tall ? ' tall' : ''}`} style={style}>
-        <video data-auto muted loop playsInline preload="none" poster={m.poster} width={m.w} height={m.h} aria-label={alt}>
+        {m.poster && <img className="frame-poster" src={m.poster} alt="" aria-hidden="true" width={m.w} height={m.h} decoding="async" />}
+        <video data-auto muted loop={!START[m.src]} playsInline preload="none" poster={m.poster} width={m.w} height={m.h} aria-label={alt}
+          onLoadedMetadata={(e) => { const s = START[m.src]; if (s && e.currentTarget.currentTime < s) e.currentTarget.currentTime = s; }}
+          onTimeUpdate={(e) => { const v = e.currentTarget; if (!v.paused && v.currentTime >= (START[m.src] ?? 0)) v.classList.add('is-live'); }}
+          onEnded={(e) => { const v = e.currentTarget; v.currentTime = START[m.src] ?? 0; v.play().catch(() => {}); }}>
           <source src={m.src} type="video/mp4" />
         </video>
       </div>
