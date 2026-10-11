@@ -1,7 +1,8 @@
 /* Which model answers, beside the send button. The chat runs on Haiku
    5.5; Sonnet 5.5 and Opus 5.5 are listed but locked, so choosing one
    gives a small shake and stays on Haiku. Only for show here, nothing is
-   sent to the server. A menu that opens upward, keyboard friendly
+   sent to the server. A menu that drops down below the pill, or opens
+   upward when there is no room below (measured on open), keyboard friendly
    (arrows, Enter, Escape); on phones the pill folds to its icon. */
 import { useEffect, useRef, useState } from 'react';
 
@@ -25,6 +26,7 @@ export function ModelPicker() {
   const [open, setOpen] = useState(false);
   const [at, setAt] = useState(0);
   const [shake, setShake] = useState<string | null>(null);
+  const [up, setUp] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
   const list = useRef<HTMLUListElement>(null);
@@ -38,6 +40,13 @@ export function ModelPicker() {
   }, [open]);
   useEffect(() => { if (open) list.current?.querySelectorAll<HTMLElement>('[role="option"]')[at]?.focus(); }, [open, at]);
 
+  /* down when it fits under the pill inside the screen, else up */
+  const place = () => {
+    const b = button.current?.getBoundingClientRect();
+    const tube = button.current?.closest('.tube')?.getBoundingClientRect();
+    const need = (list.current?.offsetHeight ?? 130) + 16;
+    setUp(!!b && (tube ? tube.bottom : innerHeight) - b.bottom < need);
+  };
   const choose = (i: number) => {
     const m = MODELS[i];
     if (m.locked) {
@@ -58,12 +67,12 @@ export function ModelPicker() {
   return (
     <div className="model" ref={root}>
       <button type="button" ref={button} className="model-pill" aria-haspopup="listbox" aria-expanded={open} aria-label="Model, Haiku 5.5"
-        onClick={() => { setAt(0); setOpen((o) => !o); }}
-        onKeyDown={(e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); setAt(0); setOpen(true); } }}>
+        onClick={() => { if (!open) place(); setAt(0); setOpen((o) => !o); }}
+        onKeyDown={(e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); place(); setAt(0); setOpen(true); } }}>
         <Spark /><span className="model-name">Haiku 5.5</span>
         <svg className="model-caret" viewBox="0 0 10 10" width="8" height="8" aria-hidden="true"><path d="M2 6.5l3-3 3 3" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
       </button>
-      <ul ref={list} className="model-menu" role="listbox" aria-label="Model" data-on={open ? '' : undefined} onKeyDown={onKey} inert={!open || undefined}>
+      <ul ref={list} className="model-menu" role="listbox" aria-label="Model" data-on={open ? '' : undefined} data-up={up ? '' : undefined} onKeyDown={onKey} inert={!open || undefined}>
         {MODELS.map((m, i) => (
           <li key={m.id} role="option" tabIndex={-1} aria-selected={!m.locked && m.id === 'haiku'} aria-disabled={m.locked || undefined}
             className={`model-opt${shake === m.id ? ' is-shaking' : ''}`} onAnimationEnd={() => setShake(null)}

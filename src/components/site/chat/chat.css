@@ -467,7 +467,7 @@
   position: absolute;
   z-index: 3;
   right: 0;
-  bottom: calc(100% + 10px);
+  top: calc(100% + 10px);
   width: 210px;
   margin: 0;
   padding: 6px;
@@ -478,10 +478,11 @@
   box-shadow: inset 0 0 0 1px var(--chat-rule), 0 8px 24px rgba(0, 0, 0, 0.25);
   opacity: 0;
   visibility: hidden;
-  transform: translateY(4px);
-  transform-origin: bottom right;
+  transform: translateY(-4px);
+  transform-origin: top right;
   transition: opacity var(--chat-quick) var(--chat-out), transform var(--chat-quick) var(--chat-out), visibility 0s linear var(--chat-quick);
 }
+.model-menu[data-up] { top: auto; bottom: calc(100% + 10px); transform: translateY(4px); transform-origin: bottom right; }
 .model-menu[data-on] { opacity: 1; visibility: visible; transform: none; transition: opacity 220ms var(--ease), transform 220ms var(--ease), visibility 0s; }
 .model-opt {
   display: flex;
