@@ -43,7 +43,7 @@ export function curve(tube: HTMLElement): () => void {
     svg.innerHTML = `<defs><filter id="crt-warp" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB" x="0" y="0" width="1" height="1">
       <feImage id="crt-warp-map" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="map"/>
       <feDisplacementMap id="crt-warp-move" in="SourceGraphic" in2="map" scale="0" xChannelSelector="R" yChannelSelector="G" result="bent"/>
-      <feGaussianBlur in="bent" stdDeviation="0.45" result="soft"/>
+      <feGaussianBlur in="bent" stdDeviation="0.3" result="soft"/>
       <feColorMatrix in="map" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 1 0 0" result="edge"/>
       <feComposite in="soft" in2="edge" operator="in" result="soft-edge"/>
       <feComposite in="bent" in2="edge" operator="out" result="sharp-middle"/>

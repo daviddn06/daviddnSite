@@ -15,7 +15,7 @@
   --muted: #a3aec2;
   /* quieter text that still reads over the picture: phosphor stays
      bright, hierarchy comes from size and weight */
-  --soft: rgba(232, 239, 250, 0.86);
+  --soft: rgba(236, 242, 252, 0.93);
   --link: #8db8ff;
   --line: rgba(233, 238, 246, 0.08);
   /* phosphor: a faint halo around light text */
@@ -59,7 +59,7 @@
     --screen: #eef1f6;
     --ink: #121821;
     --muted: #4e586a;
-    --soft: rgba(14, 20, 30, 0.8);
+    --soft: #263040;
     --link: #2a5dcc;
     --line: rgba(18, 24, 33, 0.09);
     /* a lit room: dark text on a bright picture, a soft light halo */
@@ -144,7 +144,7 @@ button { font: inherit; color: inherit; }
 @media (prefers-color-scheme: light) {
   .glass {
     background:
-      radial-gradient(120% 70% at 18% 4%, rgba(255, 255, 255, 0.45), transparent 55%),
+      radial-gradient(120% 70% at 18% 4%, rgba(255, 255, 255, 0.16), transparent 55%),
       radial-gradient(ellipse 75% 70% at 50% 50%, transparent 62%, rgba(40, 55, 80, 0.14) 100%);
     box-shadow: inset 0 0 0 1px rgba(20, 30, 50, 0.08), inset 0 0 44px 4px rgba(40, 55, 80, 0.18);
   }
@@ -184,7 +184,7 @@ button { font: inherit; color: inherit; }
   border-bottom: 1px solid var(--rule);
 }
 .name { font-size: 15px; line-height: 24px; font-weight: 700; }
-.osd-clock { color: var(--soft); font-size: 12px; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.osd-clock { color: var(--ink); font-size: 13px; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
 .bio { padding: 12px 12px 0; color: var(--soft); font-size: 14px; line-height: 22px; }
 
 .lists { margin-top: 16px; display: grid; gap: 14px; }
@@ -193,7 +193,7 @@ button { font: inherit; color: inherit; }
   align-items: center;
   gap: 10px;
   margin: 0 12px 4px;
-  color: var(--soft);
+  color: var(--ink);
   font-size: 11px;
   line-height: 16px;
   font-weight: 700;
@@ -214,7 +214,8 @@ button { font: inherit; color: inherit; }
   transition: background-color var(--quick) var(--ease), color var(--quick) var(--ease), box-shadow var(--quick) var(--ease);
 }
 .channel .ch {
-  color: var(--soft);
+  color: var(--ink);
+  opacity: 0.86;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
@@ -222,7 +223,7 @@ button { font: inherit; color: inherit; }
 @media (hover: hover) { .channel:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 70%, transparent); } }
 /* the open channel in inverse video, the way a set marks its selection */
 .channel.active { background: var(--link); color: var(--screen); text-shadow: none; box-shadow: 0 0 14px color-mix(in srgb, var(--link) 45%, transparent); }
-.channel.active .ch, .channel.active .x { color: var(--screen); }
+.channel.active .ch, .channel.active .x { color: var(--screen); opacity: 1; }
 .channel .x { color: var(--soft); }
 .channel:focus-visible { outline-offset: -1px; border-radius: 9px; }
 
@@ -242,7 +243,7 @@ button { font: inherit; color: inherit; }
   font-size: 14px;
 }
 /* the foot links read as the guide's own text, lit up on hover */
-.links .link { color: var(--ink); opacity: 0.82; }
+.links .link { color: var(--ink); opacity: 0.94; }
 @media (hover: hover) { .links .link:hover { color: var(--link); opacity: 1; } }
 
 /* The article, on the screen beside the guide. It lies under the field,
@@ -546,7 +547,7 @@ button { font: inherit; color: inherit; }
 .composer-btn:disabled { opacity: 0.3; cursor: default; }
 .composer-btn.is-stop { background: color-mix(in srgb, var(--ink) 85%, transparent); }
 
-.chat-note { color: var(--soft); font-size: 12px; line-height: 18px; text-align: center; }
+.chat-note { color: var(--ink); opacity: 0.86; font-size: 13px; line-height: 18px; text-align: center; }
 
 /* cards inside answers */
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
