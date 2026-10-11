@@ -430,8 +430,11 @@ a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
   text-transform: uppercase;
 }
 .hist-label::after { content: ''; flex: 1; height: 1px; background: var(--chat-rule); }
+.crt-history[data-on] { flex: 0 1 auto; }
+/* shrinks with the guide down to about three rows, then scrolls */
 .hist-list {
-  min-height: 0;
+  flex: 0 1 auto;
+  min-height: 96px;
   max-height: 268px;
   overflow-y: auto;
   overscroll-behavior: contain;

@@ -202,10 +202,16 @@ button { font: inherit; color: inherit; }
   pointer-events: auto;
   max-height: 100%;
   overflow-y: auto;
+  /* a column, so a long history shrinks and scrolls in its own space
+     and the links always stay at the foot */
+  display: flex;
+  flex-direction: column;
   scrollbar-width: none;
   padding: 16px 8px 8px;
   text-shadow: var(--body-glow);
 }
+.osd-panel > * { flex: none; }
+.osd-panel > #crt-history-slot { flex: 0 1 auto; display: flex; flex-direction: column; }
 .osd-panel .name { text-shadow: var(--glow); }
 .osd-panel::-webkit-scrollbar { display: none; }
 
