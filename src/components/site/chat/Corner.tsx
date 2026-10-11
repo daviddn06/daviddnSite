@@ -47,7 +47,7 @@ export function Corner({ chats, current, fresh, onNew, onPick }: Props) {
 
   const onKey = (e: React.KeyboardEvent) => {
     if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-    const rows = [...(nav.current?.querySelectorAll<HTMLButtonElement>('.hist-row') ?? [])];
+    const rows = [...(nav.current?.querySelectorAll<HTMLButtonElement>('.hist-new, .hist-row') ?? [])];
     const i = rows.indexOf(document.activeElement as HTMLButtonElement);
     if (i < 0) return;
     e.preventDefault();
@@ -58,19 +58,19 @@ export function Corner({ chats, current, fresh, onNew, onPick }: Props) {
   if (!slot) return null;
   return createPortal(
     <nav ref={nav} className="crt-history" data-on={on ? '' : undefined} aria-label="Chat history" aria-hidden={!on} inert={!on || undefined} onKeyDown={onKey}>
-      <h2 className="hist-label">History</h2>
-      <button type="button" className="hist-row hist-new" aria-current={fresh ? 'true' : undefined} onClick={onNew}>
-        <span className="ch" aria-hidden="true">
-          <svg viewBox="0 0 12 12" width="10" height="10"><path d="M6 1.5v9M1.5 6h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
-        </span>
-        <span className="hist-title">New chat</span>
-      </button>
+      <div className="hist-head">
+        <h2 className="hist-label">History</h2>
+        <button type="button" className="hist-new" aria-current={fresh ? 'true' : undefined} onClick={onNew}>
+          <svg viewBox="0 0 12 12" width="9" height="9" aria-hidden="true"><path d="M6 1.5v9M1.5 6h9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+          New chat
+        </button>
+      </div>
       <ul className="hist-list">
-        {chats.map((c, i) => (
+        {chats.map((c) => (
           <li key={c.id} className={seen.current && !seen.current.has(c.id) ? 'is-new' : undefined}>
             <button type="button" className="hist-row" aria-current={c.id === current && !fresh ? 'true' : undefined}
               aria-label={`${c.title}, ${when(c.updated)}`} onClick={() => onPick(c)}>
-              <span className="ch" aria-hidden="true">{String(chats.length - i).padStart(2, '0')}</span>
+              <svg className="hist-glyph" viewBox="0 0 14 14" width="12" height="12" aria-hidden="true"><path d="M2.5 3.5a1.5 1.5 0 0 1 1.5-1.5h6a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5H6.5L4 11.5V9a1.5 1.5 0 0 1-1.5-1.5z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /></svg>
               <span className="hist-title">{c.title}</span>
               <span className="hist-when" aria-hidden="true">{ago(c.updated, now)}</span>
             </button>

@@ -731,13 +731,22 @@
 /* the list holds New message and History, so the chat's own buttons step aside */
 .crt-slot[data-history="full"] .chat-tool[data-kind="history"] { display: none; }
 
+/* History is a different kind of thing from the channels above it: a
+   recessed tray at the foot of the guide, set apart by space and a faint
+   hairline, with smaller, quieter rows, a chat glyph instead of a
+   number, New chat as a small button, and the chat on screen marked by
+   a soft tint rather than the channels' inverse bar. */
 .crt-history {
   --chat-rule: var(--rule, rgba(200, 220, 255, 0.3));
   --chat-quiet: var(--soft, rgba(236, 242, 252, 0.9));
   --chat-link: color-mix(in srgb, var(--link) 62%, #fff);
   display: flex;
   flex-direction: column;
-  margin-top: 14px;
+  margin: 24px 2px 0;
+  padding: 8px 4px 4px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ink) 3.5%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 9%, transparent);
   color: var(--ink);
   opacity: 0;
   transform: translateY(4px);
@@ -745,64 +754,82 @@
 }
 .crt-history:not([data-on]) { display: none; }
 .crt-history[data-on] { opacity: 1; transform: none; animation: chat-fade var(--calm, 320ms) var(--ease) backwards; }
+.crt-history[data-on] { flex: 0 1 auto; min-height: 0; }
+.hist-head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 4px 6px 8px; }
 .hist-label {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0 12px 4px;
-  color: var(--soft, var(--ink));
-  font-size: 11px;
+  color: var(--chat-quiet);
+  font-size: 10.5px;
   line-height: 16px;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
-.hist-label::after { content: ''; flex: 1; height: 1px; background: var(--chat-rule); }
-.crt-history[data-on] { flex: 0 1 auto; min-height: 0; }
+/* New chat, a small button */
+.hist-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 9px 0 8px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--chat-rule);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1;
+  text-shadow: inherit;
+  cursor: pointer;
+  transition: box-shadow var(--quick, 160ms) var(--ease), color var(--quick, 160ms) var(--ease);
+}
+@media (hover: hover) { .hist-new:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 75%, transparent); color: var(--chat-link); } }
+.hist-new:focus-visible { outline: 1.5px solid var(--link); outline-offset: 1px; }
+.hist-new[aria-current] { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--chat-link) 70%, transparent); color: var(--chat-link); }
 /* shrinks with the guide down to two rows, then scrolls */
 .hist-list {
   flex: 0 1 auto;
-  min-height: 64px;
-  max-height: 268px;
+  min-height: 52px;
+  max-height: 240px;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: none;
   display: grid;
   align-content: start;
   padding-bottom: 2px;
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 14px), transparent);
 }
 .hist-list::-webkit-scrollbar { display: none; }
-/* a row, the same measure as a channel in the guide */
 .hist-row {
   position: relative;
   flex: none;
   display: grid;
-  grid-template-columns: 28px 1fr auto;
+  grid-template-columns: 12px 1fr auto;
   align-items: center;
   gap: 8px;
   width: 100%;
-  min-height: 32px;
-  padding: 0 10px 0 12px;
+  min-height: 26px;
+  padding: 0 8px;
   border: 0;
-  border-radius: 9px;
+  border-radius: 7px;
   background: none;
-  color: var(--ink);
+  color: color-mix(in srgb, var(--ink) 78%, transparent);
   font: inherit;
+  font-size: 13px;
+  line-height: 18px;
   text-align: left;
   text-shadow: inherit;
   cursor: pointer;
-  transition: box-shadow var(--quick, 160ms) var(--ease), color var(--quick, 160ms) var(--ease);
+  transition: background-color var(--quick, 160ms) var(--ease), color var(--quick, 160ms) var(--ease);
 }
-.hist-row .ch { color: var(--chat-quiet); font-size: 12px; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; display: flex; }
+.hist-glyph { color: var(--chat-quiet); opacity: 0.8; }
 .hist-title { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.hist-when { color: var(--chat-quiet); font-size: 12px; font-variant-numeric: tabular-nums; }
-@media (hover: hover) { .hist-row:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 70%, transparent); } }
-.hist-row:focus-visible { outline: none; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 85%, transparent), 0 0 14px color-mix(in srgb, var(--link) 22%, transparent); }
-/* the one on screen */
-.hist-row[aria-current]::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px; border-radius: 1px; background: var(--chat-link); box-shadow: 0 0 8px color-mix(in srgb, var(--chat-link) 60%, transparent); }
-.hist-row[aria-current] .ch, .hist-row[aria-current] .hist-when { color: var(--chat-link); }
+.hist-when { color: var(--chat-quiet); font-size: 11.5px; font-variant-numeric: tabular-nums; opacity: 0.85; }
+@media (hover: hover) { .hist-row:hover { background: color-mix(in srgb, var(--ink) 7%, transparent); color: var(--ink); } }
+.hist-row:focus-visible { outline: 1.5px solid var(--link); outline-offset: -1px; }
+/* the one on screen: a soft tint, full ink, the glyph lit */
+.hist-row[aria-current] { background: color-mix(in srgb, var(--chat-link) 14%, transparent); color: var(--ink); }
+.hist-row[aria-current] .hist-glyph { color: var(--chat-link); opacity: 1; }
 .hist-list li.is-new { animation: chat-rise 360ms var(--ease) backwards; }
 
 @media (prefers-color-scheme: light) {
