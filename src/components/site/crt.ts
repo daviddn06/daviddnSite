@@ -245,7 +245,7 @@ void main() {
 const TUBE = COMMON + `
 uniform sampler2D uSig, uBloom;
 uniform vec2 uSize, uRes;
-uniform float uEdge, uDpr, uPitch, uLines, uStore, uK, uRadius, uLight, uT, uFrame, uFlick, uNoise;
+uniform float uEdge, uDpr, uPitch, uLines, uStore, uK, uRadius, uLight, uT, uFrame, uFlick, uNoise, uInset;
 uniform float uScan, uGrille, uWire, uBloomAmt, uRoll, uAfter;
 uniform vec3 uGlass, uPanel;
 
@@ -321,7 +321,7 @@ void main() {
      all round so its curved top and bottom never run into the glass's
      edge (the middle of each side would otherwise sit flush, and the
      strip's top left corner looked cut off) */
-  float m = edge > 0.5 ? 10.0 : 0.0;
+  float m = uInset;
   float inside = 1.0 - smoothstep(-aa, aa, box(q, vec4(max(edge, 0.0), m, uSize.x - max(edge, 0.0) - m, uSize.y - 2.0 * m), uRadius));
   float cleared = edge > 0.5 ? 1.0 - smoothstep(edge - aa, edge + aa, q.x) : 0.0;
 
@@ -689,6 +689,9 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
   const ease = (u: number) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
   const sm = (a: number, b: number, x: number) => { const u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
 
+  /* a browser that has seen the site before (Base.astro marks the page
+     `seen`) skips the power on: the tube is simply on */
+  const seen = document.documentElement.classList.contains('seen');
   let raf = 0, last = performance.now(), t = Math.random() * 100, born = still ? -1e9 : -1, frameNo = 0, cur = 0;
   /* With a project open the side over the article is drawn black and
      clear once its afterglow has gone out. `glow` bounds how bright the
@@ -731,7 +734,7 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     lift += ((near ? 1 : 0) - lift) * (still ? 0 : Math.min(1, dt / 260));
 
     /* the power on */
-    if (born < 0) born = ms;
+    if (born < 0) born = seen ? ms - LOAD - 1 : ms;
     const age = ms - born;
     const powering = age < LOAD;
 
@@ -941,6 +944,10 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     u1(u.uStore, store);
     u1(u.uK, CURVE);
     u1(u.uRadius, 16);
+    /* the strip's margin grows in with the sweep and lets go with it, so
+       the picture never changes size in one frame at the start or end of
+       an open or close */
+    u1(u.uInset, 10 * Math.min(1, edgeNow / Math.max(1, edgeFrom, edgeTo)));
     u1(u.uLight, light ? 1 : 0);
     u1(u.uT, t);
     u1(u.uFrame, still ? 0 : frameNo % 997);
