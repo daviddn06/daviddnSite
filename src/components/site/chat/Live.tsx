@@ -280,6 +280,13 @@ function Screen({ open, all, headline, cid, named, swap, switchTo }: ScreenProps
     return m ? m.content.map((p) => (p.type === 'text' ? p.text : '')).join(' ').replace(/\s+/g, ' ').trim() : '';
   });
 
+  /* New chat from the guide's button before the chat had loaded */
+  useEffect(() => {
+    const go = () => freshRef.current();
+    addEventListener('dd-new-chat', go);
+    return () => removeEventListener('dd-new-chat', go);
+  }, []);
+
   /* New chat from anywhere: Command K, or Control K */
   const mac = useMemo(() => /Mac|iPhone|iPad/.test(navigator.platform), []);
   const freshRef = useRef(fresh);

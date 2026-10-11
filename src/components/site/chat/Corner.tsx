@@ -34,6 +34,8 @@ export function Corner({ chats, current, fresh, onNew, onPick, onRemove }: Props
   const [slot, setSlot] = useState<HTMLElement | null>(null);
   useEffect(() => { setSlot(document.getElementById('crt-history-slot')); }, []);
   const nav = useRef<HTMLElement>(null);
+  /* with chats: the label, the rows and Clear history; with none, only
+     New chat stays */
   const on = chats.length > 0;
 
   /* rows that arrive after the list is first drawn rise in */
@@ -85,41 +87,69 @@ export function Corner({ chats, current, fresh, onNew, onPick, onRemove }: Props
 
   if (!slot) return null;
   return createPortal(
-    <nav ref={nav} className="crt-history" data-on={on ? '' : undefined} data-fading={fading || !on ? '' : undefined} aria-label="Chat history" aria-hidden={!on} inert={!on || undefined} onKeyDown={onKey}>
+    <nav ref={nav} className="crt-history" data-on={on ? '' : undefined} data-fading={fading || !on ? '' : undefined} aria-label="Chat history" onKeyDown={onKey}>
       <div className="hist-tray">
-      <div className="hist-head">
-        <h2 className="hist-label">History</h2>
-        <button type="button" className="hist-new" aria-current={fresh ? 'true' : undefined} onClick={onNew}>
-          <svg viewBox="0 0 12 12" width="9" height="9" aria-hidden="true"><path d="M6 1.5v9M1.5 6h9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
-          New chat
-        </button>
-      </div>
-      <ul className="hist-list">
-        {shown.map((c, i) => (
-          <li key={c.id} style={{ '--n': Math.min(i, 8) } as React.CSSProperties} className={`${seen.current && !seen.current.has(c.id) ? 'is-new' : ''}${going.has(c.id) ? ' is-going' : ''}` || undefined}>
-            <button type="button" className="hist-row" aria-current={c.id === current && !fresh ? 'true' : undefined}
-              aria-label={`${nameOf(c)}, ${when(c.updated)}`} onClick={() => onPick(c)}>
-              <svg className="hist-glyph" viewBox="0 0 14 14" width="12" height="12" aria-hidden="true"><path d="M2.5 3.5a1.5 1.5 0 0 1 1.5-1.5h6a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5H6.5L4 11.5V9a1.5 1.5 0 0 1-1.5-1.5z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /></svg>
-              <span className="hist-title"><span key={nameOf(c)} className="hist-name">{nameOf(c)}</span></span>
-              <span className="hist-when" aria-hidden="true">{ago(c.updated, now)}</span>
-            </button>
-            <button type="button" className="hist-del" aria-label={`Delete ${nameOf(c)}`} title="Delete from this browser" onClick={() => remove([c.id])}>
-              <svg viewBox="0 0 12 12" width="9" height="9" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
-            </button>
-          </li>
-        ))}
-      </ul>
-      <div className="hist-foot" data-asking={asking ? '' : undefined}>
-        {asking ? <>
-          <span className="hist-ask">Removes them from this browser.</span>
-          <button type="button" className="hist-act is-yes" autoFocus onClick={() => remove('all')}>Clear</button>
-          <button type="button" className="hist-act" onClick={() => setAsking(false)}>Cancel</button>
-        </> : (
-          <button type="button" className="hist-act" onClick={() => setAsking(true)}>Clear history</button>
-        )}
-      </div>
+        <div className="hist-head">
+          <h2 className="hist-label" aria-hidden={!on}>History</h2>
+          <NewChat fresh={fresh} onClick={onNew} />
+        </div>
+        {/* the rows and Clear history fold away when there are none */}
+        <div className="hist-fold" inert={!on || undefined}>
+          <div className="hist-fold-in">
+            <ul className="hist-list">
+              {shown.map((c, i) => (
+                <li key={c.id} style={{ '--n': Math.min(i, 8) } as React.CSSProperties} className={`${seen.current && !seen.current.has(c.id) ? 'is-new' : ''}${going.has(c.id) ? ' is-going' : ''}` || undefined}>
+                  <button type="button" className="hist-row" aria-current={c.id === current && !fresh ? 'true' : undefined}
+                    aria-label={`${nameOf(c)}, ${when(c.updated)}`} onClick={() => onPick(c)}>
+                    <svg className="hist-glyph" viewBox="0 0 14 14" width="12" height="12" aria-hidden="true"><path d="M2.5 3.5a1.5 1.5 0 0 1 1.5-1.5h6a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5H6.5L4 11.5V9a1.5 1.5 0 0 1-1.5-1.5z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /></svg>
+                    <span className="hist-title"><span key={nameOf(c)} className="hist-name">{nameOf(c)}</span></span>
+                    <span className="hist-when" aria-hidden="true">{ago(c.updated, now)}</span>
+                  </button>
+                  <button type="button" className="hist-del" aria-label={`Delete ${nameOf(c)}`} title="Delete from this browser" onClick={() => remove([c.id])}>
+                    <svg viewBox="0 0 12 12" width="9" height="9" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="hist-foot" data-asking={asking ? '' : undefined}>
+              {asking ? <>
+                <span className="hist-ask">Removes them from this browser.</span>
+                <button type="button" className="hist-act is-yes" autoFocus onClick={() => remove('all')}>Clear</button>
+                <button type="button" className="hist-act" onClick={() => setAsking(false)}>Cancel</button>
+              </> : (
+                <button type="button" className="hist-act" onClick={() => setAsking(true)}>Clear history</button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </nav>,
     slot,
+  );
+}
+
+function NewChat({ fresh, onClick }: { fresh: boolean; onClick?: () => void }) {
+  return (
+    <button type="button" className="hist-new" aria-current={fresh ? 'true' : undefined} onClick={onClick}>
+      <svg viewBox="0 0 12 12" width="9" height="9" aria-hidden="true"><path d="M6 1.5v9M1.5 6h9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+      New chat
+    </button>
+  );
+}
+
+/* What the guide holds before the chat's code has loaded (App.tsx renders
+   it on the server): the empty state, New chat alone, exactly as the live
+   one first draws it, so nothing pops. The live list takes its place the
+   moment it arrives (chat.css); a click before then is passed on. */
+export function HistoryShell() {
+  return (
+    <nav className="crt-history hist-static" aria-label="Chat history">
+      <div className="hist-tray">
+        <div className="hist-head">
+          <h2 className="hist-label" aria-hidden="true">History</h2>
+          <NewChat fresh onClick={() => dispatchEvent(new Event('dd-new-chat'))} />
+        </div>
+      </div>
+    </nav>
   );
 }

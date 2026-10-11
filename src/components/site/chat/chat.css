@@ -771,36 +771,54 @@
   --chat-rule: var(--rule, rgba(200, 220, 255, 0.3));
   --chat-quiet: var(--soft, rgba(236, 242, 252, 0.9));
   --chat-link: color-mix(in srgb, var(--link) 62%, #fff);
-  /* the block folds open and shut: its height runs between nothing and
-     its content (a grid row from 0fr to 1fr), its margin with it, so the
-     links under the guide glide rather than jump */
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin: 24px 2px 0;
+  color: var(--ink);
+}
+/* the live list takes the server's copy's place the moment it arrives */
+#crt-history-slot:has(.crt-history:not(.hist-static)) > .hist-static { display: none; }
+/* With chats, a tray: the label, the rows and Clear history. With none,
+   the tray's edge, the label and everything under New chat fold away
+   (a grid row from 1fr to 0fr), so the links under the guide glide;
+   they grow back when a chat is saved. */
+.hist-tray {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border-radius: 12px;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px transparent;
+  transition: padding var(--t-medium) var(--ease-in), background-color var(--t-small) var(--ease-in), box-shadow var(--t-small) var(--ease-in);
+}
+.crt-history[data-on] .hist-tray {
+  padding: 8px 4px 4px;
+  background: color-mix(in srgb, var(--ink) 3.5%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 9%, transparent);
+  transition: padding var(--t-medium) var(--ease-out), background-color var(--t-small) var(--ease-out), box-shadow var(--t-small) var(--ease-out);
+}
+.hist-fold {
   flex: 0 1 auto;
   min-height: 0;
   display: grid;
   grid-template-rows: 0fr;
-  margin: 0 2px;
-  color: var(--ink);
   opacity: 0;
-  visibility: hidden;
-  transition: grid-template-rows var(--t-medium) var(--ease-in), margin-top var(--t-medium) var(--ease-in), opacity var(--t-small) var(--ease-in) 100ms, visibility 0s linear var(--t-medium);
+  transition: grid-template-rows var(--t-medium) var(--ease-in), opacity var(--t-small) var(--ease-in);
 }
-.crt-history[data-on] {
+.crt-history[data-on] .hist-fold {
   grid-template-rows: 1fr;
-  margin-top: 24px;
   opacity: 1;
-  visibility: visible;
-  transition: grid-template-rows var(--t-medium) var(--ease-out), margin-top var(--t-medium) var(--ease-out), opacity var(--t-small) var(--ease-out), visibility 0s;
+  transition: grid-template-rows var(--t-medium) var(--ease-out), opacity var(--t-small) var(--ease-out);
 }
-.hist-tray {
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  padding: 8px 4px 4px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--ink) 3.5%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 9%, transparent);
-}
+.hist-fold-in { min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.crt-history .hist-label { transition: opacity var(--t-small) var(--ease-out); }
+.crt-history:not([data-on]) .hist-label { opacity: 0; transition-timing-function: var(--ease-in); }
+.crt-history:not([data-on]) .hist-head { padding-bottom: 0; }
+.hist-head { transition: padding var(--t-medium) var(--ease); }
 /* the slot in the guide eases its floor with the block */
 #crt-history-slot { transition: min-height var(--t-medium) var(--ease-in); }
 /* clearing everything: the rows fade first, one after another */

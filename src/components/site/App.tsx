@@ -27,6 +27,7 @@ import { curve } from './warp';
 import { Marks, Mini, type Project } from './Media';
 import { Panel } from './Panel';
 import { Chat } from './chat/Chat';
+import { HistoryShell } from './chat/Corner';
 import { resume as RESUME } from '../../data/resume.js';
 
 type Props = { work: Project[]; projects: Project[]; earlier: Project[]; initial: string | null };
@@ -368,7 +369,7 @@ export default function App({ work, projects, earlier, initial }: Props) {
             </nav>
 
             {/* the chat's history, drawn here by chat/Corner.tsx */}
-            <div id="crt-history-slot" />
+            <div id="crt-history-slot"><HistoryShell /></div>
 
             <ul className="links">
               {LINKS.map((l) => (
