@@ -47,16 +47,19 @@ const urlOf = (s: string | null) => (!s ? '/' : s === 'cv' ? '/cv/' : `/projects
 const Clock = memo(function Clock() {
   const [now, setNow] = useState('');
   useEffect(() => {
-    const fmt = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
+    let fmt: Intl.DateTimeFormat | null = null;
     /* once a minute, as the minute turns, and again on coming back to the tab */
     let id = 0;
     const tick = () => {
       const d = new Date();
+      fmt ??= new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
       setNow(fmt.format(d));
       clearTimeout(id);
       id = window.setTimeout(tick, 60000 - (d.getSeconds() * 1000 + d.getMilliseconds()) + 50);
     };
-    tick();
+    /* the first date format a page makes is slow (the browser loads its
+       locale data), so it waits for its own moment, not the page's start */
+    id = window.setTimeout(tick, 0);
     const onVis = () => { if (!document.hidden) tick(); };
     document.addEventListener('visibilitychange', onVis);
     return () => { clearTimeout(id); document.removeEventListener('visibilitychange', onVis); };
