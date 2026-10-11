@@ -661,9 +661,16 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
     /* the logo's room: with the chat panel below it, the zone above the
        panel (its top less a margin); otherwise the strip */
     const dock = glass.querySelector<HTMLElement>('.crt-slot[data-mode="dock"]');
-    const dockTop = dock ? dock.getBoundingClientRect().top - canvas.getBoundingClientRect().top : 0;
-    const roomH = dockTop > 80 ? dockTop - 56 : H * 0.4;
-    const fitW = Math.max(96, Math.min(dockTop > 80 ? 200 : 288, Math.floor((vw * 0.8) / 8) * 8));
+    const canvasTop = canvas.getBoundingClientRect().top;
+    const dockTop = dock ? dock.getBoundingClientRect().top - canvasTop : 0;
+    /* the chat can name the logo's place and size itself: its
+       `.crt-logo-spot` (chat/Live.tsx), centred in an empty panel and
+       moved up by a transform once there is a conversation; the logo
+       follows it frame by frame */
+    const spotBox = dock?.querySelector<HTMLElement>('.crt-logo-spot')?.getBoundingClientRect();
+    const spot = spotBox && spotBox.width > 0 && spotBox.height > 0 ? spotBox : null;
+    const roomH = spot ? spot.height : dockTop > 80 ? dockTop - 56 : H * 0.4;
+    const fitW = Math.max(96, Math.min(spot ? Math.floor(spot.width / 8) * 8 : dockTop > 80 ? 200 : 288, Math.floor((vw * 0.8) / 8) * 8));
     const fitH = Math.max(96, Math.min(240, Math.floor(roomH / 8) * 8));
     const fit = `${fitW}x${fitH}`;
     if (!target) {
@@ -705,8 +712,8 @@ export function startCrt(canvas: HTMLCanvasElement, w: Wants): (() => void) | nu
 
     /* the logo sits in the zone above the chat panel when there is one,
        otherwise in the middle of the strip, easing between the two */
-    const wantY = dockTop > 80 ? dockTop / 2 + 4 : H / 2;
-    logoY = logoY < 0 || still ? wantY : logoY + (wantY - logoY) * Math.min(1, dt / 220);
+    const wantY = spot ? spot.top + spot.height / 2 - canvasTop : dockTop > 80 ? dockTop / 2 + 4 : H / 2;
+    logoY = logoY < 0 || still || spot ? wantY : logoY + (wantY - logoY) * Math.min(1, dt / 220);
 
     /* the power on: a dot, a line across, the picture opening out
        vertically overbright, then a short degauss wobble */

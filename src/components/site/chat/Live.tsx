@@ -249,6 +249,53 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
   }, [mode, pinned, running, menu]);
 
   const openMenu = () => { setChats(listChats()); setMenu(true); };
+  /* ends the conversation on screen (it stays in History) and goes back
+     to the empty chat */
+  const closeChat = () => { setMenu(false); setPinned(false); if (!empty) switchTo(null); input.current?.blur(); };
+
+  /* the conversation's title, its first question */
+  const topic = useAuiState((s) => {
+    const m = s.thread.messages.find((x) => x.role === 'user');
+    return m ? m.content.map((p) => (p.type === 'text' ? p.text : '')).join(' ').replace(/\s+/g, ' ').trim() : '';
+  });
+
+  /* New chat from anywhere: Command K, or Control K */
+  const mac = useMemo(() => /Mac|iPhone|iPad/.test(navigator.platform), []);
+  const freshRef = useRef(fresh);
+  freshRef.current = fresh;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((mac ? e.metaKey : e.ctrlKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k') { e.preventDefault(); freshRef.current(); }
+    };
+    addEventListener('keydown', onKey);
+    return () => removeEventListener('keydown', onKey);
+  }, [mac]);
+
+  /* Docked beside a project, the project's logo (drawn by the picture,
+     crt.ts) follows this chat's \`.crt-logo-spot\`: centred in the panel
+     with the headline under it while the chat is empty, up at the top in
+     a compact row with the chat's controls once there is a conversation.
+     The spot moves by a transform; here it is only measured, when the
+     panel changes size. */
+  useEffect(() => {
+    const el = slot.current;
+    if (mode !== 'dock' || !el) return;
+    const SPOT = 128, GAP = 14, LINE = 30, TOP = 28, FOOT = 104;
+    const place = () => {
+      const z = el.offsetTop, h = el.offsetHeight;
+      const up = -z / 2 + 6;
+      const room = h - FOOT + z - TOP;
+      const group = Math.max(-z + TOP, -z + TOP + (room - (SPOT + GAP + LINE)) / 2);
+      el.style.setProperty('--spot-top', `${Math.round(up - SPOT / 2)}px`);
+      el.style.setProperty('--spot-drop', `${Math.round(Math.max(0, group + SPOT / 2 - up))}px`);
+      el.style.setProperty('--row-top', `${Math.round(up - 16)}px`);
+      el.style.setProperty('--hello-top', `${Math.round(group + SPOT + GAP)}px`);
+    };
+    place();
+    const ro = new ResizeObserver(place);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [mode]);
 
   return (<>
     <div id="crt-chat-slot" ref={slot} className="crt-slot" data-mode={mode} data-fade={fade}
@@ -263,17 +310,28 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
       onBlur={(e) => { if (!slot.current?.contains(e.relatedTarget as Node)) setFocused(false); }}>
       <ThreadPrimitive.Root className="chat">
         <div className="chat-sheet">
-          <div className="chat-head">
-            <button type="button" className="chat-tool" data-on={!empty ? '' : undefined} tabIndex={!empty ? 0 : -1} onClick={fresh}>
-              New message
+          {/* once talking: what this chat is about, New chat, and Close */}
+          <div className="chat-head" data-on={!empty || mode === 'bar' ? '' : undefined}>
+            {mode === 'center' && <p className="chat-topic" title={topic}>{topic}</p>}
+            {mode === 'bar' && (
+              <button type="button" className="chat-tool" data-kind="history" data-on={past || menu ? '' : undefined} tabIndex={past || menu ? 0 : -1}
+                aria-expanded={menu} onClick={() => (menu ? closeMenu() : openMenu())}>
+                History
+              </button>
+            )}
+            <button type="button" className="chat-ctl" tabIndex={!empty ? 0 : -1} data-on={!empty ? '' : undefined} onClick={fresh}
+              aria-keyshortcuts={mac ? 'Meta+K' : 'Control+K'}>
+              New chat{mode !== 'bar' && <kbd>{mac ? '⌘K' : 'Ctrl K'}</kbd>}
             </button>
-            <button type="button" className="chat-tool" data-on={past || menu ? '' : undefined} tabIndex={past || menu ? 0 : -1}
-              aria-expanded={menu} onClick={() => (menu ? closeMenu() : openMenu())}>
-              History
-            </button>
-            <button type="button" className="chat-x" onClick={away} aria-label="Close chat">
-              <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
-            </button>
+            {mode !== 'bar' ? (
+              <button type="button" className="chat-ctl" tabIndex={!empty ? 0 : -1} data-on={!empty ? '' : undefined} onClick={closeChat} aria-keyshortcuts="Escape">
+                Close<kbd>esc</kbd>
+              </button>
+            ) : (
+              <button type="button" className="chat-x" onClick={away} aria-label="Close chat">
+                <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+              </button>
+            )}
           </div>
           <div className="chat-stage">
             <ThreadPrimitive.Viewport className="chat-body" turnAnchor={mode === 'center' ? 'top' : 'bottom'} autoScroll={mode !== 'center'} inert={menu || undefined}>
@@ -291,7 +349,14 @@ function Screen({ open, all, headline, cid, swap, switchTo }: ScreenProps) {
           </div>
         </div>
 
-        <Composer input={input} placeholder={placeholderFor(project)} onEscape={() => (menu ? closeMenu() : away())}
+        {mode === 'dock' && <>
+          <div className="crt-logo-spot" aria-hidden="true" />
+          <div className="dock-hello" aria-hidden={!empty}>
+            <p className="chat-title">{headline}</p>
+          </div>
+        </>}
+
+        <Composer input={input} placeholder={placeholderFor(project)} onEscape={() => (menu ? closeMenu() : mode !== 'bar' && !empty ? closeChat() : away())}
           onHistory={mode === 'bar' && chats.length ? openMenu : undefined} />
 
         <p className="chat-note">{noteFor(project)}</p>

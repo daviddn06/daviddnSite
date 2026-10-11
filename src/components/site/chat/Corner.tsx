@@ -63,7 +63,7 @@ export function Corner({ chats, current, fresh, onNew, onPick }: Props) {
         <span className="ch" aria-hidden="true">
           <svg viewBox="0 0 12 12" width="10" height="10"><path d="M6 1.5v9M1.5 6h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
         </span>
-        <span className="hist-title">New message</span>
+        <span className="hist-title">New chat</span>
       </button>
       <ul className="hist-list">
         {chats.map((c, i) => (

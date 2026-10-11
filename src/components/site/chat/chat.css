@@ -73,15 +73,65 @@
 .crt-slot[data-fade] .chat-rest { transition: none; }
 @keyframes chat-place-in { from { opacity: 0; translate: 0 6px; } }
 
-/* New chat and History, small and quiet at the top */
+/* Once talking, a quiet row at the top: what the chat is about on the
+   left, New chat and Close on the right, labelled, each with its key */
 .chat-head {
   flex: none;
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 2px;
-  height: 32px;
+  gap: 4px;
+  height: 36px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity var(--chat-quick) var(--chat-out), transform var(--chat-quick) var(--chat-out), visibility 0s linear var(--chat-quick);
 }
+.chat-head[data-on] {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity var(--chat-enter) var(--ease) 120ms, transform var(--chat-enter) var(--ease) 120ms, visibility 0s;
+}
+.chat-topic {
+  flex: 1;
+  min-width: 0;
+  margin-right: 8px;
+  padding-left: 6px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--chat-quiet);
+  font-size: 13px;
+  font-weight: 700;
+}
+.chat-ctl {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 10px 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--chat-rule);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-shadow: inherit;
+  cursor: pointer;
+  transition: box-shadow var(--chat-quick) var(--ease), color var(--chat-quick) var(--ease);
+}
+.chat-ctl kbd {
+  font: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--chat-quiet);
+  letter-spacing: 0.04em;
+}
+@media (hover: hover) { .chat-ctl:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 75%, transparent), 0 0 12px color-mix(in srgb, var(--link) 20%, transparent); } }
+.chat-ctl:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
 .chat-tool {
   height: 28px;
   padding: 0 10px;
@@ -400,7 +450,7 @@ a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
 /* History, in the guide under the channels (Corner.tsx). Its rows line
    up with the guide's channels and it scrolls with the guide. */
 /* the list holds New message and History, so the chat's own buttons step aside */
-.crt-slot[data-history="full"] .chat-tool { display: none; }
+.crt-slot[data-history="full"] .chat-tool[data-kind="history"] { display: none; }
 
 .crt-history {
   --chat-rule: var(--rule, rgba(200, 220, 255, 0.3));
@@ -512,6 +562,49 @@ a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
 }
 .crt-slot[data-mode="dock"] .cards { grid-template-columns: 1fr; }
 .crt-slot[data-mode="dock"] .chat-hello { display: none; }
+/* the row of controls shares the logo's line at the top of the strip,
+   New chat to its left and Close to its right */
+.crt-slot[data-mode="dock"] .chat-head {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  top: var(--row-top, -114px);
+  justify-content: space-between;
+  pointer-events: none;
+}
+.crt-slot[data-mode="dock"] .chat-head > * { pointer-events: auto; }
+/* where the picture draws the project's logo (crt.ts reads this box):
+   centred with the headline under it while the chat is empty, up in the
+   top row once there is a conversation, a transform between the two */
+.crt-logo-spot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--spot-top, -162px);
+  width: min(200px, 60%);
+  height: 128px;
+  margin: 0 auto;
+  pointer-events: none;
+  transform: none;
+  transition: transform 480ms var(--ease-io, cubic-bezier(0.65, 0, 0.35, 1));
+}
+.chat > .crt-logo-spot { pointer-events: none; }
+.crt-slot[data-mode="dock"][data-empty] .crt-logo-spot { transform: translateY(var(--spot-drop, 0px)); }
+.dock-hello {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--hello-top, 50%);
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity var(--chat-quick) var(--chat-out), transform var(--chat-quick) var(--chat-out);
+}
+.chat > .dock-hello { pointer-events: none; }
+.dock-hello .chat-title { padding: 0 12px; font-size: 20px; line-height: 28px; animation: none; }
+.crt-slot[data-mode="dock"][data-empty] .dock-hello { opacity: 1; transform: none; transition: opacity var(--chat-enter) var(--ease) 220ms, transform var(--chat-enter) var(--ease) 220ms; }
 .crt-slot[data-mode="dock"][data-empty]:not([data-menu]) .chat-sheet { justify-content: flex-end; }
 .crt-slot[data-mode="dock"][data-empty]:not([data-menu]) .chat-stage { flex: none; }
 
@@ -529,6 +622,10 @@ a.card:focus-visible { outline: 1.5px solid var(--link); outline-offset: 2px; }
   clip-path: inset(-20px -20px 0 -20px);
   transition: opacity 280ms var(--ease), clip-path 460ms var(--ease), visibility 0s;
 }
+
+/* in the dock nothing above the panel is clipped: its row sits beside
+   the logo */
+.crt-slot[data-mode="dock"][data-expanded] .chat-sheet { clip-path: none; }
 
 /* Phones and narrow windows. A bar along the bottom of the screen that
    opens into a full screen conversation, over the guide and any open
