@@ -17,7 +17,7 @@ export type Media = {
 export type Compare = { type: 'compare'; caption?: string; before: Media; after: Media; labels?: [string, string] };
 export type Shot = Media | Compare | { type: 'pair'; caption?: string; items: Media[] };
 /* An article is a list of blocks: a paragraph, a heading, or a screen. */
-export type Block = string | { h: string } | { stats: [string, string][] } | Shot;
+export type Block = string | { h: string } | { stats: [string, string][] } | { role: [string, string] } | { list: string[] } | Shot;
 export type Project = {
   slug: string;
   name: string;

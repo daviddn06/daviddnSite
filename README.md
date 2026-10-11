@@ -54,6 +54,7 @@ The chat UI is built on [assistant-ui](https://github.com/assistant-ui/assistant
 - **Texts back and forth.** Your messages sit on the right as bright outlined bubbles, mine on the left in darker filled ones, each sized to its words, with attachments under my reply: projects as one list of rows, a timeline with the dates in their own column, contact as a row of actions. While I'm "typing" there are three dots, then the words stream into the bubble. My first reply carries my name and an AI tag.
 - **Sources.** When I say where something comes from, a small numbered chip follows the claim and the sources line up under my reply, each with its project's mark and the part of the write up it's from. The project's channel in the guide flickers as a source arrives, as if the set were tuning in. Choosing a source opens the project and scrolls to that heading, which glows for a moment.
 - **The daily allowance.** Nothing shows until it matters. With 15 or fewer messages left today a quiet line over the box says how many, with a thin bar that drains; sending too fast gives a short "try again in 8s" that counts down; once the day is used up the box gives way to a note that it resets tomorrow, with my email.
+- **The resume opens like a project.** Asking for it, or choosing it in a card, opens it beside the chat in the same split, with a document mark in the strip and a Download PDF link at its top. The address becomes /cv/, so a shared link lands there too.
 - **The model.** A small pill beside the send button shows it answers on Haiku 5.5. Sonnet 5.5 and Opus 5.5 are in the list but locked.
 - **Motion.** Everything moves on one curve and enters a little up and in; the answer streams in at an even pace whatever the network does, cards follow one after another, and the chat fades rather than slides when it changes place. Reduced motion turns it all off.
 
@@ -96,7 +97,7 @@ Earlier ventures (Digital Enterprise, HYRE, Swire, AVA Media) are on the site to
 
 ```
 src/
-  pages/            index, /projects/<slug>/, /cv/ (opens the resume), /privacy/, 404
+  pages/            index, /projects/<slug>/, /cv/ (the resume, beside the chat), /privacy/, 404
   layouts/          Base.astro, and Screen.astro for the plain pages on the set
   styles/           site.css (the screen), details.css (pointer, focus, pages)
   components/site/
@@ -107,7 +108,8 @@ src/
     palette.ts      brand colours and blending
     Panel.tsx       the article
     chat/           Chat.tsx and Live.tsx, the runtime adapter, the cards, History (Corner.tsx, store.ts), chat.css
-  data/work.js      every project and its write up, the one content file
+  data/work.js      every project and its write up
+  data/resume.js    the resume as an article, transcribed from public/resume.pdf
 public/work/        images and video for each project
 public/cursors/     the pixel pointer, 1x and 2x
 integrations/       a build step that drops media no page uses

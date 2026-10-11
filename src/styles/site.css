@@ -364,6 +364,13 @@ button { font: inherit; color: inherit; }
 .article p { margin-top: 16px; max-width: 620px; }
 .article .sub { margin-top: 40px; font-size: inherit; font-weight: 700; }
 .article .sub + p { margin-top: 8px; }
+/* the resume's entries (data/resume.js): a title line, then its points */
+.article .role { margin-top: 22px; color: var(--muted); }
+.article .role strong { color: var(--ink); font-weight: 700; }
+.article .sub + .role { margin-top: 10px; }
+.article .points { max-width: 620px; margin: 8px 0 0; padding-left: 18px; list-style: disc; }
+.article .points li { margin-top: 6px; padding-left: 2px; }
+.article .points li::marker { color: var(--muted); }
 .meta-line { color: var(--muted); }
 .meta-line a { color: var(--link); transition: color var(--brand) var(--ease); }
 @media (hover: hover) { .meta-line a:hover { opacity: 0.72; } }

@@ -27,6 +27,7 @@ import { curve } from './warp';
 import { Marks, Mini, type Project } from './Media';
 import { Panel } from './Panel';
 import { Chat } from './chat/Chat';
+import { resume as RESUME } from '../../data/resume.js';
 
 type Props = { work: Project[]; projects: Project[]; earlier: Project[]; initial: string | null };
 
@@ -37,7 +38,9 @@ const LINKS = [
   { label: 'Privacy', url: '/privacy/' },
 ];
 
-const slugOf = (path: string) => path.match(/^\/projects\/([^/]+)\/?$/)?.[1] ?? null;
+const slugOf = (path: string) => (/^\/cv\/?$/.test(path) ? 'cv' : path.match(/^\/projects\/([^/]+)\/?$/)?.[1] ?? null);
+/* the resume opens beside the chat like a project, as 'cv' (data/resume.js) */
+const urlOf = (s: string | null) => (!s ? '/' : s === 'cv' ? '/cv/' : `/projects/${s}/`);
 
 /* the time in the guide's header strip, like a set's on screen clock;
    blank until the page runs so the server and the browser agree */
@@ -68,7 +71,8 @@ export default function App({ work, projects, earlier, initial }: Props) {
     { id: 'projects', title: 'Projects', items: projects },
     { id: 'earlier', title: 'Earlier', items: earlier },
   ], [work, projects, earlier]);
-  const slugs = useMemo(() => all.map((p) => p.slug), [all]);
+  const slugs = useMemo(() => [...all.map((p) => p.slug), 'cv'], [all]);
+  const find = useCallback((s: string | null) => (s === 'cv' ? (RESUME as Project) : all.find((x) => x.slug === s)), [all]);
 
   /* `open` is the project on screen; `shown` is what the article holds
      (it keeps its project while the picture covers it again). Switching
@@ -122,13 +126,13 @@ export default function App({ work, projects, earlier, initial }: Props) {
       } else setOutgoing([]);
       setShown(s);
     }
-    const p = all.find((x) => x.slug === s);
+    const p = find(s);
     document.title = p ? `${p.name}, David Nguyen` : 'David Nguyen';
     if (push) {
-      const url = s ? `/projects/${s}/` : '/';
+      const url = urlOf(s);
       if (location.pathname !== url) history.pushState({ slug: s }, '', url);
     }
-  }, [all]);
+  }, [find]);
 
   useEffect(() => {
     const onPop = () => show(slugOf(location.pathname), false);
@@ -171,6 +175,7 @@ export default function App({ work, projects, earlier, initial }: Props) {
       if (t?.closest?.('input, textarea, select, [contenteditable="true"], .crt-slot')) return;
       if (e.key === 'Escape') { e.preventDefault(); show(null); return; }
       const i = all.findIndex((p) => p.slug === open);
+      if (i < 0) return;
       if (e.key === 'ArrowDown' && i < all.length - 1) { e.preventDefault(); show(all[i + 1].slug); }
       if (e.key === 'ArrowUp' && i > 0) { e.preventDefault(); show(all[i - 1].slug); }
     };
@@ -269,14 +274,14 @@ export default function App({ work, projects, earlier, initial }: Props) {
         {[
           <Panel
             key={`a${slot}`}
-            p={all.find((x) => x.slug === shown) ?? null}
+            p={find(shown) ?? null}
             open={!!open}
             swapping={outgoing.length > 0}
             onClose={close}
             onZoom={onZoom}
           />,
           ...outgoing.map((o) => (
-            <Panel key={`a${o.id}`} p={all.find((x) => x.slug === o.slug) ?? null} open={false}
+            <Panel key={`a${o.id}`} p={find(o.slug) ?? null} open={false}
               leaving startAt={o.at} from={o.from} onClose={close} onZoom={onZoom} />
           )),
         ]}

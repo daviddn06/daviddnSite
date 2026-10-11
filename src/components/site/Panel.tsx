@@ -100,6 +100,8 @@ const Body = memo(function Body({ p, onClose, onZoom }: { p: Project; onClose: (
   const block = (b: Block, k: number) =>
     typeof b === 'string' ? <p key={k}>{b}</p>
       : 'type' in b ? shot(b, k)
+      : 'role' in b ? <p className="role" key={k}><strong>{b.role[0]}</strong><br />{b.role[1]}</p>
+      : 'list' in b ? <ul className="points" key={k}>{b.list.map((t, j) => <li key={j}>{t}</li>)}</ul>
       : 'stats' in b ? (
         <dl className="stats" key={k}>
           {b.stats.map(([v, l]) => <div key={l}><dt>{v}</dt><dd>{l}</dd></div>)}
@@ -108,7 +110,7 @@ const Body = memo(function Body({ p, onClose, onZoom }: { p: Project; onClose: (
       : <h3 className="sub" key={k}>{b.h}</h3>;
 
   const host = p?.url ? new URL(p.url).hostname.replace(/^www\./, '') : '';
-  const label = host === 'web.archive.org' ? 'Archived site' : host;
+  const label = host === 'web.archive.org' ? 'Archived site' : p.url.endsWith('.pdf') ? 'Download PDF' : host;
 
   return (
     <div className="article-inner">

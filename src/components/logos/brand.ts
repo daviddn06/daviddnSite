@@ -30,4 +30,6 @@ export const BRAND: Record<string, Brand> = {
   swire: { name: 'Swire', color: '#769EC4', ink: '#FFFFFF', wordmark: true },
   // White letters on black, Archive/Sep2023 Downloads/avabold.png.
   'ava-media': { name: 'AVA Media', color: '#000000', ink: '#FFFFFF', wordmark: true },
+  // The resume has no brand: a calm neutral slate.
+  cv: { name: 'Resume', color: '#5B6472', ink: '#FFFFFF', wordmark: false },
 };

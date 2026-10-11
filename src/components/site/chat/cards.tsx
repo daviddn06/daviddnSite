@@ -107,22 +107,31 @@ const DOC = 'M4.5 2.5h5l2 2v9h-7zM6.5 7.5h3M6.5 10h3';
 
 /* how to reach me: a row of actions */
 function Contact() {
+  const { show } = useSite();
   return (
     <div className="att att-actions">
       <a className="att-act" href={`mailto:${CONTACT.email}`} style={{ '--i': 0 } as React.CSSProperties}><Icon d={MAIL} />Email<span className="att-act-sub">{CONTACT.email}</span></a>
       <a className="att-act" href={CONTACT.linkedin} target="_blank" rel="noopener" style={{ '--i': 1 } as React.CSSProperties}><Icon d={LINK} />LinkedIn</a>
-      <a className="att-act" href={CONTACT.resume} style={{ '--i': 2 } as React.CSSProperties}><Icon d={DOC} />Resume</a>
+      <a className="att-act" href={CONTACT.resume} onClick={openResume(show)} style={{ '--i': 2 } as React.CSSProperties}><Icon d={DOC} />Resume</a>
     </div>
   );
 }
 
+/* the resume opens beside the chat, like a project */
+const openResume = (show: (s: string | null) => void) => (e: React.MouseEvent) => {
+  if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+  e.preventDefault();
+  show('cv');
+};
+
 function Resume() {
+  const { show } = useSite();
   return (
-    <a className="att att-file" href={CONTACT.resume}>
+    <a className="att att-file" href={CONTACT.resume} onClick={openResume(show)}>
       <span className="att-file-icon"><Icon d={DOC} /></span>
       <span className="att-main">
         <span className="att-name">Resume</span>
-        <span className="att-meta">One page, PDF</span>
+        <span className="att-meta">One page, opens beside the chat</span>
       </span>
     </a>
   );

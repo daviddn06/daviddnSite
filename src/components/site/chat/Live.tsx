@@ -98,12 +98,15 @@ export function Live({ first, ...site }: Site & { first: Convo | null }) {
   const [topic, setTopic] = useState(first?.topic ?? '');
   const adapter = useMemo(() => chatAdapter({
     cid: () => convo.current.id,
-    page: () => siteRef.current.open,
+    /* the resume is not a project the server knows; where the visitor is
+       in it still goes in the context */
+    page: () => (siteRef.current.open === 'cv' ? null : siteRef.current.open),
     context: () => readContext(siteRef.current.open),
     act: (name, input) => {
       const s = siteRef.current;
       if (name === 'open_project' && typeof input.slug === 'string' && s.all.some((p) => p.slug === input.slug)) s.show(input.slug);
       if (name === 'close_project') s.show(null);
+      if (name === 'show_resume') s.show('cv');
     },
     quota: (left, limit) => writeQuota({ left, limit }),
     title: (t) => { convo.current.topic = t; setTopic(t); },
