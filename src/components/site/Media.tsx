@@ -16,8 +16,9 @@ export type Media = {
 };
 export type Compare = { type: 'compare'; caption?: string; before: Media; after: Media; labels?: [string, string] };
 export type Shot = Media | Compare | { type: 'pair'; caption?: string; items: Media[] };
-/* An article is a list of blocks: a paragraph, a heading, or a screen. */
-export type Block = string | { h: string } | { stats: [string, string][] } | { role: [string, string] } | { list: string[] } | Shot;
+/* An article is a list of blocks: a paragraph, a heading, or a screen.
+   `text` is a paragraph with links in it, plain strings and [label, href] pairs. */
+export type Block = string | { h: string } | { stats: [string, string][] } | { role: [string, string] } | { list: string[] } | { text: (string | [string, string])[] } | Shot;
 export type Project = {
   slug: string;
   name: string;

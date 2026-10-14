@@ -86,8 +86,9 @@ The site counts visits with my own script, not a third party. It keeps a random 
 | | What | Role |
 |---|---|---|
 | [ShoSoft AI](https://daviddn.dev/projects/shosoft/) | Software for independent event venues. AI onboarding that reads a venue's website and handbook | Founding Product Engineer |
-| [Wedge Studio](https://daviddn.dev/projects/wedge/) | My design and development studio, and the software it runs on | Founder |
+| [Wedge Studio](https://daviddn.dev/projects/wedge/) | My design and development studio. Websites, web apps and internal tools, and every project comes with Sightpane | Founder |
 | [Reve AI](https://daviddn.dev/projects/reve/) | Growth at an image model lab: launch pages, campaigns, the team's internal tool | Growth engineer |
+| [Sightpane](https://daviddn.dev/projects/sightpane/) | The client portal for agencies. Clients see where their project stands and ask for changes in one place | Founder |
 | [Vecka](https://daviddn.dev/projects/vecka/) | A workspace with tasks, notes, calendar and Gmail side by side, with mail that files itself | Founder |
 | [Handoff](https://daviddn.dev/projects/handoff/) | A student sublease marketplace that shows what you save on every listing | Co-founder |
 

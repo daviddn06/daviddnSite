@@ -105,6 +105,13 @@ const Body = memo(function Body({ p, onClose, onZoom }: { p: Project; onClose: (
       : 'type' in b ? shot(b, k)
       : 'role' in b ? <p className="role" key={k}><strong>{b.role[0]}</strong><br />{b.role[1]}</p>
       : 'list' in b ? <ul className="points" key={k}>{b.list.map((t, j) => <li key={j}>{t}</li>)}</ul>
+      : 'text' in b ? (
+        <p key={k}>
+          {b.text.map((t, j) => (typeof t === 'string' ? t
+            : t[1].startsWith('/') ? <a key={j} href={t[1]}>{t[0]}</a>
+            : <a key={j} href={t[1]} target="_blank" rel="noopener">{t[0]}</a>))}
+        </p>
+      )
       : 'stats' in b ? (
         <dl className="stats" key={k}>
           {b.stats.map(([v, l]) => <div key={l}><dt>{v}</dt><dd>{l}</dd></div>)}

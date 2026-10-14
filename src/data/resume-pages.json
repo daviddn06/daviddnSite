@@ -494,10 +494,10 @@
      "s": 0.014706
     },
     {
-     "t": "Built Wedge App, an AI-native client portal and agency OS (Hono, SQLite, React 19, OpenAI tool loop), and Docket, a client project dashboard.",
+     "t": "Built Sightpane (sightpane.com), a client portal for agencies with AI request intake and MCP (Node 22, Hono, SQLite, React 19, SSE).",
      "x": 0.09608,
      "y": 0.64312,
-     "w": 0.83466,
+     "w": 0.78091,
      "s": 0.014334
     },
     {

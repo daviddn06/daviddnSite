@@ -4,8 +4,9 @@
 export type MarkBox = { x: number; y: number; w: number; h: number; vb?: string };
 
 /** Every mark gets a per-instance id prefix for its clipPaths and gradients.
-    `box` is set when the mark is nested inside a lockup. */
-export type MarkProps = { uid: string; box?: MarkBox };
+    `box` is set when the mark is nested inside a lockup, `size` when it
+    stands alone, so a brand with size masters can pick the right drawing. */
+export type MarkProps = { uid: string; box?: MarkBox; /** rendered size in px, for marks with size masters */ size?: number };
 
 /** Props for a mark's <svg>, standalone (padded viewBox) or nested in a lockup. */
 export function markSvg(viewBox: string, art: string, box?: MarkBox) {

@@ -122,35 +122,30 @@
   100% { transform: translate(0, 0); }
 }
 
-/* ── Wedge. The hexagon lifts apart into its four layers, cut at its own
-   vertex rows, then stacks back together. */
-.lg-wedge[data-play] .w-l1 { animation: pl-wedge-1 560ms 40ms both; }
-.lg-wedge[data-play] .w-l2 { animation: pl-wedge-2 560ms both; }
-.lg-wedge[data-play] .w-l3 { animation: pl-wedge-3 560ms both; }
-.lg-wedge[data-play] .w-l4 { animation: pl-wedge-4 560ms 40ms both; }
-@keyframes pl-wedge-1 {
-  0% { transform: translateY(0); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
-  42% { transform: translateY(-1.6px); animation-timing-function: cubic-bezier(0.55, 0, 0.3, 1); }
-  76% { transform: translateY(0.2px); animation-timing-function: ease-in-out; }
-  100% { transform: translateY(0); }
+/* ── Wedge and Sightpane. The Opening: the cut breathes wider, 12 to 16
+   degrees, and closes back to the mark. Two half planes turn about the
+   hinge inside a clip of the block (opening.tsx); the rest path hides while
+   they move and takes over the moment they stop. Same curve and length as
+   the brands' own hover (motion/wedge-motion.css, sightpane-motion.css). */
+.lg-wedge .o-u, .lg-wedge .o-l { transform-origin: 10px 90px; }
+.lg-sightpane .o-u, .lg-sightpane .o-l { transform-origin: 21px 79px; }
+.plogo .o-u { transform: rotate(-51deg); }
+.plogo .o-l { transform: rotate(-39deg); }
+.plogo[data-play] .o-g { animation: pl-open-on 560ms linear both; }
+.plogo[data-play] .o-s { animation: pl-open-off 560ms linear both; }
+.plogo[data-play] .o-u { animation: pl-open-u 560ms both; }
+.plogo[data-play] .o-l { animation: pl-open-l 560ms both; }
+@keyframes pl-open-on { 0%, 99% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes pl-open-off { 0%, 99% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes pl-open-u {
+  0% { transform: rotate(-51deg); animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+  45% { transform: rotate(-53deg); animation-timing-function: cubic-bezier(0.65, 0, 0.2, 1); }
+  100% { transform: rotate(-51deg); }
 }
-@keyframes pl-wedge-2 {
-  0% { transform: translateY(0); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
-  42% { transform: translateY(-0.55px); animation-timing-function: cubic-bezier(0.55, 0, 0.3, 1); }
-  76% { transform: translateY(0.08px); animation-timing-function: ease-in-out; }
-  100% { transform: translateY(0); }
-}
-@keyframes pl-wedge-3 {
-  0% { transform: translateY(0); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
-  42% { transform: translateY(0.55px); animation-timing-function: cubic-bezier(0.55, 0, 0.3, 1); }
-  76% { transform: translateY(-0.08px); animation-timing-function: ease-in-out; }
-  100% { transform: translateY(0); }
-}
-@keyframes pl-wedge-4 {
-  0% { transform: translateY(0); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
-  42% { transform: translateY(1.6px); animation-timing-function: cubic-bezier(0.55, 0, 0.3, 1); }
-  76% { transform: translateY(-0.2px); animation-timing-function: ease-in-out; }
-  100% { transform: translateY(0); }
+@keyframes pl-open-l {
+  0% { transform: rotate(-39deg); animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+  45% { transform: rotate(-37deg); animation-timing-function: cubic-bezier(0.65, 0, 0.2, 1); }
+  100% { transform: rotate(-39deg); }
 }
 
 /* ── Reve. The mirrored bars fold toward the spine and open again, one

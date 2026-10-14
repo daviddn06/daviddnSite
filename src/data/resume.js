@@ -34,7 +34,7 @@ export const resume = {
     { role: ['Wedge Studio, Los Angeles', 'Founder, Jan 2026 to present'] },
     { list: [
       'Founded a design, web development, SEO/AEO, and AI consulting studio (wedgestudio.dev) that ships all client work through agentic tooling.',
-      'Built Wedge App, an AI-native client portal and agency OS (Hono, SQLite, React 19, OpenAI tool loop), and Docket, a client project dashboard.',
+      'Built Sightpane (sightpane.com), a client portal for agencies with AI request intake and MCP (Node 22, Hono, SQLite, React 19, SSE).',
       "Delivered the flagship engagement for Magic Box LA, a 220,000 sq ft DTLA venue: full redesign, self-hosted headless CMS (Payload 3, Next.js 16), first-party attribution with GA4 and Google Ads conversion tracking, CRM lead forwarding, and 15 audit defects fixed, so every paid lead is attributed correctly and the venue's ads agency can measure spend.",
     ] },
     { h: 'Selected project' },

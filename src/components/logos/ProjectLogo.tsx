@@ -4,6 +4,7 @@ import type { MarkProps } from './types';
 import { useLogoPlay } from './useLogoPlay';
 import { VeckaMark } from './VeckaMark';
 import { WedgeMark } from './WedgeMark';
+import { SightpaneMark } from './SightpaneMark';
 import { ReveMark } from './ReveMark';
 import { ShoSoftMark } from './ShoSoftMark';
 import { HandoffMark } from './HandoffMark';
@@ -22,7 +23,8 @@ export type LogoMeta = {
 
 export const LOGO_META: Record<string, LogoMeta> = {
   shosoft: { name: 'ShoSoft', Mark: ShoSoftMark, duration: 620 },
-  wedge: { name: 'Wedge Studio', Mark: WedgeMark, duration: 600 },
+  wedge: { name: 'Wedge Studio', Mark: WedgeMark, duration: 560 },
+  sightpane: { name: 'Sightpane', Mark: SightpaneMark, duration: 560 },
   reve: { name: 'Reve', Mark: ReveMark, duration: 560 },
   vecka: { name: 'Vecka', Mark: VeckaMark, duration: 580 },
   handoff: { name: 'Handoff', Mark: HandoffMark, duration: 580 },
@@ -59,7 +61,7 @@ export function ProjectLogo({ slug, size = 36, className, color }: Props) {
       aria-label={`${name} logo`}
       style={style}
     >
-      <Mark uid={uid} />
+      <Mark uid={uid} size={size} />
     </span>
   );
 }

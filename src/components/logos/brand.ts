@@ -14,8 +14,11 @@ export const BRAND: Record<string, Brand> = {
   // The logo disc's plum, sampled from shosoft.ai's favicon (rgb 50 1 46).
   // The Clay marketing site's --plum is #300020, the app's --brand-venue #59359A.
   shosoft: { name: 'ShoSoft', color: '#32012E', ink: '#FFFFFF', wordmark: true },
-  // wedgestudio.dev/favicon.svg, tile #050505 with the mark in #F4F4F6 (v17 site --bg is #000).
-  wedge: { name: 'Wedge Studio', color: '#050505', ink: '#F4F4F6', wordmark: true },
+  // The Opening identity (Work/Wedge/brand/logo-2026-10/final-opening), mono only: off white #FFF3F0 on night #0A0A0B.
+  wedge: { name: 'Wedge Studio', color: '#0A0A0B', ink: '#FFF3F0', wordmark: true },
+  // Sightpane's mark is mono (final-through, white on night). Its colour is sightpane.com's theme-color, the
+  // night slate of the dusk scene behind the site and the demo, so its channel reads apart from Wedge's.
+  sightpane: { name: 'Sightpane', color: '#1B2228', ink: '#FFFFFF', wordmark: true },
   // Reve's mark is black (brand/logo/reve_logo_black_alpha.svg), reve.com theme-color #000000 on dark.
   reve: { name: 'Reve', color: '#000000', ink: '#FFFFFF', wordmark: true },
   // Vecka's product blue, assets/brand/vecka-exploration-v2/01-gather/icon-blue.svg and the vecka.ai favicon.

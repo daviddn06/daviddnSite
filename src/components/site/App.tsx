@@ -247,6 +247,21 @@ export default function App({ work, projects, earlier, initial }: Props) {
     return () => removeEventListener('keydown', onEsc, true);
   }, [zoom, show]);
 
+  /* a link inside an article to another project opens it in place, the
+     same path as a click in the guide */
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = (e.target as Element | null)?.closest?.('.article-inner a[href^="/projects/"]');
+      const s = a ? slugOf(a.getAttribute('href') ?? '') : null;
+      if (!s || !find(s)) return;
+      e.preventDefault();
+      show(s);
+    };
+    document.addEventListener('click', onClick);
+    return () => document.removeEventListener('click', onClick);
+  }, [show, find]);
+
   /* arrows step through everything in order */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

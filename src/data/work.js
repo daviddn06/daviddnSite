@@ -4,7 +4,8 @@
    800 wide webp, videos have an mp4 and a poster webp.
 
    `body` is the article, a list of blocks: a string is a paragraph,
-   { h } a small heading, { stats } a row of numbers, anything else a
+   { text } a paragraph with links in it (strings and [label, href]
+   pairs), { h } a small heading, { stats } a row of numbers, anything else a
    screen (image, video, pair, or a before and after `compare`). Written
    in David's voice and kept short. Projects without a body fall back to
    `notes` and `shots`. */
@@ -75,28 +76,29 @@ export const work = [
     name: 'Wedge Studio',
     role: 'Founder',
     when: 'Since high school, expanded in 2026',
-    line: 'My design and development studio. I\'ve built sites for clients since high school, and in 2026 I expanded it and built the software it runs on.',
+    line: 'My design and development studio. Websites, web apps and internal tools, and every project comes with Sightpane.',
     url: 'https://wedgestudio.dev',
-    tile: img('wedge', 'app-overview', 1600, 1000),
-    cover: vid('wedge', 'site-intro-manifesto', 1600, 1000),
+    tile: img('wedge', 'site-2026-home', 1600, 1000),
+    cover: img('wedge', 'site-2026-home', 1600, 1000),
     shots: [],
     body: [
 
-      'I started building websites for local businesses in high school, under the name AVA Media. That studio did more than 50 projects before I left for USC. In 2026 I expanded it into Wedge, design, web, SEO and AI, and built the software it runs on.',
-      vid('wedge', 'site-intro-manifesto', 1600, 1000, 'wedgestudio.dev'),
-      { h: 'Why software came first' },
-      'Running a studio as a teenager showed me where agencies lose clients. It\'s rarely the design. It\'s the two week wait for a small edit, the update nobody sent, the login that left with the last freelancer. That\'s the broken part of the agency market, and it\'s a process problem. So before taking on more clients, I built the process.',
-      'Every project lives in one place, with the live build, a timeline, approvals, messages and billing. A client pins a comment on the live site and it becomes a revision I have to close. Status is never typed in. It\'s worked out from the records, because my first version taught me typed status goes stale in a day.',
-      img('wedge', 'app-overview', 1600, 1000, 'Project home'),
-      vid('wedge', 'app-preview-pin-comment', 1440, 900, 'Comments pinned on the live build'),
-      vid('wedge', 'app-feedback-to-revision', 1440, 900, 'A request becomes a tracked revision'),
-      'The assistant can check a project, file a revision or draft a message, and a person always presses send. I drew that line on purpose. A client should never get a message nobody read.',
-      vid('wedge', 'app-ai-command', 1440, 900, 'The assistant'),
-      img('wedge', 'app-billing', 1600, 1000, 'Billing'),
-      vid('wedge', 'docket-pipeline-drag', 1440, 900, 'Docket, a version for other agencies'),
-      { h: 'The first client' },
-      'Magic Box LA, a 220,000 square foot event venue in downtown LA. I redesigned and rebuilt their site on a self-hosted CMS, carried their SEO across, and made sure every paid lead lands in their CRM with its source attached, so they can finally tell which ads book events.',
+      'I started building websites for local businesses in high school as AVA Media, more than 50 projects before I left for USC. Wedge Studio is what that grew into, and in 2026 I expanded it.',
+      img('wedge', 'site-2026-home', 1600, 1000, 'wedgestudio.dev'),
+      { h: 'The studio now' },
+      'Wedge builds websites, web apps and internal tools, along with AI integrations, search and AI visibility, and analytics. In October I rebuilt the site around the work itself and gave the studio a new mark.',
+      'The work so far. Magic Box LA\'s website and site editor. For ShoSoft, the marketing site, a demo site, the app redesign, AI onboarding and an internal tool. Vecka and Handoff, my own products. The Moat, a restaurant site concept, and a tool for the growth team at an image model company.',
+      img('wedge', 'site-2026-work-menu', 1600, 1000, 'The Work menu'),
+      'The old logo was a hexagon with a hole in it. It said nothing about Wedge, and at favicon size it read as a nut. The new one, Opening, is a block with a wedge cut from one hinge. Agencies used to be a closed box. Wedge opens it so every step is visible.',
+      img('wedge', 'brand-opening-before-after', 1600, 757, 'The hexagon, and Opening'),
+      { h: 'Magic Box LA' },
+      'The flagship is Magic Box LA, a 220,000 square foot event venue in downtown LA. I redesigned and rebuilt their site on a self-hosted CMS, carried their SEO across, and made sure every paid lead lands in their CRM with its source attached, so they can finally tell which ads book events.',
+      '"Very excited to get this live, it looks amazing, you should be proud of your work here." Wayne Fernandez, GM of Magic Box LA.',
+      img('wedge', 'site-2026-magic-box', 1600, 1000, 'The case study on wedgestudio.dev'),
       img('wedge', 'client-venue-home-collage', 1600, 1000, 'The venue\'s new site'),
+      { h: 'Every project comes with Sightpane' },
+      { text: ['Every Wedge project comes with Sightpane, the client portal I built after five years of client work, so clients can see where things stand any day, approve designs and ask for changes in one place. The whole story is on ', ['the Sightpane page', '/projects/sightpane/'], '.'] },
+      img('wedge', 'site-2026-platform', 1600, 1000, 'wedgestudio.dev/platform'),
     ],
   },
   {
@@ -140,6 +142,42 @@ export const work = [
 
 /* Things David founded or built. */
 export const projects = [
+  {
+    slug: 'sightpane',
+    name: 'Sightpane',
+    role: 'Founder',
+    when: 'Oct 2026 to now',
+    line: 'The client portal for teams that build for clients and stakeholders, agencies first.',
+    url: 'https://sightpane.com',
+    tile: img('sightpane', 'client-home', 1600, 1000),
+    cover: vid('sightpane', 'request-split', 1440, 900),
+    shots: [],
+    body: [
+
+      'I\'ve built websites for clients for five years, first as AVA Media in high school, now as Wedge Studio. The design was rarely what went wrong. The process was. The two week wait for a small edit, the update nobody sent, feedback lost across email, texts and Slack, the login that left with the last freelancer. The client is always asking where we are, and the studio is always answering by hand.',
+      'So I built the software first, for my own studio. In October 2026 it became its own product, Sightpane, so any agency can run on it.',
+      img('sightpane', 'site-home', 1600, 1000, 'sightpane.com'),
+      { h: 'Status nobody types' },
+      'It started as the Wedge app, and before that Docket. Docket taught me that typed status goes stale in a day, so in Sightpane nobody types it. Status is worked out from the records.',
+      { h: 'One button for the client' },
+      'Clients aren\'t project managers, so their side stays simple. Home answers one question, how is my project going, with what needs them, the stage, the next update and the launch date. Then one big Request a change button.',
+      img('sightpane', 'client-home', 1600, 1000, 'What a client sees'),
+      'They can paste a screenshot, record their screen or put three asks in one message. The AI splits it into separate requests, catches duplicates and asks at most two questions.',
+      vid('sightpane', 'request-split', 1440, 900, 'One message becomes three requests'),
+      'Every change gets its own page with what they asked, what we did, a before and after and a live link. They answer Looks good or Still not right.',
+      img('sightpane', 'change-detail', 1600, 1000, 'A change, ready for the client to check'),
+      { h: 'The studio side' },
+      'For the studio, every project sits on one screen. The plan works like a sheet, with phases, a timeline and a baseline the client approves before work starts, and change orders turn into draft invoices. Pages swap instantly, and anything in the sidebar can be dragged into the page to work side by side.',
+      img('sightpane', 'studio-plan', 1600, 1000, 'The plan'),
+      vid('sightpane', 'split-drag', 1440, 900, 'Drag anything into split view'),
+      { h: 'AI with a person in the loop' },
+      'The assistant can draft a reply, file requests or fill a plan from notes, but it acts only after a person confirms. A client should never get a message nobody read. Sightpane also speaks MCP, so Claude and other agents can file and update work in it.',
+      vid('sightpane', 'assistant-draft', 1440, 900, 'The assistant drafts, a person sends'),
+      { h: 'Where it is now' },
+      'Sightpane is live, and every Wedge Studio project comes with it, so our clients use it today. It\'s built for other agencies too, each with its own branded sign in, and opening it to them is next.',
+      { text: ['The public demo at ', ['demo.sightpane.com', 'https://demo.sightpane.com'], ' has a client view and a studio view. Every feature ships with its own sample data, and every release runs a 76 screen headless sweep before it goes out.'] },
+    ],
+  },
   {
     slug: 'vecka',
     name: 'Vecka',
