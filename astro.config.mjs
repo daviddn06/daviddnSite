@@ -10,4 +10,7 @@ export default defineConfig({
   server: { port: 4321 },
   build: { inlineStylesheets: 'always' },
   integrations: [react(), pruneMedia(), precompress()],
+  /* AVA Media is told as Wedge Studio now (2026-10-15), so its old
+     address lands on the Wedge channel. */
+  redirects: { '/projects/ava-media': '/projects/wedge/' },
 });

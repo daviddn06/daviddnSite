@@ -275,18 +275,6 @@
   30%, 62% { fill: var(--pl-swire-b); }
 }
 
-/* ── AVA Media. The three letters hop in turn, a quick wave through the
-   word. */
-.lg-ava-media[data-play] .a-1 { animation: pl-ava-hop 440ms both; }
-.lg-ava-media[data-play] .a-v { animation: pl-ava-hop 440ms 70ms both; }
-.lg-ava-media[data-play] .a-2 { animation: pl-ava-hop 440ms 140ms both; }
-@keyframes pl-ava-hop {
-  0% { transform: translateY(0); animation-timing-function: cubic-bezier(0.22, 0.9, 0.3, 1); }
-  38% { transform: translateY(-24px); animation-timing-function: cubic-bezier(0.55, 0, 0.6, 1); }
-  70% { transform: translateY(3px); animation-timing-function: ease-in-out; }
-  100% { transform: translateY(0); }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .plogo,
   .plogo * {

@@ -83,7 +83,7 @@ export const work = [
     shots: [],
     body: [
 
-      'I started building websites for local businesses in high school as AVA Media, more than 50 projects before I left for USC. Wedge Studio is what that grew into, and in 2026 I expanded it.',
+      'I started Wedge Studio building websites for local businesses in high school, more than 50 projects before I left for USC, and in 2026 I expanded it.',
       img('wedge', 'site-2026-home', 1600, 1000, 'wedgestudio.dev'),
       { h: 'The studio now' },
       'Wedge builds websites, web apps and internal tools, along with AI integrations, search and AI visibility, and analytics. In October I rebuilt the site around the work itself and gave the studio a new mark.',
@@ -154,7 +154,7 @@ export const projects = [
     shots: [],
     body: [
 
-      'I\'ve built websites for clients for five years, first as AVA Media in high school, now as Wedge Studio. The design was rarely what went wrong. The process was. The two week wait for a small edit, the update nobody sent, feedback lost across email, texts and Slack, the login that left with the last freelancer. The client is always asking where we are, and the studio is always answering by hand.',
+      'I\'ve built websites for clients for five years with Wedge Studio, starting in high school. The design was rarely what went wrong. The process was. The two week wait for a small edit, the update nobody sent, feedback lost across email, texts and Slack, the login that left with the last freelancer. The client is always asking where we are, and the studio is always answering by hand.',
       'So I built the software first, for my own studio. In October 2026 it became its own product, Sightpane, so any agency can run on it.',
       img('sightpane', 'site-home', 1600, 1000, 'sightpane.com'),
       { h: 'Status nobody types' },
@@ -287,23 +287,6 @@ export const earlier = [
       vid('swire', 'app-flow', 1440, 810, 'App walkthrough'),
       img('swire', 'app-screens', 1600, 900, 'Sign in, feed and a match'),
       img('swire', 'deck-solution', 1600, 900, 'Pitch deck'),
-    ],
-  },
-  {
-    slug: 'ava-media',
-    name: 'AVA Media',
-    role: 'Founder',
-    when: 'Until Oct 2022',
-    line: 'The web studio I ran in high school, building sites for local businesses and nonprofits. It grew into Wedge.',
-    url: '',
-    tile: img('ava-media', 'site-live-2022', 1600, 882),
-    cover: img('ava-media', 'site-live-2022', 1600, 882),
-    shots: [],
-    body: [
-      'My first studio, and where I learned to ship for clients. 50+ projects and $30K+ grossed building sites and content for local businesses.',
-      img('ava-media', 'site-live-2022', 1600, 882, 'The studio site, 2022'),
-      img('ava-media', 'homepage-design', 1600, 2749, 'Homepage design'),
-      img('ava-media', 'stats-posts', 1600, 518, 'Launch posts'),
     ],
   },
 ];

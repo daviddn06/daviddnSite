@@ -11,7 +11,6 @@ import { HandoffMark } from './HandoffMark';
 import { DigitalEnterpriseMark } from './DigitalEnterpriseMark';
 import { HyreMark } from './HyreMark';
 import { SwireMark } from './SwireMark';
-import { AvaMark } from './AvaMark';
 import { DocMark } from './DocMark';
 
 export type LogoMeta = {
@@ -31,7 +30,6 @@ export const LOGO_META: Record<string, LogoMeta> = {
   'digital-enterprise': { name: 'Digital Enterprise', Mark: DigitalEnterpriseMark, duration: 580 },
   hyre: { name: 'HYRE', Mark: HyreMark, duration: 580 },
   swire: { name: 'Swire', Mark: SwireMark, duration: 620 },
-  'ava-media': { name: 'AVA Media', Mark: AvaMark, duration: 580 },
   cv: { name: 'Resume', Mark: DocMark, duration: 0 },
 };
 

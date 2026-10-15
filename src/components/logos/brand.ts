@@ -31,8 +31,6 @@ export const BRAND: Record<string, Brand> = {
   hyre: { name: 'HYRE', color: '#5944E9', ink: '#FFFFFF', wordmark: true },
   // The chevron's lower, deeper blue, Archive/Sep2023 Downloads/swirelogo1.png (upper half #94B9DB).
   swire: { name: 'Swire', color: '#769EC4', ink: '#FFFFFF', wordmark: true },
-  // White letters on black, Archive/Sep2023 Downloads/avabold.png.
-  'ava-media': { name: 'AVA Media', color: '#000000', ink: '#FFFFFF', wordmark: true },
   // The resume has no brand: a calm neutral slate.
   cv: { name: 'Resume', color: '#5B6472', ink: '#FFFFFF', wordmark: false },
 };

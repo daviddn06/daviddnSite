@@ -296,7 +296,7 @@ button { font: inherit; color: inherit; }
 }
 .mini .plogo { --plogo-size: 17px; }
 /* the wordmark-only marks read small at this size; bring them up to the others */
-.mini .lg-ava-media, .mini .lg-digital-enterprise { transform: scale(1.18); }
+.mini .lg-digital-enterprise { transform: scale(1.18); }
 @media (hover: hover) {
   .channel:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--link) 70%, transparent); }
   :is(.channel:not(.active), a.card, .tl-name):hover .mini { color: var(--tint, var(--link)); }

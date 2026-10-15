@@ -92,7 +92,7 @@ The site counts visits with my own script, not a third party. It keeps a random 
 | [Vecka](https://daviddn.dev/projects/vecka/) | A workspace with tasks, notes, calendar and Gmail side by side, with mail that files itself | Founder |
 | [Handoff](https://daviddn.dev/projects/handoff/) | A student sublease marketplace that shows what you save on every listing | Co-founder |
 
-Earlier ventures (Digital Enterprise, HYRE, Swire, AVA Media) are on the site too.
+Earlier ventures (Digital Enterprise, HYRE, Swire) are on the site too. Since 2026-10-15 the websites I built for local businesses in high school are told as part of Wedge Studio.
 
 ### The resume
 
